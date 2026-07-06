@@ -7,10 +7,11 @@ import {
   View,
 } from 'react-native';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { WebView } from 'react-native-webview';
+import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
+import { WordPopup } from '@/components/WordPopup';
 import { getBook, getChapter, getChapterCount } from '@/lib/db';
-import { wrapChapterHtml } from '@/lib/reader-html';
+import { wrapChapterHtml, WORD_SELECT_MESSAGE_TYPE } from '@/lib/reader-html';
 
 export default function ReaderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,6 +25,7 @@ export default function ReaderScreen() {
   const [html, setHtml] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
 
   const loadChapter = useCallback(
     async (index: number) => {
@@ -94,6 +96,7 @@ export default function ReaderScreen() {
     if (!canGoPrev) return;
     const nextIndex = chapterIndex - 1;
     setChapterIndex(nextIndex);
+    setSelectedWord(null);
     await loadChapter(nextIndex);
   };
 
@@ -101,8 +104,27 @@ export default function ReaderScreen() {
     if (!canGoNext) return;
     const nextIndex = chapterIndex + 1;
     setChapterIndex(nextIndex);
+    setSelectedWord(null);
     await loadChapter(nextIndex);
   };
+
+  const handleWebViewMessage = useCallback((event: WebViewMessageEvent) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data?.type === WORD_SELECT_MESSAGE_TYPE && typeof data.word === 'string') {
+        const cleaned = data.word.trim();
+        if (cleaned.length >= 2) {
+          setSelectedWord(cleaned);
+        }
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
+
+  const closeWordPopup = useCallback(() => {
+    setSelectedWord(null);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -127,6 +149,7 @@ export default function ReaderScreen() {
           source={{ html: html ?? '' }}
           style={styles.webview}
           showsVerticalScrollIndicator={false}
+          onMessage={handleWebViewMessage}
         />
       )}
 
@@ -146,6 +169,12 @@ export default function ReaderScreen() {
           <Text style={styles.navButtonText}>Novbeti</Text>
         </Pressable>
       </View>
+
+      <WordPopup
+        visible={selectedWord !== null}
+        word={selectedWord}
+        onClose={closeWordPopup}
+      />
     </View>
   );
 }
