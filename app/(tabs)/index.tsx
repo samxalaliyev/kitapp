@@ -1,16 +1,21 @@
-﻿import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 
+import { BookCard } from '@/components/BookCard';
 import { BookPrepareModal } from '@/components/BookPrepareModal';
+import { SectionHeader } from '@/components/SectionHeader';
 import { fetchBooksPage } from '@/lib/api';
+import { Colors, FontSize, FontWeight, Spacing, Radius } from '@/lib/design';
 import { isBookReady, prepareBookForReading } from '@/lib/book-service';
 import type {
   ApiBook,
@@ -26,17 +31,34 @@ const INITIAL_PROGRESS: BookPrepareProgress = {
   message: 'Gozleyin...',
 };
 
-export default function BooksScreen() {
+/** Gunun saatina gore salamlama mesaji */
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 6) return 'Xoş gecələr';
+  if (hour < 12) return 'Sabahın xeyir';
+  if (hour < 18) return 'Günortanız xeyir';
+  return 'Axşamınız xeyir';
+}
+
+export default function HomeScreen() {
   const router = useRouter();
-  const [books, setBooks] = useState<BookListItem[]>([]);
+
+  // --- Data state ---
+  const [recommended, setRecommended] = useState<BookListItem[]>([]);
+  const [popular, setPopular] = useState<BookListItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [nextPage, setNextPage] = useState<number | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
+  const [listError, setListError] = useState<string | null>(null);
+
+  // --- Search state ---
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<BookListItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchActive, setSearchActive] = useState(false);
+
+  // --- Book prepare (modal) state ---
   const [progress, setProgress] = useState<BookPrepareProgress | null>(null);
   const [openingBook, setOpeningBook] = useState<ApiBook | null>(null);
   const [openingError, setOpeningError] = useState<string | null>(null);
-  const [listError, setListError] = useState<string | null>(null);
   const navigationLock = useRef(false);
 
   const mergeWithLocalStatus = useCallback(async (apiBooks: ApiBook[]) => {
@@ -53,12 +75,21 @@ export default function BooksScreen() {
     setLoading(true);
 
     try {
-      const page = await fetchBooksPage(1);
-      const merged = await mergeWithLocalStatus(page.books);
+      // Sehife 1 — recommended ucun (random siralama Gutendex default)
+      const page1 = await fetchBooksPage(1);
+      const merged1 = await mergeWithLocalStatus(page1.books);
 
-      setBooks(merged);
-      setNextPage(page.nextPage);
-      setTotalCount(page.totalCount);
+      // Sehife 2 — popular ucun (ferqli kitablar)
+      const page2 = await fetchBooksPage(2);
+      const merged2 = await mergeWithLocalStatus(page2.books);
+
+      // Popular = download_count-a gore siralama
+      const sortedPopular = [...merged2].sort(
+        (a, b) => (b.downloadCount ?? 0) - (a.downloadCount ?? 0),
+      );
+
+      setRecommended(merged1);
+      setPopular(sortedPopular);
     } catch (err) {
       setListError(
         err instanceof Error ? err.message : 'Kitablar yuklenmedi',
@@ -67,34 +98,6 @@ export default function BooksScreen() {
       setLoading(false);
     }
   }, [mergeWithLocalStatus]);
-
-  const loadMoreBooks = useCallback(async () => {
-    if (!nextPage || loadingMore) {
-      return;
-    }
-
-    setLoadingMore(true);
-    setListError(null);
-
-    try {
-      const page = await fetchBooksPage(nextPage);
-      const merged = await mergeWithLocalStatus(page.books);
-
-      setBooks((current) => {
-        const existingIds = new Set(current.map((book) => book.id));
-        const newBooks = merged.filter((book) => !existingIds.has(book.id));
-        return [...current, ...newBooks];
-      });
-      setNextPage(page.nextPage);
-      setTotalCount(page.totalCount);
-    } catch (err) {
-      setListError(
-        err instanceof Error ? err.message : 'Daha cox kitab yuklenmedi',
-      );
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [nextPage, loadingMore, mergeWithLocalStatus]);
 
   useEffect(() => {
     loadBooks();
@@ -114,12 +117,37 @@ export default function BooksScreen() {
 
   const refreshLocalStatus = useCallback(async (bookId: string) => {
     const ready = await isBookReady(bookId);
-    setBooks((current) =>
-      current.map((book) =>
+    const updateList = (list: BookListItem[]) =>
+      list.map((book) =>
         book.id === bookId ? { ...book, isReady: ready } : book,
-      ),
-    );
+      );
+    setRecommended(updateList);
+    setPopular(updateList);
+    setSearchResults(updateList);
   }, []);
+
+  const performSearch = useCallback(async () => {
+    const query = searchQuery.trim();
+    if (!query) {
+      setSearchActive(false);
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchActive(true);
+    setListError(null);
+
+    try {
+      const page = await fetchBooksPage(1, query);
+      const merged = await mergeWithLocalStatus(page.books);
+      setSearchResults(merged);
+    } catch (err) {
+      setListError(err instanceof Error ? err.message : 'Axtarış zamanı xəta baş verdi');
+    } finally {
+      setIsSearching(false);
+    }
+  }, [searchQuery, mergeWithLocalStatus]);
 
   const closePrepare = useCallback(() => {
     if (openingError) {
@@ -130,6 +158,26 @@ export default function BooksScreen() {
     }
   }, [openingError]);
 
+  /** Kitab detali ekranina kecid */
+  const goToDetail = useCallback(
+    (book: BookListItem) => {
+      router.push({
+        pathname: '/book/detail',
+        params: {
+          id: book.id,
+          title: book.title,
+          author: book.author,
+          coverUrl: book.coverUrl ?? '',
+          epubUrl: book.epubUrl,
+          downloadCount: String(book.downloadCount ?? 0),
+          summary: book.summary ?? '',
+        },
+      });
+    },
+    [router],
+  );
+
+  /** Birbaşa kitabı açmaq (modal ilə) — detail ekranından çağırılır */
   const openBook = useCallback(
     async (book: BookListItem) => {
       if (navigationLock.current) return;
@@ -144,8 +192,6 @@ export default function BooksScreen() {
           setProgress(next);
         });
         await refreshLocalStatus(book.id);
-        // Reader ekranina kecid. useFocusEffect-in cleanup-i
-        // qayitdiqda modal-i baglayacaq.
         router.push('/book/' + book.id);
       } catch (err) {
         setOpeningError(
@@ -156,74 +202,123 @@ export default function BooksScreen() {
     [refreshLocalStatus, router],
   );
 
+  // --- Loading state ---
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#2563eb" />
-        <Text style={styles.muted}>Gutendex-den kitablar yuklenir...</Text>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Kitablar yüklənir...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Kitablar</Text>
-      <Text style={styles.subheading}>
-        Project Gutenberg (Gutendex) - {books.length} / {totalCount} kitab
-      </Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.greeting}>{getGreeting()}</Text>
+          <Text style={styles.subtitle}>
+            Sizin üçün maraqlı kitablar seçdik.
+          </Text>
+        </View>
 
-      {listError ? <Text style={styles.error}>{listError}</Text> : null}
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Kitab və ya müəllif axtar..."
+            placeholderTextColor={Colors.textSubtle}
+            value={searchQuery}
+            onChangeText={(text) => {
+              setSearchQuery(text);
+              if (text.trim() === '') {
+                 setSearchActive(false);
+                 setSearchResults([]);
+              }
+            }}
+            onSubmitEditing={performSearch}
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+          />
+        </View>
 
-      <FlatList
-        data={books}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        onEndReached={loadMoreBooks}
-        onEndReachedThreshold={0.4}
-        ListFooterComponent={
-          loadingMore ? (
-            <View style={styles.footerLoader}>
-              <ActivityIndicator color="#2563eb" />
+        {listError ? (
+          <Text style={styles.error}>{listError}</Text>
+        ) : null}
+
+        {searchActive ? (
+          isSearching ? (
+            <ActivityIndicator size="large" color={Colors.primary} style={styles.searchLoader} />
+          ) : searchResults.length > 0 ? (
+            <View style={styles.popularSection}>
+              <SectionHeader title="Axtarış Nəticələri" />
+              {searchResults.map((item) => (
+                <View key={'search-' + item.id} style={styles.popularItem}>
+                  <BookCard
+                    id={item.id}
+                    title={item.title}
+                    author={item.author}
+                    coverUrl={item.coverUrl}
+                    downloadCount={item.downloadCount}
+                    variant="vertical"
+                    coverSize="sm"
+                    onPress={() => goToDetail(item)}
+                  />
+                </View>
+              ))}
             </View>
-          ) : null
-        }
-        renderItem={({ item }) => {
-          const isOpening = openingBook?.id === item.id;
+          ) : (
+            <Text style={styles.noResultsText}>Heç nə tapılmadı</Text>
+          )
+        ) : (
+          <>
+            {/* Recommended — Horizontal Carousel */}
+            <SectionHeader title="Tövsiyə Edilən" />
+            <FlatList
+              data={recommended}
+              keyExtractor={(item) => 'rec-' + item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.carousel}
+              renderItem={({ item }) => (
+                <BookCard
+                  id={item.id}
+                  title={item.title}
+                  author={item.author}
+                  coverUrl={item.coverUrl}
+                  downloadCount={item.downloadCount}
+                  variant="horizontal"
+                  coverSize="md"
+                  onPress={() => goToDetail(item)}
+                />
+              )}
+            />
 
-          return (
-            <Pressable
-              style={({ pressed }) => [
-                styles.card,
-                pressed && styles.cardPressed,
-                isOpening && styles.cardDisabled,
-              ]}
-              disabled={isOpening}
-              onPress={() => openBook(item)}
-            >
-              <View style={styles.cardBody}>
-                <Text style={styles.title}>{item.title}</Text>
-                <Text style={styles.author}>{item.author}</Text>
-                {item.languages?.length ? (
-                  <Text style={styles.meta}>
-                    Dil: {item.languages.join(', ')}
-                    {item.downloadCount != null
-                      ? ' - ' + item.downloadCount.toLocaleString() + ' yuklenme'
-                      : ''}
-                  </Text>
-                ) : null}
-                <Text style={styles.status}>
-                  {item.isReady
-                    ? 'Lokalda hazirdir'
-                    : 'Ilk acilishda yuklenecek'}
-                </Text>
-              </View>
-              {isOpening && !openingError ? (
-                <ActivityIndicator color="#2563eb" />
-              ) : null}
-            </Pressable>
-          );
-        }}
-      />
+            {/* Popular — Vertical List */}
+            <View style={styles.popularSection}>
+              <SectionHeader title="Populyar Kitablar" />
+              {popular.map((item) => (
+                <View key={'pop-' + item.id} style={styles.popularItem}>
+                  <BookCard
+                    id={item.id}
+                    title={item.title}
+                    author={item.author}
+                    coverUrl={item.coverUrl}
+                    downloadCount={item.downloadCount}
+                    variant="vertical"
+                    coverSize="sm"
+                    onPress={() => goToDetail(item)}
+                  />
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+      </ScrollView>
 
       <BookPrepareModal
         visible={openingBook !== null}
@@ -239,83 +334,76 @@ export default function BooksScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
-    paddingTop: 16,
+    backgroundColor: Colors.bg,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
-    backgroundColor: '#f3f4f6',
+    gap: Spacing.md,
+    backgroundColor: Colors.bg,
   },
-  heading: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#111827',
-    paddingHorizontal: 20,
+  loadingText: {
+    color: Colors.textMuted,
+    fontSize: FontSize.md,
   },
-  subheading: {
-    fontSize: 15,
-    color: '#6b7280',
-    paddingHorizontal: 20,
-    marginTop: 4,
-    marginBottom: 12,
+  scrollContent: {
+    paddingBottom: Spacing.xxxl,
   },
-  list: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-    gap: 12,
+  header: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.xxxl,
+    paddingBottom: Spacing.md,
   },
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+  greeting: {
+    fontSize: FontSize.hero,
+    fontWeight: FontWeight.bold,
+    color: Colors.text,
+    marginBottom: Spacing.xs,
   },
-  cardPressed: {
-    opacity: 0.92,
-  },
-  cardDisabled: {
-    opacity: 0.7,
-  },
-  cardBody: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  author: {
-    fontSize: 14,
-    color: '#4b5563',
-    marginBottom: 6,
-  },
-  meta: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 4,
-  },
-  status: {
-    fontSize: 12,
-    color: '#2563eb',
-  },
-  muted: {
-    color: '#6b7280',
+  subtitle: {
+    fontSize: FontSize.md,
+    color: Colors.textMuted,
   },
   error: {
-    color: '#dc2626',
-    paddingHorizontal: 20,
-    marginBottom: 8,
+    color: Colors.danger,
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.md,
+    fontSize: FontSize.sm,
   },
-  footerLoader: {
-    paddingVertical: 16,
-    alignItems: 'center',
+  carousel: {
+    paddingLeft: Spacing.xl,
+    paddingRight: Spacing.sm,
+    paddingBottom: Spacing.xxl,
+  },
+  popularSection: {
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
+  },
+  popularItem: {
+    // Wrapper for spacing
+  },
+  searchContainer: {
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.xl,
+  },
+  searchInput: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 14,
+    fontSize: FontSize.md,
+    color: Colors.text,
+  },
+  searchLoader: {
+    marginTop: Spacing.xxl,
+  },
+  noResultsText: {
+    textAlign: 'center',
+    color: Colors.textMuted,
+    fontSize: FontSize.md,
+    marginTop: Spacing.xxl,
   },
 });

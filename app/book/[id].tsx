@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -6,17 +6,20 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { WordPopup } from '@/components/WordPopup';
-import { getBook, getChapter, getChapterCount } from '@/lib/db';
+import { getBook, getChapter, getChapterCount, setReadingProgress } from '@/lib/db';
 import { wrapChapterHtml, WORD_SELECT_MESSAGE_TYPE } from '@/lib/reader-html';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 
 export default function ReaderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const navigation = useNavigation();
+  const router = useRouter();
   const bookId = id ?? '';
+  const insets = useSafeAreaInsets();
 
   const [bookTitle, setBookTitle] = useState('');
   const [chapterIndex, setChapterIndex] = useState(0);
@@ -27,8 +30,23 @@ export default function ReaderScreen() {
   const [error, setError] = useState<string | null>(null);
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
 
+  const updateProgress = useCallback(
+    async (index: number, count: number) => {
+      if (!bookId || count <= 0) return;
+      const percent = Math.round(((index + 1) / count) * 100);
+      await setReadingProgress({
+        bookId,
+        currentChapter: index,
+        totalChapters: count,
+        percent,
+        updatedAt: Date.now(),
+      });
+    },
+    [bookId],
+  );
+
   const loadChapter = useCallback(
-    async (index: number) => {
+    async (index: number, total: number) => {
       if (!bookId) return;
 
       setLoading(true);
@@ -38,27 +56,30 @@ export default function ReaderScreen() {
         const chapter = await getChapter(bookId, index);
 
         if (!chapter) {
-          throw new Error('Bolme tapilmadi');
+          throw new Error('Bölmə tapılmadı');
         }
 
         setChapterTitle(chapter.title);
         setHtml(wrapChapterHtml(chapter.content.content, chapter.title));
+        
+        // Progressi yenile
+        await updateProgress(index, total);
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : 'Bolme oxunmadi',
+          err instanceof Error ? err.message : 'Bölmə oxunmadı',
         );
         setHtml(null);
       } finally {
         setLoading(false);
       }
     },
-    [bookId],
+    [bookId, updateProgress],
   );
 
   useEffect(() => {
     const bootstrap = async () => {
       if (!bookId) {
-        setError('Kitab ID tapilmadi');
+        setError('Kitab ID tapılmadı');
         setLoading(false);
         return;
       }
@@ -68,14 +89,14 @@ export default function ReaderScreen() {
         const count = await getChapterCount(bookId);
 
         if (!bookRecord?.isDownloaded || count === 0) {
-          throw new Error('Kitab lokalda hazir deyil');
+          throw new Error('Kitab lokalda hazır deyil. Əvvəlcə yükləyin.');
         }
 
         setBookTitle(bookRecord.title);
         setChapterCount(count);
-        await loadChapter(0);
+        await loadChapter(0, count);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Kitab acilmadi');
+        setError(err instanceof Error ? err.message : 'Kitab açılmadı');
         setLoading(false);
       }
     };
@@ -86,18 +107,12 @@ export default function ReaderScreen() {
   const canGoPrev = chapterIndex > 0;
   const canGoNext = chapterIndex < chapterCount - 1;
 
-  const headerTitle = useMemo(() => bookTitle || 'Oxuma', [bookTitle]);
-
-  useLayoutEffect(() => {
-    navigation.setOptions({ title: headerTitle });
-  }, [navigation, headerTitle]);
-
   const goPrev = async () => {
     if (!canGoPrev) return;
     const nextIndex = chapterIndex - 1;
     setChapterIndex(nextIndex);
     setSelectedWord(null);
-    await loadChapter(nextIndex);
+    await loadChapter(nextIndex, chapterCount);
   };
 
   const goNext = async () => {
@@ -105,7 +120,7 @@ export default function ReaderScreen() {
     const nextIndex = chapterIndex + 1;
     setChapterIndex(nextIndex);
     setSelectedWord(null);
-    await loadChapter(nextIndex);
+    await loadChapter(nextIndex, chapterCount);
   };
 
   const handleWebViewMessage = useCallback((event: WebViewMessageEvent) => {
@@ -127,46 +142,90 @@ export default function ReaderScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.meta}>
-        <Text style={styles.chapterTitle}>{chapterTitle}</Text>
-        <Text style={styles.chapterProgress}>
-          Bolme {chapterCount > 0 ? chapterIndex + 1 : 0} / {chapterCount}
-        </Text>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      {/* Custom Header */}
+      <View style={styles.header}>
+        <Pressable
+          style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+          onPress={() => router.back()}
+          hitSlop={12}
+        >
+          <Text style={styles.iconText}>{'<'}</Text>
+        </Pressable>
+
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {bookTitle || 'Oxuma'}
+          </Text>
+          <Text style={styles.headerSubtitle} numberOfLines={1}>
+            {chapterTitle}
+          </Text>
+        </View>
+
+        <Pressable
+          style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+          hitSlop={12}
+        >
+          <Text style={styles.iconText}>{'⋮'}</Text>
+        </Pressable>
       </View>
 
-      {loading ? (
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#2563eb" />
-        </View>
-      ) : error ? (
-        <View style={styles.centered}>
-          <Text style={styles.error}>{error}</Text>
-        </View>
-      ) : (
-        <WebView
-          originWhitelist={['*']}
-          source={{ html: html ?? '' }}
-          style={styles.webview}
-          showsVerticalScrollIndicator={false}
-          onMessage={handleWebViewMessage}
-        />
-      )}
+      {/* Content */}
+      <View style={styles.content}>
+        {loading ? (
+          <View style={styles.centered}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+          </View>
+        ) : error ? (
+          <View style={styles.centered}>
+            <Text style={styles.error}>{error}</Text>
+          </View>
+        ) : (
+          <WebView
+            originWhitelist={['*']}
+            source={{ html: html ?? '' }}
+            style={styles.webview}
+            showsVerticalScrollIndicator={false}
+            onMessage={handleWebViewMessage}
+            bounces={false}
+          />
+        )}
+      </View>
 
+      {/* Custom Footer */}
       <View style={styles.footer}>
         <Pressable
-          style={[styles.navButton, !canGoPrev && styles.navButtonDisabled]}
+          style={({ pressed }) => [
+            styles.navButton,
+            !canGoPrev && styles.navButtonDisabled,
+            pressed && canGoPrev && styles.pressed,
+          ]}
           disabled={!canGoPrev || loading}
           onPress={goPrev}
+          hitSlop={16}
         >
-          <Text style={styles.navButtonText}>Evvelki</Text>
+          <Text style={[styles.navIcon, !canGoPrev && styles.navIconDisabled]}>
+            {'<'}
+          </Text>
         </Pressable>
+
+        <Text style={styles.pageIndicator}>
+          {chapterCount > 0 ? chapterIndex + 1 : 0} / {chapterCount}
+        </Text>
+
         <Pressable
-          style={[styles.navButton, !canGoNext && styles.navButtonDisabled]}
+          style={({ pressed }) => [
+            styles.navButton,
+            !canGoNext && styles.navButtonDisabled,
+            pressed && canGoNext && styles.pressed,
+          ]}
           disabled={!canGoNext || loading}
           onPress={goNext}
+          hitSlop={16}
         >
-          <Text style={styles.navButtonText}>Novbeti</Text>
+          <Text style={[styles.navIcon, !canGoNext && styles.navIconDisabled]}>
+            {'>'}
+          </Text>
         </Pressable>
       </View>
 
@@ -182,51 +241,63 @@ export default function ReaderScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#faf8f5',
+    backgroundColor: Colors.readerBg,
   },
-  meta: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-    backgroundColor: '#ffffff',
+  
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    backgroundColor: Colors.readerBg,
   },
-  chapterTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
   },
-  chapterProgress: {
-    fontSize: 13,
-    color: '#6b7280',
+  headerTitle: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+    color: Colors.readerText,
+  },
+  headerSubtitle: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
     marginTop: 2,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.pill,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  iconText: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    color: Colors.readerNav,
+  },
+  pressed: {
+    opacity: 0.7,
+  },
+
+  // Content
+  content: {
+    flex: 1,
+    backgroundColor: Colors.readerBg,
   },
   webview: {
     flex: 1,
-    backgroundColor: '#faf8f5',
-  },
-  footer: {
-    flexDirection: 'row',
-    gap: 12,
-    padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    backgroundColor: '#ffffff',
-  },
-  navButton: {
-    flex: 1,
-    backgroundColor: '#2563eb',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  navButtonDisabled: {
-    backgroundColor: '#cbd5e1',
-  },
-  navButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
+    backgroundColor: 'transparent', // HTML ozu fon rengi verir
   },
   centered: {
     flex: 1,
@@ -234,8 +305,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   error: {
-    color: '#dc2626',
-    paddingHorizontal: 20,
+    color: Colors.danger,
+    paddingHorizontal: Spacing.xl,
     textAlign: 'center',
+    fontSize: FontSize.md,
+  },
+
+  // Footer
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.xxl,
+    paddingVertical: Spacing.lg,
+    backgroundColor: Colors.readerBg,
+  },
+  navButton: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navButtonDisabled: {
+    opacity: 1,
+  },
+  navIcon: {
+    fontSize: FontSize.hero,
+    fontWeight: FontWeight.regular,
+    color: Colors.readerNav,
+  },
+  navIconDisabled: {
+    color: Colors.readerNavDisabled,
+  },
+  pageIndicator: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textMuted,
+    letterSpacing: 1,
   },
 });

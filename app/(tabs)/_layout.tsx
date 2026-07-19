@@ -1,36 +1,80 @@
 import { SymbolView } from 'expo-symbols';
 import { Tabs } from 'expo-router';
 
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
+import { Colors, FontSize } from '@/lib/design';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme].tint,
-        headerShown: useClientOnlyValue(false, true),
+        tabBarActiveTintColor: Colors.tabBarActive,
+        tabBarInactiveTintColor: Colors.tabBarInactive,
+        tabBarStyle: {
+          backgroundColor: Colors.tabBarBg,
+          borderTopColor: Colors.border,
+          borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 6,
+        },
+        tabBarLabelStyle: {
+          fontSize: FontSize.xs,
+          fontWeight: '500',
+        },
+        headerShown: false,
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Kitablar',
+          title: 'Ana Səhifə',
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{
-                ios: 'book.fill',
-                android: 'menu_book',
-                web: 'menu_book',
+                ios: 'house.fill',
+                android: 'home',
+                web: 'home',
               }}
               tintColor={color}
-              size={26}
+              size={24}
             />
           ),
         }}
       />
+      <Tabs.Screen
+        name="library"
+        options={{
+          title: 'Kitabxana',
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{
+                ios: 'books.vertical.fill',
+                android: 'menu_book',
+                web: 'menu_book',
+              }}
+              tintColor={color}
+              size={24}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Ayarlar',
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{
+                ios: 'gearshape.fill',
+                android: 'settings',
+                web: 'settings',
+              }}
+              tintColor={color}
+              size={24}
+            />
+          ),
+        }}
+      />
+      {/* Kohne two.tsx-i gizlet */}
       <Tabs.Screen
         name="two"
         options={{
