@@ -1,6 +1,9 @@
-﻿const WORD_SELECT_MESSAGE = '__word_selected__';
+const WORD_SELECT_MESSAGE = '__word_selected__';
 
-export function wrapChapterHtml(bodyHtml: string, title: string): string {
+export function wrapChapterHtml(
+  bodyHtml: string,
+  title: string,
+): string {
   return `<!DOCTYPE html>
 <html lang="az">
   <head>
@@ -11,7 +14,6 @@ export function wrapChapterHtml(bodyHtml: string, title: string): string {
     />
     <title>${escapeHtml(title)}</title>
     <style>
-      /* Reset + horizontal scroll lock */
       *, *::before, *::after { box-sizing: border-box; }
       html, body {
         margin: 0;
@@ -33,8 +35,6 @@ export function wrapChapterHtml(bodyHtml: string, title: string): string {
         max-width: 720px;
         margin: 0 auto;
       }
-
-      /* Basliqlar */
       h1, h2, h3, h4, h5, h6 {
         line-height: 1.3;
         margin-top: 1.5em;
@@ -49,8 +49,6 @@ export function wrapChapterHtml(bodyHtml: string, title: string): string {
       h2 { font-size: 1.35em; }
       h3 { font-size: 1.15em; }
       h4 { font-size: 1em; }
-
-      /* Paraqraflar ve siyahilar */
       p {
         margin: 0 0 1em;
         color: #1a1a1a;
@@ -59,8 +57,6 @@ export function wrapChapterHtml(bodyHtml: string, title: string): string {
       }
       ul, ol { padding-left: 1.4em; margin: 0 0 1em; }
       li { margin-bottom: 0.35em; }
-
-      /* Seksiyali elementler */
       blockquote {
         margin: 0 0 1em;
         padding: 0.4em 0 0.4em 1em;
@@ -73,8 +69,6 @@ export function wrapChapterHtml(bodyHtml: string, title: string): string {
         border-top: 1px solid #e2e8f0;
         margin: 1.5em 0;
       }
-
-      /* Inline emeliyyatlar ucun reng normalizasiyasi */
       a, a:visited, a:hover, a:active {
         color: #2563eb;
         text-decoration: underline;
@@ -98,8 +92,6 @@ export function wrapChapterHtml(bodyHtml: string, title: string): string {
         overflow-x: auto;
         max-width: 100%;
       }
-
-      /* Media */
       img, picture, video, audio, canvas, svg, iframe {
         max-width: 100% !important;
         height: auto !important;
@@ -107,8 +99,6 @@ export function wrapChapterHtml(bodyHtml: string, title: string): string {
       }
       figure { margin: 0 0 1em; max-width: 100%; }
       figcaption { font-size: 0.85em; color: #64748b; }
-
-      /* Cedveller */
       table {
         border-collapse: collapse;
         width: 100% !important;
@@ -119,46 +109,20 @@ export function wrapChapterHtml(bodyHtml: string, title: string): string {
       }
       th, td { padding: 6px 8px; border: 1px solid #e2e8f0; }
       th { background: #f1f5f9; }
-
-      /* Section / article */
       section, article, main, aside, nav, header, footer, div {
         max-width: 100%;
       }
-
-      /* EPUB-lardan gelen tez-tez rast gelinan yanlis stilleri neytralle */
-      [style*="white-space: nowrap"] {
-        white-space: normal !important;
-      }
+      [style*="white-space: nowrap"] { white-space: normal !important; }
       [style*="color: blue"],
       [style*="color:blue"],
       [style*="color: #00f"],
       [style*="color: #0000ff"] {
         color: #1a1a1a !important;
       }
-      [style*="color: red"] {
-        color: #b91c1c !important;
-      }
-      [style*="color: green"] {
-        color: #166534 !important;
-      }
-
-      /* Webview skrollunu bircins tut */
+      [style*="color: red"] { color: #b91c1c !important; }
+      [style*="color: green"] { color: #166534 !important; }
       ::-webkit-scrollbar { width: 0; background: transparent; }
-
-      ::selection {
-        background: #bfdbfe;
-        color: inherit;
-      }
-
-      .word-token {
-        cursor: pointer;
-        border-radius: 3px;
-        padding: 0 1px;
-        transition: background 120ms ease;
-      }
-      .word-token:active {
-        background: #fde68a;
-      }
+      ::selection { background: #bfdbfe; color: inherit; }
     </style>
   </head>
   <body onclick="handleBodyClick(event)">
@@ -204,6 +168,45 @@ export function wrapChapterHtml(bodyHtml: string, title: string): string {
           return null;
         }
 
+        // Selection mode aktiv olanda secilmis sozleri range ile highlight et
+        // ve native terefə gonder. selectionMode = true|false
+        window.__setSelectionMode = function (active) {
+          window.__selectionMode = !!active;
+          if (!active) {
+            // secili highlight-lari temizle
+            var marks = document.querySelectorAll('mark.__kitapapp_sel');
+            for (var i = 0; i < marks.length; i += 1) {
+              var parent = marks[i].parentNode;
+              while (marks[i].firstChild) {
+                parent.insertBefore(marks[i].firstChild, marks[i]);
+              }
+              parent.removeChild(marks[i]);
+              parent.normalize();
+            }
+          }
+        };
+
+        function highlightWord(node, start, end) {
+          if (!node || node.nodeType !== 3) return;
+          var range = document.createRange();
+          range.setStart(node, start);
+          range.setEnd(node, end);
+          var mark = document.createElement('mark');
+          mark.className = '__kitapapp_sel';
+          mark.style.background = '#fde68a';
+          mark.style.padding = '0 2px';
+          mark.style.borderRadius = '3px';
+          try {
+            range.surroundContents(mark);
+          } catch (e) {
+            // range birden cox node-a yayilirsa, surroundContents islemir;
+            // fallback olaraq secilmish hisseni parcalayib mark ile evez edirik
+            var fragment = range.extractContents();
+            mark.appendChild(fragment);
+            range.insertNode(mark);
+          }
+        }
+
         window.handleBodyClick = function (event) {
           var word = findWordFromPoint(event.clientX, event.clientY);
           if (!word) {
@@ -216,7 +219,32 @@ export function wrapChapterHtml(bodyHtml: string, title: string): string {
             }
           }
           if (!word) return;
-          sendToNative({ type: '${WORD_SELECT_MESSAGE}', word: word });
+
+          if (window.__selectionMode) {
+            // highlight + native terefə gonder
+            var pos = document.caretPositionFromPoint
+              ? document.caretPositionFromPoint(event.clientX, event.clientY)
+              : null;
+            if (pos && pos.offsetNode && pos.offsetNode.nodeType === 3) {
+              var t = pos.offsetNode.nodeValue;
+              var s = pos.offset;
+              while (s > 0 && isWordChar(t[s - 1] || '')) s -= 1;
+              var e = pos.offset;
+              while (e < t.length && isWordChar(t[e] || '')) e += 1;
+              highlightWord(pos.offsetNode, s, e);
+            }
+            
+            // DOM-dakı bütün seçilmiş (mark) sözləri sırası ilə topla
+            var marks = document.querySelectorAll('mark.__kitapapp_sel');
+            var selectedWordsArray = [];
+            for (var i = 0; i < marks.length; i++) {
+              selectedWordsArray.push(marks[i].textContent.trim());
+            }
+            var fullText = selectedWordsArray.join(' ');
+            sendToNative({ type: '${WORD_SELECT_MESSAGE}', word: fullText, mode: 'select_all' });
+          } else {
+            sendToNative({ type: '${WORD_SELECT_MESSAGE}', word: word, mode: 'lookup' });
+          }
         };
       })();
     </script>

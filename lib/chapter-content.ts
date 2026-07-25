@@ -1,4 +1,4 @@
-﻿const SKIP_TITLE_PATTERNS = [
+const SKIP_TITLE_PATTERNS = [
   /^contents\.?$/i,
   /^table of contents\.?$/i,
   /^etymology\.?$/i,
@@ -29,8 +29,6 @@
   /^please\s+(read|note|consider|help|support)/i,
   /^most\s+(recently\s+)?updated/i,
   /^new\s+editions?/i,
-  /^section\s+1\./i,
-  /^section\s+2\./i,
 ];
 
 const SKIP_HREF_PATTERNS = [
@@ -116,7 +114,8 @@ export function shouldSkipChapter(
   const text = body.replace(/<[^>]+>/g, '').trim();
 
   // Cox qisa, icibos ve ya yalniz metadata olan sehifeleri atla.
-  if (text.length < 200) {
+  // Originalda 200 idi, lakin real qisa bolmeler (seir, onsoz) silinirdi.
+  if (text.length < 20) {
     return true;
   }
 

@@ -16,29 +16,33 @@ async function getDb(): Promise<SQLiteDatabase> {
 }
 
 async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
-  // chapters cedveli varsa ve content_json kolonu yoxdursa, onu sifirdan qur.
+  const bookColumns = await db.getAllAsync<{ name: string }>(
+    'PRAGMA table_info(books)',
+  );
   const chapterColumns = await db.getAllAsync<{ name: string }>(
     'PRAGMA table_info(chapters)',
   );
 
-  if (chapterColumns.length > 0) {
-    const hasContentJson = chapterColumns.some(
-      (column) => column.name === 'content_json',
-    );
+  const booksNeedsMigration =
+    bookColumns.length > 0 &&
+    bookColumns.some((column) => column.name === 'author');
 
-    if (!hasContentJson) {
-      await db.execAsync('DROP TABLE IF EXISTS chapters');
-    }
+  const chaptersNeedsMigration =
+    chapterColumns.length > 0 &&
+    !chapterColumns.some((column) => column.name === 'content_json');
+
+  if (!booksNeedsMigration && !chaptersNeedsMigration) {
+    return;
   }
 
-  // books cedvelinde author kolonu qalibsa, books_v2 kimi yeniden qur.
-  const bookColumns = await db.getAllAsync<{ name: string }>(
-    'PRAGMA table_info(books)',
-  );
+  // FK asılı cədvəlləri əvvəl sil.
+  await db.execAsync(`
+    DROP TABLE IF EXISTS reading_progress;
+    DROP TABLE IF EXISTS saved_books;
+    DROP TABLE IF EXISTS chapters;
+  `);
 
-  const hasAuthor = bookColumns.some((column) => column.name === 'author');
-
-  if (hasAuthor) {
+  if (booksNeedsMigration) {
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS books_v2 (
         id TEXT PRIMARY KEY NOT NULL,
@@ -55,53 +59,57 @@ async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
   }
 }
 
+async function ensureSchema(db: SQLiteDatabase): Promise<void> {
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS books (
+      id TEXT PRIMARY KEY NOT NULL,
+      title TEXT NOT NULL,
+      is_downloaded INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS chapters (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      book_id TEXT NOT NULL,
+      chapter_index INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      content_json TEXT NOT NULL,
+      FOREIGN KEY (book_id) REFERENCES books(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_chapters_book_index
+      ON chapters(book_id, chapter_index);
+
+    CREATE TABLE IF NOT EXISTS saved_books (
+      book_id TEXT PRIMARY KEY NOT NULL,
+      status TEXT NOT NULL DEFAULT 'saved',
+      saved_at INTEGER NOT NULL,
+      FOREIGN KEY (book_id) REFERENCES books(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS reading_progress (
+      book_id TEXT PRIMARY KEY NOT NULL,
+      current_chapter INTEGER NOT NULL DEFAULT 0,
+      total_chapters INTEGER NOT NULL DEFAULT 0,
+      percent INTEGER NOT NULL DEFAULT 0,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (book_id) REFERENCES books(id)
+    );
+  `);
+}
+
 export async function initDatabase(): Promise<void> {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
-    const db = await getDb();
-
-    await db.execAsync(`
-      PRAGMA journal_mode = WAL;
-
-      CREATE TABLE IF NOT EXISTS books (
-        id TEXT PRIMARY KEY NOT NULL,
-        title TEXT NOT NULL,
-        is_downloaded INTEGER NOT NULL DEFAULT 0
-      );
-
-      CREATE TABLE IF NOT EXISTS chapters (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        book_id TEXT NOT NULL,
-        chapter_index INTEGER NOT NULL,
-        title TEXT NOT NULL,
-        content_json TEXT NOT NULL,
-        FOREIGN KEY (book_id) REFERENCES books(id)
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_chapters_book_index
-        ON chapters(book_id, chapter_index);
-
-      -- Library (qeyd edilmis kitablar) ve oxuma statusu
-      CREATE TABLE IF NOT EXISTS saved_books (
-        book_id TEXT PRIMARY KEY NOT NULL,
-        status TEXT NOT NULL DEFAULT 'saved',
-        saved_at INTEGER NOT NULL,
-        FOREIGN KEY (book_id) REFERENCES books(id)
-      );
-
-      -- Oxuma progressi (chapter index)
-      CREATE TABLE IF NOT EXISTS reading_progress (
-        book_id TEXT PRIMARY KEY NOT NULL,
-        current_chapter INTEGER NOT NULL DEFAULT 0,
-        total_chapters INTEGER NOT NULL DEFAULT 0,
-        percent INTEGER NOT NULL DEFAULT 0,
-        updated_at INTEGER NOT NULL,
-        FOREIGN KEY (book_id) REFERENCES books(id)
-      );
-    `);
-
-    await migrateDatabase(db);
+    try {
+      const db = await getDb();
+      await db.execAsync('PRAGMA journal_mode = WAL;');
+      await migrateDatabase(db);
+      await ensureSchema(db);
+    } catch (error) {
+      initPromise = null;
+      throw error;
+    }
   })();
 
   return initPromise;
@@ -196,12 +204,23 @@ export async function getChapter(
 
   if (!row) return null;
 
+  let content: ChapterJson;
+  try {
+    content = JSON.parse(row.content_json) as ChapterJson;
+  } catch {
+    return null;
+  }
+
+  if (!content?.content) {
+    return null;
+  }
+
   return {
     id: row.id,
     bookId: row.book_id,
     index: row.chapter_index,
     title: row.title,
-    content: JSON.parse(row.content_json) as ChapterJson,
+    content,
   };
 }
 

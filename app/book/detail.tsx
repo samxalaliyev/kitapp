@@ -101,7 +101,7 @@ export default function BookDetailScreen() {
       // Status-u reading olaraq isaretle
       await setSavedStatus(bookId, 'reading');
       setSavedStatusState('reading');
-      router.push('/book/' + bookId);
+      router.push(('/book/' + bookId) as any);
     } catch (err) {
       setPrepareError(
         err instanceof Error ? err.message : 'Kitab acilmadi',

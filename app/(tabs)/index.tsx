@@ -192,7 +192,7 @@ export default function HomeScreen() {
           setProgress(next);
         });
         await refreshLocalStatus(book.id);
-        router.push('/book/' + book.id);
+        router.push(('/book/' + book.id) as any);
       } catch (err) {
         setOpeningError(
           err instanceof Error ? err.message : 'Kitab acilmadi',
