@@ -1,10 +1,11 @@
-import { useFonts } from 'expo-font';
+﻿import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
+import { LanguageProvider, useLanguage } from '@/lib/i18n/LanguageContext';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -39,19 +40,41 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <LanguageProvider>
+      <RootLayoutNav />
+    </LanguageProvider>
+  );
 }
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const { ready, onboarded } = useLanguage();
+
+  // AsyncStorage oxuma bitenedek splash saxlayiriq (qisa muddete)
+  if (!ready) {
+    return null;
+  }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen
+          name="onboarding/language"
+          options={{ headerShown: false }}
+        />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="book" options={{ headerShown: false }} />
+        <Stack.Screen name="settings/language" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
+      {!onboarded ? <OnboardingRedirect /> : null}
     </ThemeProvider>
   );
+}
+
+import { Redirect } from 'expo-router';
+
+function OnboardingRedirect() {
+  return <Redirect href="/onboarding/language" />;
 }

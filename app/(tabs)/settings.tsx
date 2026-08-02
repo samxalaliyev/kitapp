@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+﻿import { useCallback, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -7,8 +7,12 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { getLanguage } from '@/lib/i18n/constants';
+import { clearTranslationCache } from '@/lib/i18n/cache';
 
 interface SettingRowProps {
   icon: string;
@@ -35,7 +39,7 @@ function SettingRow({ icon, label, value, onPress, danger }: SettingRowProps) {
         </Text>
         {value ? <Text style={styles.settingValue}>{value}</Text> : null}
       </View>
-      {onPress ? <Text style={styles.chevron}>›</Text> : null}
+      {onPress ? <Text style={styles.chevron}>{'>'}</Text> : null}
     </Pressable>
   );
 }
@@ -50,33 +54,36 @@ function SettingSection({ title, children }: { title: string; children: React.Re
 }
 
 export default function SettingsScreen() {
-  const [fontSize, setFontSize] = useState<'Kiçik' | 'Normal' | 'Böyük'>('Normal');
+  const router = useRouter();
+  const { targetLang } = useLanguage();
+  const currentLang = getLanguage(targetLang);
+  const [fontSize, setFontSize] = useState<'Kicik' | 'Normal' | 'Boyuk'>('Normal');
 
   const cycleFontSize = useCallback(() => {
     setFontSize((prev) => {
       switch (prev) {
-        case 'Kiçik':
+        case 'Kicik':
           return 'Normal';
         case 'Normal':
-          return 'Böyük';
-        case 'Böyük':
-          return 'Kiçik';
+          return 'Boyuk';
+        case 'Boyuk':
+          return 'Kicik';
       }
     });
   }, []);
 
   const clearCache = useCallback(() => {
     Alert.alert(
-      'Yaddaşı təmizlə',
-      'Endirilmiş kitablar silinəcək. Davam etmək istəyirsiniz?',
+      'Yaddasi temizle',
+      'Endirilmis kitablar ve tercume cache-i silinecek. Davam etmek isteyirsiniz?',
       [
-        { text: 'Ləğv et', style: 'cancel' },
+        { text: 'Legv et', style: 'cancel' },
         {
-          text: 'Təmizlə',
+          text: 'Temizle',
           style: 'destructive',
-          onPress: () => {
-            // TODO: Implement cache clearing
-            Alert.alert('Hazır', 'Yaddaş təmizləndi.');
+          onPress: async () => {
+            await clearTranslationCache();
+            Alert.alert('Hazirdir', 'Yaddas temizlendi.');
           },
         },
       ],
@@ -89,77 +96,75 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Ayarlar</Text>
         </View>
 
-        {/* Profil */}
         <View style={styles.profileCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>KO</Text>
           </View>
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>Kitab Oxucu</Text>
-            <Text style={styles.profileEmail}>Profilinizi fərdiləşdirin</Text>
+            <Text style={styles.profileEmail}>Profilinizi ferdilesdirin</Text>
           </View>
         </View>
 
-        {/* Oxuma Ayarlari */}
-        <SettingSection title="Oxuma Ayarları">
+        <SettingSection title="Oxuma Ayarlari">
           <SettingRow
-            icon="🔤"
-            label="Şrift ölçüsü"
+            icon="Aa"
+            label="Srift olcusu"
             value={fontSize}
             onPress={cycleFontSize}
           />
           <View style={styles.divider} />
           <SettingRow
-            icon="🌙"
-            label="Gecə rejimi"
+            icon="*"
+            label="Gece rejimi"
             value="Avtomatik"
           />
         </SettingSection>
 
-        {/* Umumi */}
-        <SettingSection title="Ümumi">
+        <SettingSection title="Dil ve Tercume">
           <SettingRow
-            icon="🌐"
-            label="Dil"
-            value="Azərbaycan"
+            icon="Az"
+            label="Tercume dili"
+            value={currentLang.nativeLabel + ' (' + currentLang.flag + ')'}
+            onPress={() => router.push('/settings/language')}
           />
           <View style={styles.divider} />
           <SettingRow
-            icon="🔔"
-            label="Bildirişlər"
-            value="Aktiv"
-          />
-          <View style={styles.divider} />
-          <SettingRow
-            icon="💾"
-            label="Yaddaşı təmizlə"
+            icon="..."
+            label="Tercume cache-ini temizle"
             onPress={clearCache}
           />
         </SettingSection>
 
-        {/* Haqqinda */}
-        <SettingSection title="Haqqında">
+        <SettingSection title="Umumi">
           <SettingRow
-            icon="📱"
+            icon="..."
+            label="Bildirisler"
+            value="Aktiv"
+          />
+        </SettingSection>
+
+        <SettingSection title="Haqqinda">
+          <SettingRow
+            icon="v"
             label="Versiya"
             value="1.0.0"
           />
           <View style={styles.divider} />
           <SettingRow
-            icon="📖"
-            label="Mənbə"
+            icon="..."
+            label="Menbe"
             value="Project Gutenberg"
           />
         </SettingSection>
 
         <Text style={styles.footer}>
-          Kitab Oxu © 2024{'\n'}
-          Project Gutenberg kitabları ilə işləyir
+          Kitab Oxu (c) 2026{'\n'}
+          Project Gutenberg kitablar ile isleyir
         </Text>
       </ScrollView>
     </View>
@@ -184,8 +189,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
     color: Colors.text,
   },
-
-  // Profil
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -224,8 +227,6 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginTop: 2,
   },
-
-  // Sections
   section: {
     marginBottom: Spacing.xxl,
   },
@@ -246,8 +247,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     overflow: 'hidden',
   },
-
-  // Setting Row
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -259,9 +258,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.progressTrack,
   },
   settingIcon: {
-    fontSize: 20,
+    fontSize: 16,
     width: 28,
     textAlign: 'center',
+    fontWeight: FontWeight.bold,
+    color: Colors.textMuted,
   },
   settingContent: {
     flex: 1,
@@ -289,8 +290,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.border,
     marginLeft: 56,
   },
-
-  // Footer
   footer: {
     textAlign: 'center',
     fontSize: FontSize.xs,

@@ -1,4 +1,4 @@
-import { SymbolView } from 'expo-symbols';
+﻿import { SymbolView } from 'expo-symbols';
 import { Tabs } from 'expo-router';
 
 import { Colors, FontSize } from '@/lib/design';
@@ -26,7 +26,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Ana Səhifə',
+          title: 'Ana Sehife',
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{
@@ -58,6 +58,23 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="vocabulary"
+        options={{
+          title: 'Sozlerim',
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{
+                ios: 'character.book.closed.fill',
+                android: 'translate',
+                web: 'translate',
+              }}
+              tintColor={color}
+              size={24}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Ayarlar',
@@ -74,7 +91,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      {/* Kohne two.tsx-i gizlet */}
       <Tabs.Screen
         name="two"
         options={{

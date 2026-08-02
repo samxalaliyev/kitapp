@@ -1,7 +1,10 @@
 ﻿// Coxmənbəli tərcumə servisi. Sıra ile 3 pulsuz API sınanılır:
-// 1) MyMemory - esas, suretli, IP-ye gore gunluk limitli
+// 1) MyMemory - suretli, IP-ye gore gunluk limitli (5000 soz/gun)
 // 2) LibreTranslate - community instances, Google keyfiyyetinə yaxın
 // 3) Lingva - Google Translate proxy, public instances
+// Qeyd: əvvəl default MyMemory idi, lakin onun EN->AZ keyfiyyəti zəifdir
+// (literal tercume, kontekst yox). LibTranslate daha yaxşı nəticə verir
+// (Google keyfiyyəti).
 
 export type TranslationSource = 'mymemory' | 'libretranslate' | 'lingva';
 
@@ -24,7 +27,7 @@ const LIBRETRANSLATE_INSTANCES = [
   'https://lt.vern.cc',
 ];
 
-// Lingva public instances.
+// Lingva public instances (cox vaxt offline olur).
 const LINGVA_INSTANCES = [
   'https://lingva.ml',
   'https://lingva.lunar.icu',
@@ -67,11 +70,12 @@ function looksLikeError(text: string): boolean {
 async function tryMyMemory(
   text: string,
   sourceLang: string,
+  targetLang: string = AZ_LANG,
 ): Promise<TranslationResult | null> {
   try {
     const params = new URLSearchParams({
       q: text,
-      langpair: sourceLang + '|' + AZ_LANG,
+      langpair: sourceLang + '|' + targetLang,
     });
     const response = await withTimeout(
       fetch(MYMEMORY_ENDPOINT + '?' + params.toString()),
@@ -92,6 +96,7 @@ async function tryMyMemory(
 async function tryLibreTranslate(
   text: string,
   sourceLang: string,
+  targetLang: string = AZ_LANG,
 ): Promise<TranslationResult | null> {
   for (const instance of LIBRETRANSLATE_INSTANCES) {
     try {
@@ -102,7 +107,7 @@ async function tryLibreTranslate(
           body: JSON.stringify({
             q: text,
             source: sourceLang,
-            target: AZ_LANG,
+            target: targetLang,
             format: 'text',
           }),
         }),
@@ -125,6 +130,7 @@ async function tryLibreTranslate(
 async function tryLingva(
   text: string,
   sourceLang: string,
+  targetLang: string = AZ_LANG,
 ): Promise<TranslationResult | null> {
   for (const instance of LINGVA_INSTANCES) {
     try {
@@ -133,7 +139,7 @@ async function tryLingva(
         '/api/v1/' +
         encodeURIComponent(sourceLang) +
         '/' +
-        encodeURIComponent(AZ_LANG) +
+        encodeURIComponent(targetLang) +
         '/' +
         encodeURIComponent(text);
       const response = await withTimeout(
@@ -154,8 +160,8 @@ async function tryLingva(
 }
 
 /**
- * Verilmis sozu Azərbaycan diline tercume edir.
- * Novbeli fallback zenciri: MyMemory -> LibreTranslate -> Lingva.
+ * Verilmis sozu secilmis hedef diline tercume edir.
+ * Novbeli fallback zenciri: LibreTranslate (keyfiyyet) -> MyMemory (suretli) -> Lingva.
  */
 export async function translateToAzerbaijani(
   text: string,
@@ -164,14 +170,74 @@ export async function translateToAzerbaijani(
   const cleaned = text.trim().slice(0, MAX_QUERY_LENGTH);
   if (!cleaned) return null;
 
-  const myMemory = await tryMyMemory(cleaned, sourceLang);
-  if (myMemory) return myMemory;
-
-  const libre = await tryLibreTranslate(cleaned, sourceLang);
+  const libre = await tryLibreTranslate(cleaned, sourceLang, AZ_LANG);
   if (libre) return libre;
 
-  const lingva = await tryLingva(cleaned, sourceLang);
+  const myMemory = await tryMyMemory(cleaned, sourceLang, AZ_LANG);
+  if (myMemory) return myMemory;
+
+  const lingva = await tryLingva(cleaned, sourceLang, AZ_LANG);
   if (lingva) return lingva;
 
   return null;
+}
+
+
+// ---------------------------------------------------------------------------
+// YENI OZELLIKLER (multilang + cache)
+// Kohnə funksiyalar SİLİNMİYİB, yalniz üzərinə əlavə olunur.
+// ---------------------------------------------------------------------------
+
+import { getCachedTranslation, setCachedTranslation } from './i18n/cache';
+import { getTargetLanguage } from './i18n/settings';
+import type { LanguageCode } from './i18n/constants';
+
+// Provider sırası: LibreTranslate (Google keyfiyyəti) → MyMemory (suretli fallback)
+async function tryTranslate(
+  text: string,
+  sourceLang: string,
+  targetLang: string,
+): Promise<TranslationResult | null> {
+  const libre = await tryLibreTranslate(text, sourceLang, targetLang);
+  if (libre) return libre;
+  const myMemory = await tryMyMemory(text, sourceLang, targetLang);
+  if (myMemory) return myMemory;
+  return null;
+}
+
+/**
+ * İstifadeçinin secdiyi hedef diline tercume edir. Cache varsa onu qaytarir.
+ * İlk defe cagirilanda provider-den cekir ve AsyncStorage-ə yazir.
+ */
+export async function translateWord(
+  text: string,
+  sourceLang = 'en',
+): Promise<TranslationResult | null> {
+  const cleaned = text.trim().slice(0, MAX_QUERY_LENGTH);
+  if (!cleaned) return null;
+
+  const targetLang = await getTargetLanguage();
+
+  const cached = await getCachedTranslation<TranslationResult>(cleaned, targetLang);
+  if (cached) return cached;
+
+  const result = await tryTranslate(cleaned, sourceLang, targetLang);
+  if (result) {
+    await setCachedTranslation(cleaned, targetLang, result);
+  }
+  return result;
+}
+
+/**
+ * Birbaşa müəyyən dilə tərcümə edir (cache istifadə etmir).
+ * Gizli növ: gelecekde UI inline tercume ucun istifade oluna biler.
+ */
+export async function translateToLanguage(
+  text: string,
+  targetLang: LanguageCode,
+  sourceLang = 'en',
+): Promise<TranslationResult | null> {
+  const cleaned = text.trim().slice(0, MAX_QUERY_LENGTH);
+  if (!cleaned) return null;
+  return tryTranslate(cleaned, sourceLang, targetLang);
 }

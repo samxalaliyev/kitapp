@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -9,14 +9,13 @@ import {
 } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
-  fetchPronunciation,
+  getPronunciationCached,
   type PronunciationResult,
 } from "@/lib/pronunciation";
-import {
-  translateToAzerbaijani,
-  type TranslationResult,
-} from "@/lib/translation";
+import { translateWord, type TranslationResult } from "@/lib/translation";
+import { isWordSaved, saveWord } from "@/lib/vocabulary/store";
 
 export interface WordPopupProps {
   visible: boolean;
@@ -34,34 +33,67 @@ const SILENT_PLAYER_HTML = `<!DOCTYPE html>
 
 function buildPlayerHtml(audioUrl: string, autoplay: boolean): string {
   const safeUrl = audioUrl.replace(/"/g, "&quot;");
+  const auto = autoplay ? "true" : "false";
+
   return `<!DOCTYPE html>
 <html>
-  <head><meta charset="utf-8" /></head>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
   <body style="margin:0;padding:0;background:transparent;">
-    <audio id="player" src="${safeUrl}" preload="auto" ${autoplay ? "autoplay" : ""}></audio>
+    <audio id="player" src="${safeUrl}" preload="auto" playsinline webkit-playsinline></audio>
     <script>
-      var p = document.getElementById('player');
-      window.playAudio = function () {
+      (function() {
+        var p = document.getElementById("player");
+        var autoplayFlag = ${auto};
+        
+        function send(m) {
+          try {
+            if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+              window.ReactNativeWebView.postMessage(m);
+            }
+          } catch(e){}
+        }
+
         if (!p) return;
-        try { p.currentTime = 0; p.play(); } catch (e) {}
-      };
-      window.stopAudio = function () {
-        if (!p) return;
-        try { p.pause(); p.currentTime = 0; } catch (e) {}
-      };
-      if (p) {
-        p.addEventListener('ended', function () {
-          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-            window.ReactNativeWebView.postMessage('ended');
+
+        p.addEventListener("ended", function () { send("ended"); });
+        p.addEventListener("error", function () { send("error"); });
+        p.addEventListener("abort", function () { send("error"); });
+
+        function tryPlay() {
+          if (autoplayFlag) {
+            p.play().then(function() {
+              send("playing");
+            }).catch(function(err) {
+              setTimeout(function() {
+                p.play().catch(function() { send("error"); });
+              }, 250);
+            });
           }
-        });
-      }
+        }
+
+        if (p.readyState >= 2) {
+          tryPlay();
+        } else {
+          p.addEventListener("canplaythrough", tryPlay, { once: true });
+          p.addEventListener("loadedmetadata", tryPlay, { once: true });
+        }
+
+        setTimeout(function () {
+          if (p.paused && p.currentTime === 0) {
+            send("error");
+          }
+        }, 6000);
+      })();
     </script>
   </body>
 </html>`;
 }
 
 export function WordPopup({ visible, word, onClose }: WordPopupProps) {
+  const { targetLang } = useLanguage();
   const [pronunciation, setPronunciation] =
     useState<PronunciationResult | null>(null);
   const [translation, setTranslation] = useState<TranslationResult | null>(
@@ -69,18 +101,27 @@ export function WordPopup({ visible, word, onClose }: WordPopupProps) {
   );
   const [pronState, setPronState] = useState<LoadState>("loading");
   const [transState, setTransState] = useState<LoadState>("loading");
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+  const [audioQueue, setAudioQueue] = useState<string[]>([]);
+  const [activeAudioUrl, setActiveAudioUrl] = useState<string | null>(null);
   const [playerKey, setPlayerKey] = useState(0);
+  const [autoPlay, setAutoPlay] = useState(true);
+  const [saved, setSaved] = useState(false);
+  const [audioError, setAudioError] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const webViewRef = useRef<WebView>(null);
 
-  // Soz deyisende melumatlari yeniden cek.
   useEffect(() => {
     if (!visible || !word) {
       setPronunciation(null);
       setTranslation(null);
       setPronState("loading");
       setTransState("loading");
-      setAudioUrl(null);
+      setAudioQueue([]);
+      setActiveAudioUrl(null);
+      setSaved(false);
+      setAudioError(false);
+      setIsSpeaking(false);
       return;
     }
 
@@ -89,16 +130,28 @@ export function WordPopup({ visible, word, onClose }: WordPopupProps) {
     setTranslation(null);
     setPronState("loading");
     setTransState("loading");
-    setAudioUrl(null);
+    setAudioQueue([]);
+    setActiveAudioUrl(null);
+    setSaved(false);
+    setAudioError(false);
+    setIsSpeaking(false);
 
-    fetchPronunciation(word)
+    getPronunciationCached(word)
       .then((result) => {
         if (cancelled) return;
         if (result) {
           setPronunciation(result);
           setPronState("ready");
-          if (result.audioUrl) {
-            setAudioUrl(result.audioUrl);
+
+          const queue: string[] = [];
+          if (result.audioUrl) queue.push(result.audioUrl);
+          if (result.ttsFallbackUrls?.length) {
+            queue.push(...result.ttsFallbackUrls);
+          }
+
+          setAudioQueue(queue);
+          if (queue.length > 0) {
+            setActiveAudioUrl(queue[0]);
           }
         } else {
           setPronState("error");
@@ -108,7 +161,7 @@ export function WordPopup({ visible, word, onClose }: WordPopupProps) {
         if (!cancelled) setPronState("error");
       });
 
-    translateToAzerbaijani(word)
+    translateWord(word)
       .then((result) => {
         if (cancelled) return;
         if (result) {
@@ -122,26 +175,71 @@ export function WordPopup({ visible, word, onClose }: WordPopupProps) {
         if (!cancelled) setTransState("error");
       });
 
+    isWordSaved(word)
+      .then((alreadySaved) => {
+        if (!cancelled) setSaved(alreadySaved);
+      })
+      .catch(() => {});
+
     return () => {
       cancelled = true;
     };
   }, [visible, word]);
 
   const playAudio = useCallback(() => {
-    if (!audioUrl) return;
-    // Her defe yeni WebView yarad ki play() avtomatik islesin.
+    if (audioQueue.length === 0) return;
+    setAudioError(false);
+    setIsSpeaking(true);
+    setAutoPlay(true);
+    setActiveAudioUrl(audioQueue[0]);
     setPlayerKey((k) => k + 1);
-  }, [audioUrl]);
+  }, [audioQueue]);
 
   const handlePlayerMessage = useCallback((event: WebViewMessageEvent) => {
-    if (event.nativeEvent.data === "ended") {
-      // isPlaying state-ini izlemeye ehtiyac yoxdur, WebView oz ozune bitir.
+    const msg = event.nativeEvent.data;
+    if (msg === "playing") {
+      setIsSpeaking(true);
+    } else if (msg === "ended") {
+      setIsSpeaking(false);
+    } else if (msg === "error") {
+      setAudioQueue((currentQueue) => {
+        if (currentQueue.length <= 1) {
+          setAudioError(true);
+          setIsSpeaking(false);
+          setActiveAudioUrl(null);
+          return [];
+        }
+        const nextQueue = currentQueue.slice(1);
+        setActiveAudioUrl(nextQueue[0]);
+        setPlayerKey((k) => k + 1);
+        setAutoPlay(true);
+        return nextQueue;
+      });
     }
   }, []);
 
-  const playerHtml = audioUrl
-    ? buildPlayerHtml(audioUrl, true)
-    : SILENT_PLAYER_HTML;
+  const handleSave = useCallback(async () => {
+    if (!word) return;
+    try {
+      await saveWord({
+        word,
+        translation: translation?.translated ?? null,
+        phonetic: pronunciation?.phonetic ?? null,
+        language: targetLang,
+      });
+      setSaved(true);
+    } catch {
+      // ignore
+    }
+  }, [word, translation, pronunciation, targetLang]);
+
+  const showOnlinePlayer = activeAudioUrl !== null;
+  const playerHtml =
+    showOnlinePlayer && autoPlay && activeAudioUrl
+      ? buildPlayerHtml(activeAudioUrl, true)
+      : SILENT_PLAYER_HTML;
+
+  const targetBadge = "EN -> " + targetLang.toUpperCase();
 
   return (
     <Modal
@@ -168,31 +266,33 @@ export function WordPopup({ visible, word, onClose }: WordPopupProps) {
             </Pressable>
           </View>
 
-          {/* Pronunciation section */}
+          {/* Pronunciation Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Oxunusu</Text>
-              {pronunciation?.audioUrl ? (
-                <Pressable
-                  onPress={playAudio}
-                  style={({ pressed }) => [
-                    styles.playButton,
-                    pressed && styles.pressed,
-                  ]}
-                  hitSlop={6}
-                >
-                  <Text style={styles.playButtonText}>Dinle</Text>
-                </Pressable>
-              ) : null}
+              <Pressable
+                onPress={playAudio}
+                disabled={audioQueue.length === 0}
+                style={({ pressed }) => [
+                  styles.playButton,
+                  pressed && styles.pressed,
+                  audioQueue.length === 0 && styles.playButtonDisabled,
+                ]}
+                hitSlop={6}
+              >
+                <Text style={styles.playButtonText}>
+                  {isSpeaking ? "... Dinlənilir" : "Dinlə"}
+                </Text>
+              </Pressable>
             </View>
 
             {pronState === "loading" ? (
               <View style={styles.loadingRow}>
                 <ActivityIndicator color="#2563eb" />
-                <Text style={styles.muted}> Yuklenir...</Text>
+                <Text style={styles.muted}> Yüklənir...</Text>
               </View>
             ) : pronState === "error" || !pronunciation ? (
-              <Text style={styles.muted}>Bu soz ucun oxunu tapilmadi.</Text>
+              <Text style={styles.muted}>Bu söz üçün oxunuş tapılmadı.</Text>
             ) : (
               <View style={styles.pronBlock}>
                 {pronunciation.phonetic ? (
@@ -209,36 +309,53 @@ export function WordPopup({ visible, word, onClose }: WordPopupProps) {
                     ) : null}
                   </View>
                 ))}
+                {audioError ? (
+                  <Text style={styles.audioErrorText}>Səs oxuna bilmədi</Text>
+                ) : null}
               </View>
             )}
           </View>
 
           <View style={styles.divider} />
 
-          {/* Translation section */}
+          {/* Translation Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Ter cumesi</Text>
-              <Text style={styles.langBadge}>
-                EN {"->"} AZ{" "}
-                {translation?.provider ? "* " + translation.provider : ""}
-              </Text>
+              <Text style={styles.sectionTitle}>Tərcüməsi</Text>
+              <Text style={styles.langBadge}>{targetBadge}</Text>
             </View>
 
             {transState === "loading" ? (
               <View style={styles.loadingRow}>
                 <ActivityIndicator color="#2563eb" />
-                <Text style={styles.muted}> Tercume edilir...</Text>
+                <Text style={styles.muted}> Tərcümə edilir...</Text>
               </View>
             ) : transState === "error" || !translation ? (
-              <Text style={styles.muted}>Tercume tapilmadi.</Text>
+              <Text style={styles.muted}>Tərcümə tapılmadı.</Text>
             ) : (
               <Text style={styles.translation}>{translation.translated}</Text>
             )}
           </View>
 
-          {/* Hidden audio player */}
-          {audioUrl ? (
+          {/* Save Button */}
+          <Pressable
+            onPress={handleSave}
+            disabled={saved || !word}
+            style={({ pressed }) => [
+              styles.saveBtn,
+              saved && styles.saveBtnSaved,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text
+              style={[styles.saveBtnText, saved && styles.saveBtnTextSaved]}
+            >
+              {saved ? "Yadda saxlanıldı" : "Yadda saxla"}
+            </Text>
+          </Pressable>
+
+          {/* Invisible Audio Player WebView */}
+          {showOnlinePlayer ? (
             <View style={styles.hiddenPlayer}>
               <WebView
                 key={playerKey}
@@ -247,9 +364,10 @@ export function WordPopup({ visible, word, onClose }: WordPopupProps) {
                 source={{ html: playerHtml, baseUrl: "https://localhost" }}
                 onMessage={handlePlayerMessage}
                 mediaPlaybackRequiresUserAction={false}
-                allowsInlineMediaPlayback
-                javaScriptEnabled
-                domStorageEnabled
+                allowsInlineMediaPlayback={true}
+                javaScriptEnabled={true}
+                domStorageEnabled={true}
+                mixedContentMode="always"
                 style={styles.hiddenWebview}
               />
             </View>
@@ -321,7 +439,6 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
-
   langBadge: {
     fontSize: 11,
     color: "#94a3b8",
@@ -345,6 +462,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
   },
+  playButtonDisabled: {
+    opacity: 0.5,
+  },
   playButtonText: {
     color: "#1d4ed8",
     fontSize: 13,
@@ -356,7 +476,7 @@ const styles = StyleSheet.create({
   phonetic: {
     fontSize: 20,
     color: "#1d4ed8",
-    fontFamily: "Georgia, serif",
+    fontFamily: "Georgia",
     fontStyle: "italic",
   },
   meaningBlock: {
@@ -379,6 +499,12 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     lineHeight: 18,
   },
+  audioErrorText: {
+    fontSize: 12,
+    color: "#dc2626",
+    fontStyle: "italic",
+    marginTop: 4,
+  },
   divider: {
     height: 1,
     backgroundColor: "#e2e8f0",
@@ -390,14 +516,37 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     lineHeight: 24,
   },
+  saveBtn: {
+    backgroundColor: "#f1f5f9",
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  saveBtnSaved: {
+    backgroundColor: "#dcfce7",
+    borderColor: "#16a34a",
+  },
+  saveBtnText: {
+    color: "#0f172a",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  saveBtnTextSaved: {
+    color: "#166534",
+  },
   hiddenPlayer: {
     position: "absolute",
-    width: 0,
-    height: 0,
-    opacity: 0,
+    width: 10,
+    height: 10,
+    opacity: 0.01,
+    overflow: "hidden",
+    bottom: 0,
+    right: 0,
   },
   hiddenWebview: {
-    width: 0,
-    height: 0,
+    width: 10,
+    height: 10,
   },
 });
