@@ -286,26 +286,26 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: Colors.primary,
-    borderRadius: Radius.lg,
-    paddingVertical: 16,
+    borderRadius: 24,
+    paddingVertical: 18,
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#ffffff',
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.semibold,
+    color: '#111111',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
   },
   secondaryButton: {
     backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
-    paddingVertical: 16,
+    borderRadius: 24,
+    paddingVertical: 18,
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: Colors.border,
   },
   secondaryButtonActive: {
-    backgroundColor: Colors.progressTrack,
-    borderColor: Colors.progressFill,
+    backgroundColor: '#111111',
+    borderColor: '#111111',
   },
   secondaryButtonText: {
     color: Colors.text,
@@ -313,8 +313,8 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.medium,
   },
   secondaryButtonTextActive: {
-    color: Colors.primary,
-    fontWeight: FontWeight.semibold,
+    color: '#fccb35',
+    fontWeight: FontWeight.bold,
   },
   buttonPressed: {
     opacity: 0.85,

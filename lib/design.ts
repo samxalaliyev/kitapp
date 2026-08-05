@@ -2,29 +2,29 @@
 // Hero / card / cover rengleri burada merkezlesib.
 
 export const Colors = {
-  bg: '#f3efe9',        // isti krem
+  bg: '#fcfcfc',
   surface: '#ffffff',
   card: '#ffffff',
-  text: '#0f172a',
-  textMuted: '#6b7280',
-  textSubtle: '#94a3b8',
-  primary: '#1a1a1a',   // qara (buton)
-  accent: '#fde68a',    // sari vurgu
-  border: '#e7e2d6',
+  text: '#111111',
+  textMuted: '#a1a1a1',
+  textSubtle: '#d1d1d1',
+  primary: '#fccb35',
+  accent: '#fccb35',
+  border: '#f0f0f0',
   star: '#f59e0b',
-  starEmpty: '#d6d0c4',
+  starEmpty: '#e5e5e5',
   progressTrack: '#f1ece1',
-  progressFill: '#0f172a',
+  progressFill: '#111111',
   danger: '#dc2626',
   success: '#16a34a',
   // Tab bar
-  tabBarBg: '#ffffff',
-  tabBarActive: '#0f172a',
-  tabBarInactive: '#94a3b8',
+  tabBarBg: '#111111',
+  tabBarActive: '#fccb35',
+  tabBarInactive: '#ffffff',
   // Reader
-  readerBg: '#faf8f5',
-  readerText: '#1a1a1a',
-  readerNav: '#0f172a',
+  readerBg: '#fcfcfc',
+  readerText: '#111111',
+  readerNav: '#111111',
   readerNavDisabled: '#cbd5e1',
 };
 

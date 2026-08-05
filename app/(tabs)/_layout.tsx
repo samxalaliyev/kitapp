@@ -1,7 +1,7 @@
-﻿import { SymbolView } from 'expo-symbols';
 import { Tabs } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 
-import { Colors, FontSize } from '@/lib/design';
+import { Colors } from '@/lib/design';
 
 export default function TabLayout() {
   return (
@@ -9,17 +9,23 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: Colors.tabBarActive,
         tabBarInactiveTintColor: Colors.tabBarInactive,
+        tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: Colors.tabBarBg,
-          borderTopColor: Colors.border,
-          borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 6,
-        },
-        tabBarLabelStyle: {
-          fontSize: FontSize.xs,
-          fontWeight: '500',
+          borderTopWidth: 0,
+          position: 'absolute',
+          bottom: 24,
+          left: 24,
+          right: 24,
+          borderRadius: 40,
+          height: 68,
+          paddingBottom: 0,
+          paddingTop: 15,
+          elevation: 10,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 10,
         },
         headerShown: false,
       }}>
@@ -64,9 +70,9 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{
-                ios: 'character.book.closed.fill',
-                android: 'translate',
-                web: 'translate',
+                ios: 'heart.fill',
+                android: 'favorite',
+                web: 'favorite',
               }}
               tintColor={color}
               size={24}
