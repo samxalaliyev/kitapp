@@ -1,4 +1,4 @@
-﻿import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -9,10 +9,20 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
+import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { getLanguage } from '@/lib/i18n/constants';
 import { clearTranslationCache } from '@/lib/i18n/cache';
+import {
+  FONT_FAMILY_LABELS,
+  FONT_SIZE_LABELS,
+  getReaderSettings,
+  setFontFamily,
+  setFontSize,
+  type FontFamilyChoice,
+  type FontSizeLevel,
+} from '@/lib/reader/settings';
+import { useAppTheme, type ThemeMode } from '@/lib/theme';
 
 interface SettingRowProps {
   icon: string;
@@ -23,6 +33,7 @@ interface SettingRowProps {
 }
 
 function SettingRow({ icon, label, value, onPress, danger }: SettingRowProps) {
+  const { colors } = useAppTheme();
   return (
     <Pressable
       style={({ pressed }) => [
@@ -32,139 +43,206 @@ function SettingRow({ icon, label, value, onPress, danger }: SettingRowProps) {
       onPress={onPress}
       disabled={!onPress}
     >
-      <Text style={styles.settingIcon}>{icon}</Text>
+      <Text style={[styles.settingIcon, { color: colors.primary }]}>{icon}</Text>
       <View style={styles.settingContent}>
-        <Text style={[styles.settingLabel, danger && styles.dangerText]}>
+        <Text style={[styles.settingLabel, { color: danger ? colors.danger : colors.text }]}>
           {label}
         </Text>
-        {value ? <Text style={styles.settingValue}>{value}</Text> : null}
+        {value ? <Text style={[styles.settingValue, { color: colors.textMuted }]}>{value}</Text> : null}
       </View>
-      {onPress ? <Text style={styles.chevron}>{'>'}</Text> : null}
+      {onPress ? <Text style={[styles.chevron, { color: colors.textSubtle }]}>›</Text> : null}
     </Pressable>
   );
 }
 
 function SettingSection({ title, children }: { title: string; children: React.ReactNode }) {
+  const { colors } = useAppTheme();
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.sectionCard}>{children}</View>
+      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{title}</Text>
+      <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+        {children}
+      </View>
     </View>
   );
 }
 
+const SIZE_CYCLE: FontSizeLevel[] = ['small', 'normal', 'large', 'xlarge'];
+const FAMILY_CYCLE: FontFamilyChoice[] = ['system', 'serif', 'sans', 'mono', 'georgia'];
+
 export default function SettingsScreen() {
   const router = useRouter();
-  const { targetLang } = useLanguage();
-  const currentLang = getLanguage(targetLang);
-  const [fontSize, setFontSize] = useState<'Kicik' | 'Normal' | 'Boyuk'>('Normal');
+  const { mode, setMode, colors } = useAppTheme();
+  const { targetLang, uiLang, t } = useLanguage();
+  const currentTargetLang = getLanguage(targetLang);
+  const currentUILang = getLanguage(uiLang);
+  const [fontSize, setFontSizeState] = useState<FontSizeLevel>('normal');
+  const [fontFamily, setFontFamilyState] = useState<FontFamilyChoice>('system');
+
+  const cycleThemeMode = useCallback(() => {
+    const modes: ThemeMode[] = ['light', 'dark', 'system'];
+    const idx = modes.indexOf(mode);
+    const next = modes[(idx + 1) % modes.length];
+    if (next) setMode(next);
+  }, [mode, setMode]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getReaderSettings().then((s) => {
+      if (cancelled) return;
+      setFontSizeState(s.fontSize);
+      setFontFamilyState(s.fontFamily);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const cycleFontSize = useCallback(() => {
-    setFontSize((prev) => {
-      switch (prev) {
-        case 'Kicik':
-          return 'Normal';
-        case 'Normal':
-          return 'Boyuk';
-        case 'Boyuk':
-          return 'Kicik';
-      }
+    setFontSizeState((prev) => {
+      const idx = SIZE_CYCLE.indexOf(prev);
+      const next = SIZE_CYCLE[(idx + 1) % SIZE_CYCLE.length];
+      setFontSize(next).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  const cycleFontFamily = useCallback(() => {
+    setFontFamilyState((prev) => {
+      const idx = FAMILY_CYCLE.indexOf(prev);
+      const next = FAMILY_CYCLE[(idx + 1) % FAMILY_CYCLE.length];
+      setFontFamily(next).catch(() => {});
+      return next;
     });
   }, []);
 
   const clearCache = useCallback(() => {
     Alert.alert(
-      'Yaddasi temizle',
-      'Endirilmis kitablar ve tercume cache-i silinecek. Davam etmek isteyirsiniz?',
+      t('clear_cache'),
+      'Keş olunmuş kitab faylları və tərcümə keçləri silinəcək. Davam etmək istəyirsiniz?',
       [
-        { text: 'Legv et', style: 'cancel' },
+        { text: 'Ləğv et', style: 'cancel' },
         {
-          text: 'Temizle',
+          text: 'Təmizlə',
           style: 'destructive',
           onPress: async () => {
-            await clearTranslationCache();
-            Alert.alert('Hazirdir', 'Yaddas temizlendi.');
+            try {
+              await clearTranslationCache();
+              const { cacheDirectory } = require('expo-file-system');
+              if (cacheDirectory) {
+                const FileSystem = require('expo-file-system');
+                const files = await FileSystem.readDirectoryAsync(cacheDirectory).catch(() => []);
+                for (const file of files) {
+                  await FileSystem.deleteAsync(cacheDirectory + file, { idempotent: true }).catch(() => {});
+                }
+              }
+              Alert.alert('Hazırdır', 'Yaddaş keşi uğurla təmizləndi.');
+            } catch (err) {
+              Alert.alert('Xəta', 'Yaddaş təmizlənərkən xəta baş verdi.');
+            }
           },
         },
       ],
     );
-  }, []);
+  }, [t]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Ayarlar</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('profile_title')}</Text>
         </View>
 
-        <View style={styles.profileCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>KO</Text>
+        {/* Profile User Header */}
+        <View style={styles.profileHeader}>
+          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+            <Text style={styles.avatarText}>S</Text>
           </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>Kitab Oxucu</Text>
-            <Text style={styles.profileEmail}>Profilinizi ferdilesdirin</Text>
+          <Text style={[styles.profileName, { color: colors.text }]}>Sam</Text>
+          <Text style={[styles.profileEmail, { color: colors.textMuted }]}>sam@example.com</Text>
+        </View>
+
+        {/* Litera Stats Row */}
+        <View style={styles.statsRow}>
+          <View style={[styles.statBox, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.statNumber, { color: colors.text }]}>12</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('stat_books')}</Text>
+          </View>
+          <View style={[styles.statBox, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.statNumber, { color: colors.text }]}>324</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('stat_words')}</Text>
+          </View>
+          <View style={[styles.statBox, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.statNumber, { color: colors.text }]}>7</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('stat_streak')}</Text>
           </View>
         </View>
 
-        <SettingSection title="Oxuma Ayarlari">
+        <SettingSection title={t('section_reading_theme')}>
+          <SettingRow
+            icon="🌙"
+            label={t('theme_mode')}
+            value={mode === 'light' ? t('mode_light') : mode === 'dark' ? t('mode_dark') : t('mode_system')}
+            onPress={cycleThemeMode}
+          />
+          <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
           <SettingRow
             icon="Aa"
-            label="Srift olcusu"
-            value={fontSize}
+            label={t('font_size')}
+            value={FONT_SIZE_LABELS[fontSize]}
             onPress={cycleFontSize}
           />
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
           <SettingRow
-            icon="*"
-            label="Gece rejimi"
-            value="Avtomatik"
+            icon="Ab"
+            label={t('font_family')}
+            value={FONT_FAMILY_LABELS[fontFamily]}
+            onPress={cycleFontFamily}
           />
         </SettingSection>
 
-        <SettingSection title="Dil ve Tercume">
+        <SettingSection title={t('section_lang_trans')}>
           <SettingRow
-            icon="Az"
-            label="Tercume dili"
-            value={currentLang.nativeLabel + ' (' + currentLang.flag + ')'}
+            icon="🌐"
+            label={t('target_language')}
+            value={currentTargetLang.nativeLabel + ' (' + currentTargetLang.flag + ')'}
             onPress={() => router.push('/settings/language')}
           />
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
           <SettingRow
-            icon="..."
-            label="Tercume cache-ini temizle"
+            icon="📱"
+            label={t('ui_language')}
+            value={currentUILang.nativeLabel + ' (' + currentUILang.flag + ')'}
+            onPress={() => router.push('/settings/ui-language' as any)}
+          />
+          <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
+          <SettingRow
+            icon="🧹"
+            label={t('clear_cache')}
             onPress={clearCache}
           />
         </SettingSection>
 
-        <SettingSection title="Umumi">
+        <SettingSection title={t('section_about')}>
           <SettingRow
-            icon="..."
-            label="Bildirisler"
-            value="Aktiv"
-          />
-        </SettingSection>
-
-        <SettingSection title="Haqqinda">
-          <SettingRow
-            icon="v"
-            label="Versiya"
+            icon="ℹ️"
+            label={t('version')}
             value="1.0.0"
           />
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
           <SettingRow
-            icon="..."
-            label="Menbe"
+            icon="📚"
+            label={t('source')}
             value="Project Gutenberg"
           />
         </SettingSection>
 
-        <Text style={styles.footer}>
-          Kitab Oxu (c) 2026{'\n'}
-          Project Gutenberg kitablar ile isleyir
+        <Text style={[styles.footer, { color: colors.textSubtle }]}>
+          Litera / Kitab Oxu © 2026{'\n'}
+          Project Gutenberg kitabları ilə işləyir
         </Text>
       </ScrollView>
     </View>
@@ -174,128 +252,123 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bg,
   },
   scrollContent: {
-    paddingBottom: Spacing.xxxl,
+    paddingBottom: 120,
   },
   header: {
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xxxl,
-    paddingBottom: Spacing.lg,
+    paddingBottom: Spacing.md,
   },
   title: {
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
-    color: Colors.text,
   },
-  profileCard: {
-    flexDirection: 'row',
+  profileHeader: {
     alignItems: 'center',
-    backgroundColor: Colors.card,
-    marginHorizontal: Spacing.xl,
-    borderRadius: Radius.xl,
-    padding: Spacing.lg,
-    gap: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: Spacing.xxl,
+    marginBottom: Spacing.xl,
   },
   avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: Colors.primary,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: Spacing.xs,
   },
   avatarText: {
-    color: '#ffffff',
-    fontSize: FontSize.lg,
+    fontSize: 28,
     fontWeight: FontWeight.bold,
-  },
-  profileInfo: {
-    flex: 1,
+    color: '#ffffff',
   },
   profileName: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.semibold,
-    color: Colors.text,
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
   },
   profileEmail: {
     fontSize: FontSize.sm,
-    color: Colors.textMuted,
     marginTop: 2,
   },
+  statsRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.xl,
+  },
+  statBox: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xs,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+  },
+  statLabel: {
+    fontSize: 10,
+    fontWeight: FontWeight.semibold,
+    marginTop: 2,
+    textTransform: 'uppercase',
+  },
   section: {
-    marginBottom: Spacing.xxl,
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.xl,
   },
   sectionTitle: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-    color: Colors.textMuted,
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.sm,
+    letterSpacing: 0.8,
+    marginBottom: Spacing.xs,
+    paddingLeft: Spacing.xs,
   },
   sectionCard: {
-    backgroundColor: Colors.card,
-    marginHorizontal: Spacing.xl,
     borderRadius: Radius.xl,
     borderWidth: 1,
-    borderColor: Colors.border,
     overflow: 'hidden',
   },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.lg,
+    padding: Spacing.md,
     gap: Spacing.md,
   },
   pressed: {
-    backgroundColor: Colors.progressTrack,
+    opacity: 0.7,
   },
   settingIcon: {
-    fontSize: 16,
-    width: 28,
+    fontSize: 18,
+    width: 24,
     textAlign: 'center',
-    fontWeight: FontWeight.bold,
-    color: Colors.textMuted,
   },
   settingContent: {
     flex: 1,
   },
   settingLabel: {
     fontSize: FontSize.md,
-    fontWeight: FontWeight.medium,
-    color: Colors.text,
+    fontWeight: FontWeight.semibold,
   },
   settingValue: {
     fontSize: FontSize.sm,
-    color: Colors.textMuted,
-    marginTop: 1,
-  },
-  dangerText: {
-    color: Colors.danger,
+    marginTop: 2,
   },
   chevron: {
-    fontSize: 22,
-    color: Colors.textSubtle,
-    fontWeight: FontWeight.medium,
+    fontSize: 20,
+    fontWeight: '300',
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.border,
-    marginLeft: 56,
+    marginLeft: Spacing.xl + Spacing.md,
   },
   footer: {
     textAlign: 'center',
     fontSize: FontSize.xs,
-    color: Colors.textSubtle,
     paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.md,
     lineHeight: 18,
-    marginTop: Spacing.lg,
   },
 });

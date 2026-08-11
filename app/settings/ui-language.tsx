@@ -6,43 +6,30 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Redirect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
-import {
-  SUPPORTED_LANGUAGES,
-  type LanguageCode,
-} from '@/lib/i18n/constants';
+import { SUPPORTED_LANGUAGES, type LanguageCode } from '@/lib/i18n/constants';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
-import { getUITranslation } from '@/lib/i18n/translations';
 import { useAppTheme } from '@/lib/theme';
 
-export default function LanguageOnboarding() {
+export default function UILanguageSettings() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
-  const { uiLang, setLanguage, completeOnboarding } = useLanguage();
-  const [selected, setSelected] = useState<LanguageCode>(uiLang ?? 'en');
+  const { uiLang, setUILang, t } = useLanguage();
   const [saving, setSaving] = useState(false);
 
-  const onContinue = async () => {
-    if (saving) return;
+  const onPick = async (code: LanguageCode) => {
+    if (saving || code === uiLang) return;
     setSaving(true);
     try {
-      // Sets BOTH target language AND interface language synchronously
-      await setLanguage(selected);
-      await completeOnboarding();
-      router.replace('/(tabs)');
+      await setUILang(code);
     } finally {
       setSaving(false);
     }
   };
-
-  const eyebrowText = getUITranslation(selected, 'welcome_header');
-  const titleText = getUITranslation(selected, 'lang_onboarding_title');
-  const subtitleText = getUITranslation(selected, 'lang_onboarding_sub');
-  const buttonText = saving ? getUITranslation(selected, 'saving_label') : getUITranslation(selected, 'continue_btn');
 
   return (
     <View
@@ -50,36 +37,48 @@ export default function LanguageOnboarding() {
         styles.root,
         {
           backgroundColor: colors.bg,
-          paddingTop: insets.top + 24,
-          paddingBottom: insets.bottom + 24,
+          paddingTop: insets.top + 8,
+          paddingBottom: insets.bottom + 16,
         },
       ]}
     >
-      <View style={styles.header}>
-        <Text style={[styles.eyebrow, { color: colors.primary }]}>{eyebrowText}</Text>
-        <Text style={[styles.title, { color: colors.text }]}>{titleText}</Text>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-          {subtitleText}
-        </Text>
+      <View style={styles.headerRow}>
+        <Pressable
+          onPress={() => router.back()}
+          style={({ pressed }) => [
+            styles.backBtn,
+            { backgroundColor: colors.surfaceBorder },
+            pressed && styles.pressed,
+          ]}
+          hitSlop={12}
+        >
+          <Text style={[styles.backIcon, { color: colors.text }]}>‹</Text>
+        </Pressable>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('ui_language')}</Text>
+        <View style={styles.backPlaceholder} />
       </View>
+
+      <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+        {t('lang_onboarding_sub')}
+      </Text>
 
       <ScrollView
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       >
         {SUPPORTED_LANGUAGES.map((lang) => {
-          const active = lang.code === selected;
+          const active = lang.code === uiLang;
           return (
             <Pressable
               key={lang.code}
-              onPress={() => setSelected(lang.code)}
+              onPress={() => onPick(lang.code)}
               style={({ pressed }) => [
                 styles.row,
                 {
                   backgroundColor: active ? colors.primaryBg : colors.surface,
                   borderColor: active ? colors.primary : colors.surfaceBorder,
                 },
-                pressed && styles.rowPressed,
+                pressed && styles.pressed,
               ]}
             >
               <View style={[styles.flagBadge, { backgroundColor: colors.surfaceBorder }]}>
@@ -106,21 +105,6 @@ export default function LanguageOnboarding() {
           );
         })}
       </ScrollView>
-
-      <Pressable
-        onPress={onContinue}
-        disabled={saving}
-        style={({ pressed }) => [
-          styles.cta,
-          { backgroundColor: colors.primary },
-          pressed && styles.ctaPressed,
-          saving && styles.ctaDisabled,
-        ]}
-      >
-        <Text style={styles.ctaText}>
-          {buttonText}
-        </Text>
-      </Pressable>
     </View>
   );
 }
@@ -130,28 +114,39 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: Spacing.xl,
   },
-  header: {
-    marginBottom: Spacing.xl,
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.lg,
   },
-  eyebrow: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginBottom: Spacing.xs,
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  title: {
-    fontSize: FontSize.hero,
+  backPlaceholder: {
+    width: 40,
+    height: 40,
+  },
+  backIcon: {
+    fontSize: 26,
+    lineHeight: 28,
+  },
+  headerTitle: {
+    fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-    marginBottom: Spacing.xs,
   },
   subtitle: {
     fontSize: FontSize.sm,
     lineHeight: 20,
+    marginBottom: Spacing.xl,
   },
   list: {
     gap: Spacing.md,
-    paddingBottom: Spacing.xl,
+    paddingBottom: Spacing.xxxl,
   },
   row: {
     flexDirection: 'row',
@@ -160,9 +155,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     borderWidth: 1.5,
     gap: Spacing.md,
-  },
-  rowPressed: {
-    opacity: 0.85,
   },
   flagBadge: {
     width: 44,
@@ -198,27 +190,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: 'bold',
   },
-  cta: {
-    paddingVertical: 18,
-    borderRadius: Radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.md,
-    shadowColor: '#6366f1',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  ctaText: {
-    color: '#ffffff',
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-  },
-  ctaPressed: {
+  pressed: {
     opacity: 0.85,
-  },
-  ctaDisabled: {
-    opacity: 0.6,
   },
 });

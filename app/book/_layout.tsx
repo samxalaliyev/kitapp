@@ -1,21 +1,23 @@
-﻿import { Stack } from 'expo-router';
-
-import { Colors } from '@/lib/design';
+import { Stack } from 'expo-router';
+import { useAppTheme } from '@/lib/theme';
 
 export default function BookLayout() {
+  const { colors } = useAppTheme();
+
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: Colors.bg },
-        headerTintColor: Colors.text,
+        headerStyle: { backgroundColor: colors.bg },
+        headerTintColor: colors.text,
         headerShadowVisible: false,
+        contentStyle: { backgroundColor: colors.bg },
       }}
     >
       <Stack.Screen
         name="detail"
         options={{
           title: '',
-          headerBackTitle: 'Geri',
+          headerBackTitle: '',
         }}
       />
       <Stack.Screen

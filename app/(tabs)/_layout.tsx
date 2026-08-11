@@ -1,17 +1,21 @@
 import { Tabs } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 
-import { Colors } from '@/lib/design';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { useAppTheme } from '@/lib/theme';
 
 export default function TabLayout() {
+  const { colors } = useAppTheme();
+  const { t } = useLanguage();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.tabBarActive,
-        tabBarInactiveTintColor: Colors.tabBarInactive,
+        tabBarActiveTintColor: colors.tabBarActive,
+        tabBarInactiveTintColor: colors.tabBarInactive,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: Colors.tabBarBg,
+          backgroundColor: colors.tabBarBg,
           borderTopWidth: 0,
           position: 'absolute',
           bottom: 24,
@@ -32,7 +36,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Ana Sehife',
+          title: t('tab_home'),
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{
@@ -49,7 +53,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="library"
         options={{
-          title: 'Kitabxana',
+          title: t('tab_library'),
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{
@@ -66,7 +70,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="vocabulary"
         options={{
-          title: 'Sozlerim',
+          title: t('tab_vocabulary'),
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{
@@ -83,7 +87,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Ayarlar',
+          title: t('tab_settings'),
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{

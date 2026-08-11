@@ -1,100 +1,53 @@
-﻿import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
+import { openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
 
-import type { BookRecord, ChapterJson, ChapterRecord } from '@/types/book';
-import type { LibraryStatus, ReadingProgress } from '@/types/design';
+import type { LibraryStatus } from '@/types/design';
 
 const DB_NAME = 'kitab-oxu.db';
 
-let dbPromise: Promise<SQLiteDatabase> | null = null;
+let dbInstance: SQLiteDatabase | null = null;
 let initPromise: Promise<void> | null = null;
 
-async function getDb(): Promise<SQLiteDatabase> {
-  if (!dbPromise) {
-    dbPromise = openDatabaseAsync(DB_NAME);
+export function resetDatabaseHandle(): void {
+  dbInstance = null;
+  initPromise = null;
+}
+
+function getDb(): SQLiteDatabase {
+  if (!dbInstance) {
+    dbInstance = openDatabaseSync(DB_NAME);
   }
-  return dbPromise;
+  return dbInstance;
 }
 
 async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
   const bookColumns = await db.getAllAsync<{ name: string }>(
     'PRAGMA table_info(books)',
   );
-  const chapterColumns = await db.getAllAsync<{ name: string }>(
-    'PRAGMA table_info(chapters)',
-  );
 
   const booksNeedsMigration =
     bookColumns.length > 0 &&
-    bookColumns.some((column) => column.name === 'author');
-
-  const chaptersNeedsMigration =
-    chapterColumns.length > 0 &&
-    !chapterColumns.some((column) => column.name === 'content_json');
-
-  if (!booksNeedsMigration && !chaptersNeedsMigration) {
-    return;
-  }
-
-  // FK asılı cədvəlləri əvvəl sil.
-  await db.execAsync(`
-    DROP TABLE IF EXISTS reading_progress;
-    DROP TABLE IF EXISTS saved_books;
-    DROP TABLE IF EXISTS chapters;
-  `);
+    !bookColumns.some((column) => column.name === 'epub_file_path');
 
   if (booksNeedsMigration) {
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS books_v2 (
-        id TEXT PRIMARY KEY NOT NULL,
-        title TEXT NOT NULL,
-        is_downloaded INTEGER NOT NULL DEFAULT 0
-      );
-
-      INSERT OR IGNORE INTO books_v2 (id, title, is_downloaded)
-      SELECT id, title, is_downloaded FROM books;
-
-      DROP TABLE books;
-      ALTER TABLE books_v2 RENAME TO books;
-    `);
+    await db.execAsync('DROP TABLE IF EXISTS reading_progress');
+    await db.execAsync('DROP TABLE IF EXISTS saved_books');
+    await db.execAsync('DROP TABLE IF EXISTS chapters');
+    await db.execAsync('DROP TABLE IF EXISTS books');
   }
 }
 
 async function ensureSchema(db: SQLiteDatabase): Promise<void> {
-  await db.execAsync(`
-    CREATE TABLE IF NOT EXISTS books (
-      id TEXT PRIMARY KEY NOT NULL,
-      title TEXT NOT NULL,
-      is_downloaded INTEGER NOT NULL DEFAULT 0
-    );
+  await db.execAsync(
+    'CREATE TABLE IF NOT EXISTS books (id TEXT PRIMARY KEY NOT NULL, title TEXT NOT NULL, is_downloaded INTEGER NOT NULL DEFAULT 0, epub_file_path TEXT);'
+  );
 
-    CREATE TABLE IF NOT EXISTS chapters (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      book_id TEXT NOT NULL,
-      chapter_index INTEGER NOT NULL,
-      title TEXT NOT NULL,
-      content_json TEXT NOT NULL,
-      FOREIGN KEY (book_id) REFERENCES books(id)
-    );
+  await db.execAsync(
+    'CREATE TABLE IF NOT EXISTS saved_books (book_id TEXT PRIMARY KEY NOT NULL, status TEXT NOT NULL DEFAULT "saved", saved_at INTEGER NOT NULL);'
+  );
 
-    CREATE INDEX IF NOT EXISTS idx_chapters_book_index
-      ON chapters(book_id, chapter_index);
-
-    CREATE TABLE IF NOT EXISTS saved_books (
-      book_id TEXT PRIMARY KEY NOT NULL,
-      status TEXT NOT NULL DEFAULT 'saved',
-      saved_at INTEGER NOT NULL,
-      FOREIGN KEY (book_id) REFERENCES books(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS reading_progress (
-      book_id TEXT PRIMARY KEY NOT NULL,
-      current_chapter INTEGER NOT NULL DEFAULT 0,
-      total_chapters INTEGER NOT NULL DEFAULT 0,
-      percent INTEGER NOT NULL DEFAULT 0,
-      updated_at INTEGER NOT NULL,
-      FOREIGN KEY (book_id) REFERENCES books(id)
-    );
-  `);
+  await db.execAsync(
+    'CREATE TABLE IF NOT EXISTS reading_progress (book_id TEXT PRIMARY KEY NOT NULL, last_location TEXT NOT NULL DEFAULT "", percent INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL);'
+  );
 }
 
 export async function initDatabase(): Promise<void> {
@@ -102,12 +55,11 @@ export async function initDatabase(): Promise<void> {
 
   initPromise = (async () => {
     try {
-      const db = await getDb();
-      await db.execAsync('PRAGMA journal_mode = WAL;');
+      const db = getDb();
       await migrateDatabase(db);
       await ensureSchema(db);
     } catch (error) {
-      initPromise = null;
+      resetDatabaseHandle();
       throw error;
     }
   })();
@@ -115,118 +67,84 @@ export async function initDatabase(): Promise<void> {
   return initPromise;
 }
 
-// Her sorgudan evvel cedvellerin movcud oldugunu zemanetle.
 async function ensureReady(): Promise<SQLiteDatabase> {
   await initDatabase();
   return getDb();
+}
+
+export async function saveBook(
+  id: string,
+  title: string,
+  epubFilePath?: string,
+  isDownloaded = true,
+): Promise<void> {
+  const db = await ensureReady();
+  await db.runAsync(
+    `INSERT INTO books (id, title, is_downloaded, epub_file_path)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET title = excluded.title, is_downloaded = excluded.is_downloaded, epub_file_path = excluded.epub_file_path`,
+    [id, title, isDownloaded ? 1 : 0, epubFilePath ?? null],
+  );
 }
 
 export async function upsertBook(book: {
   id: string;
   title: string;
   isDownloaded?: boolean;
+  epubFilePath?: string;
 }): Promise<void> {
+  await saveBook(book.id, book.title, book.epubFilePath, book.isDownloaded ?? true);
+}
+
+export async function markBookDownloaded(
+  id: string,
+  epubFilePath: string,
+): Promise<void> {
   const db = await ensureReady();
   await db.runAsync(
-    `INSERT INTO books (id, title, is_downloaded)
-     VALUES (?, ?, ?)
-     ON CONFLICT(id) DO UPDATE SET
-       title = excluded.title,
-       is_downloaded = excluded.is_downloaded`,
-    [book.id, book.title, book.isDownloaded ? 1 : 0],
+    `UPDATE books SET is_downloaded = 1, epub_file_path = ? WHERE id = ?`,
+    [epubFilePath, id],
   );
 }
 
-export async function markBookDownloaded(bookId: string): Promise<void> {
-  const db = await ensureReady();
-  await db.runAsync('UPDATE books SET is_downloaded = 1 WHERE id = ?', [bookId]);
-}
-
-export async function getBook(bookId: string): Promise<BookRecord | null> {
+export async function getBook(
+  id: string,
+): Promise<{ id: string; title: string; isDownloaded: boolean; epubFilePath?: string } | null> {
   const db = await ensureReady();
   const row = await db.getFirstAsync<{
     id: string;
     title: string;
     is_downloaded: number;
-  }>('SELECT * FROM books WHERE id = ?', [bookId]);
+    epub_file_path: string | null;
+  }>('SELECT id, title, is_downloaded, epub_file_path FROM books WHERE id = ?', [id]);
 
   if (!row) return null;
-
   return {
     id: row.id,
     title: row.title,
-    isDownloaded: row.is_downloaded === 1,
+    isDownloaded: Boolean(row.is_downloaded),
+    epubFilePath: row.epub_file_path ?? undefined,
   };
 }
 
-export async function insertChapter(chapter: {
-  bookId: string;
-  index: number;
-  title: string;
-  content: ChapterJson;
-}): Promise<void> {
+export async function addSavedBook(bookId: string): Promise<void> {
   const db = await ensureReady();
   await db.runAsync(
-    'INSERT INTO chapters (book_id, chapter_index, title, content_json) VALUES (?, ?, ?, ?)',
-    [chapter.bookId, chapter.index, chapter.title, JSON.stringify(chapter.content)],
+    `INSERT INTO saved_books (book_id, status, saved_at)
+     VALUES (?, 'saved', ?)
+     ON CONFLICT(book_id) DO NOTHING`,
+    [bookId, Date.now()],
   );
 }
 
-export async function deleteChaptersForBook(bookId: string): Promise<void> {
+export async function removeSavedBook(bookId: string): Promise<void> {
   const db = await ensureReady();
-  await db.runAsync('DELETE FROM chapters WHERE book_id = ?', [bookId]);
+  await db.runAsync('DELETE FROM saved_books WHERE book_id = ?', [bookId]);
 }
 
-export async function getChapterCount(bookId: string): Promise<number> {
-  const db = await ensureReady();
-  const row = await db.getFirstAsync<{ count: number }>(
-    'SELECT COUNT(*) as count FROM chapters WHERE book_id = ?',
-    [bookId],
-  );
-  return row?.count ?? 0;
-}
+export const removeSaved = removeSavedBook;
 
-export async function getChapter(
-  bookId: string,
-  index: number,
-): Promise<ChapterRecord | null> {
-  const db = await ensureReady();
-  const row = await db.getFirstAsync<{
-    id: number;
-    book_id: string;
-    chapter_index: number;
-    title: string;
-    content_json: string;
-  }>(
-    'SELECT * FROM chapters WHERE book_id = ? AND chapter_index = ?',
-    [bookId, index],
-  );
-
-  if (!row) return null;
-
-  let content: ChapterJson;
-  try {
-    content = JSON.parse(row.content_json) as ChapterJson;
-  } catch {
-    return null;
-  }
-
-  if (!content?.content) {
-    return null;
-  }
-
-  return {
-    id: row.id,
-    bookId: row.book_id,
-    index: row.chapter_index,
-    title: row.title,
-    content,
-  };
-}
-
-// --- Library (qeyd edilmis kitablar) ---
-
-export async function setSavedStatus(
+export async function setSavedBookStatus(
   bookId: string,
   status: LibraryStatus,
 ): Promise<void> {
@@ -234,21 +152,14 @@ export async function setSavedStatus(
   await db.runAsync(
     `INSERT INTO saved_books (book_id, status, saved_at)
      VALUES (?, ?, ?)
-     ON CONFLICT(book_id) DO UPDATE SET
-       status = excluded.status,
-       saved_at = excluded.saved_at`,
+     ON CONFLICT(book_id) DO UPDATE SET status = excluded.status`,
     [bookId, status, Date.now()],
   );
 }
 
-export async function removeSaved(bookId: string): Promise<void> {
-  const db = await ensureReady();
-  await db.runAsync('DELETE FROM saved_books WHERE book_id = ?', [bookId]);
-}
+export const setSavedStatus = setSavedBookStatus;
 
-export async function getSavedStatus(
-  bookId: string,
-): Promise<LibraryStatus | null> {
+export async function getSavedBookStatus(bookId: string): Promise<LibraryStatus | null> {
   const db = await ensureReady();
   const row = await db.getFirstAsync<{ status: string }>(
     'SELECT status FROM saved_books WHERE book_id = ?',
@@ -257,81 +168,70 @@ export async function getSavedStatus(
   return (row?.status as LibraryStatus) ?? null;
 }
 
-export async function getAllSavedBooks(): Promise<Array<{ bookId: string; status: LibraryStatus; savedAt: number }>> {
+export const getSavedStatus = getSavedBookStatus;
+
+export async function getAllSavedBooks(): Promise<{ bookId: string; status: LibraryStatus }[]> {
   const db = await ensureReady();
-  const rows = await db.getAllAsync<{ book_id: string; status: string; saved_at: number }>(
-    'SELECT * FROM saved_books ORDER BY saved_at DESC',
+  const rows = await db.getAllAsync<{ book_id: string; status: string }>(
+    'SELECT book_id, status FROM saved_books ORDER BY saved_at DESC',
   );
-  return rows.map((row) => ({
-    bookId: row.book_id,
-    status: row.status as LibraryStatus,
-    savedAt: row.saved_at,
+  return rows.map((r) => ({
+    bookId: r.book_id,
+    status: r.status as LibraryStatus,
   }));
 }
 
-// --- Oxuma progressi ---
-
-export async function setReadingProgress(progress: ReadingProgress): Promise<void> {
+export async function saveReadingProgress(
+  bookIdOrObject: string | { bookId: string; lastLocation: string; percent: number; updatedAt?: number },
+  lastLocation?: string,
+  percent?: number,
+): Promise<void> {
   const db = await ensureReady();
+  let bookId = '';
+  let loc = '';
+  let pct = 0;
+
+  if (typeof bookIdOrObject === 'object') {
+    bookId = bookIdOrObject.bookId;
+    loc = bookIdOrObject.lastLocation;
+    pct = bookIdOrObject.percent;
+  } else {
+    bookId = bookIdOrObject;
+    loc = lastLocation ?? '';
+    pct = percent ?? 0;
+  }
+
   await db.runAsync(
-    `INSERT INTO reading_progress
-       (book_id, current_chapter, total_chapters, percent, updated_at)
-     VALUES (?, ?, ?, ?, ?)
-     ON CONFLICT(book_id) DO UPDATE SET
-       current_chapter = excluded.current_chapter,
-       total_chapters = excluded.total_chapters,
-       percent = excluded.percent,
-       updated_at = excluded.updated_at`,
-    [
-      progress.bookId,
-      progress.currentChapter,
-      progress.totalChapters,
-      progress.percent,
-      progress.updatedAt,
-    ],
+    `INSERT INTO reading_progress (book_id, last_location, percent, updated_at)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(book_id) DO UPDATE SET last_location = excluded.last_location, percent = excluded.percent, updated_at = excluded.updated_at`,
+    [bookId, loc, pct, Date.now()],
   );
 }
+
+export const setReadingProgress = saveReadingProgress;
 
 export async function getReadingProgress(
   bookId: string,
-): Promise<ReadingProgress | null> {
+): Promise<{ lastLocation: string; percent: number } | null> {
   const db = await ensureReady();
-  const row = await db.getFirstAsync<{
-    book_id: string;
-    current_chapter: number;
-    total_chapters: number;
-    percent: number;
-    updated_at: number;
-  }>(
-    'SELECT * FROM reading_progress WHERE book_id = ?',
+  const row = await db.getFirstAsync<{ last_location: string; percent: number }>(
+    'SELECT last_location, percent FROM reading_progress WHERE book_id = ?',
     [bookId],
   );
   if (!row) return null;
-  return {
-    bookId: row.book_id,
-    currentChapter: row.current_chapter,
-    totalChapters: row.total_chapters,
-    percent: row.percent,
-    updatedAt: row.updated_at,
-  };
+  return { lastLocation: row.last_location, percent: row.percent };
 }
 
-export async function getAllReadingProgress(): Promise<ReadingProgress[]> {
+export async function getAllReadingProgress(): Promise<{ bookId: string; lastLocation: string; percent: number; updatedAt: number }[]> {
   const db = await ensureReady();
-  const rows = await db.getAllAsync<{
-    book_id: string;
-    current_chapter: number;
-    total_chapters: number;
-    percent: number;
-    updated_at: number;
-  }>(
-    'SELECT * FROM reading_progress ORDER BY updated_at DESC',
+  const rows = await db.getAllAsync<{ book_id: string; last_location: string; percent: number; updated_at: number }>(
+    'SELECT book_id, last_location, percent, updated_at FROM reading_progress',
   );
-  return rows.map((row) => ({
-    bookId: row.book_id,
-    currentChapter: row.current_chapter,
-    totalChapters: row.total_chapters,
-    percent: row.percent,
-    updatedAt: row.updated_at,
+  return rows.map((r) => ({
+    bookId: r.book_id,
+    lastLocation: r.last_location,
+    percent: r.percent,
+    updatedAt: r.updated_at,
   }));
 }

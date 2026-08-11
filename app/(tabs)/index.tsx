@@ -12,8 +12,10 @@ import {
 import { useRouter, useFocusEffect } from 'expo-router';
 
 import { BookCard } from '@/components/BookCard';
+import { BookLoader } from '@/components/BookLoader';
 import { BookPrepareModal } from '@/components/BookPrepareModal';
 import { SectionHeader } from '@/components/SectionHeader';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { fetchBooksPage } from '@/lib/api';
 import { Colors, FontSize, FontWeight, Spacing, Radius } from '@/lib/design';
 import { isBookReady, prepareBookForReading } from '@/lib/book-service';
@@ -22,7 +24,11 @@ import type {
   BookPrepareProgress,
 } from '@/types/book';
 
+import { useAppTheme } from '@/lib/theme';
+
 type BookListItem = ApiBook & { isReady: boolean };
+
+const CATEGORIES = ['Hamısı', 'Klassiklər', 'Sevilənlər', 'Bitənlər'];
 
 const INITIAL_PROGRESS: BookPrepareProgress = {
   stage: 'downloading',
@@ -103,10 +109,18 @@ export default function HomeScreen() {
     loadBooks();
   }, [loadBooks]);
 
-  // Reader ekranindan qayitdiqda modal-i bagla.
+  // Focus qayitdiqda axtarisi sifirla ve modal-i bagla.
   useFocusEffect(
     useCallback(() => {
+      // Focus olduqda
+      setSearchQuery('');
+      setSearchActive(false);
+      setSearchResults([]);
+
       return () => {
+        setSearchQuery('');
+        setSearchActive(false);
+        setSearchResults([]);
         setOpeningBook(null);
         setProgress(null);
         setOpeningError(null);
@@ -202,42 +216,57 @@ export default function HomeScreen() {
     [refreshLocalStatus, router],
   );
 
+  const { colors } = useAppTheme();
+  const { t } = useLanguage();
+  const [selectedCategory, setSelectedCategory] = useState(t('filter_all'));
+
+  // Currently reading book (first ready book in recommended or popular)
+  const currentlyReading = recommended.find((b) => b.isReady) ?? popular.find((b) => b.isReady);
+
   // --- Loading state ---
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Kitablar yüklənir...</Text>
+      <View style={[styles.centered, { backgroundColor: colors.bg }]}>
+        <BookLoader size={80} message={t('loading')} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>{getGreeting()}</Text>
-          <Text style={styles.subtitle}>
-            Sizin üçün maraqlı kitablar seçdik.
+          <Text style={[styles.greeting, { color: colors.text }]}>{t('greeting_morning')}</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+            {t('home_subtitle')}
           </Text>
         </View>
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <TextInput
-            style={styles.searchInput}
-            placeholder="Kitab və ya müəllif axtar..."
-            placeholderTextColor={Colors.textSubtle}
+            style={[
+              styles.searchInput,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.surfaceBorder,
+                color: colors.text,
+              },
+            ]}
+            placeholder={t('search_placeholder')}
+            placeholderTextColor={colors.textSubtle}
             value={searchQuery}
             onChangeText={(text) => {
               setSearchQuery(text);
               if (text.trim() === '') {
-                 setSearchActive(false);
-                 setSearchResults([]);
+                setSearchActive(false);
+                setSearchResults([]);
               }
             }}
             onSubmitEditing={performSearch}
@@ -252,10 +281,10 @@ export default function HomeScreen() {
 
         {searchActive ? (
           isSearching ? (
-            <ActivityIndicator size="large" color={Colors.primary} style={styles.searchLoader} />
+            <ActivityIndicator size="large" color={colors.primary} style={styles.searchLoader} />
           ) : searchResults.length > 0 ? (
             <View style={styles.popularSection}>
-              <SectionHeader title="Axtarış Nəticələri" />
+              <SectionHeader title={t('search_results')} />
               {searchResults.map((item) => (
                 <View key={'search-' + item.id} style={styles.popularItem}>
                   <BookCard
@@ -272,35 +301,105 @@ export default function HomeScreen() {
               ))}
             </View>
           ) : (
-            <Text style={styles.noResultsText}>Heç nə tapılmadı</Text>
+            <Text style={[styles.noResultsText, { color: colors.textMuted }]}>No results found</Text>
           )
         ) : (
           <>
+            {/* Continue Reading Hero Card (if available) */}
+            {currentlyReading ? (
+              <View style={styles.sectionPadding}>
+                <SectionHeader title={t('continue_reading')} />
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.heroCard,
+                    { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={() => goToDetail(currentlyReading)}
+                >
+                  <BookCard
+                    id={currentlyReading.id}
+                    title={currentlyReading.title}
+                    author={currentlyReading.author}
+                    coverUrl={currentlyReading.coverUrl}
+                    downloadCount={currentlyReading.downloadCount}
+                    readingPercent={45}
+                    variant="vertical"
+                    coverSize="sm"
+                    onPress={() => goToDetail(currentlyReading)}
+                  />
+                </Pressable>
+              </View>
+            ) : null}
+
+            {/* My Library Categories Bar */}
+            <View style={styles.sectionPadding}>
+              <SectionHeader title={t('tab_library')} />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.categoryRow}
+              >
+                {[
+                  t('filter_all'),
+                  t('filter_classics'),
+                  t('filter_popular'),
+                  t('filter_finished'),
+                ].map((cat) => {
+                  const active = cat === selectedCategory;
+                  return (
+                    <Pressable
+                      key={cat}
+                      onPress={() => setSelectedCategory(cat)}
+                      style={[
+                        styles.categoryChip,
+                        {
+                          backgroundColor: active ? colors.primary : colors.surface,
+                          borderColor: active ? colors.primary : colors.surfaceBorder,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.categoryChipText,
+                          { color: active ? '#ffffff' : colors.textMuted },
+                        ]}
+                      >
+                        {cat}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
             {/* Recommended — Horizontal Carousel */}
-            <SectionHeader title="Tövsiyə Edilən" />
-            <FlatList
-              data={recommended}
-              keyExtractor={(item) => 'rec-' + item.id}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.carousel}
-              renderItem={({ item }) => (
-                <BookCard
-                  id={item.id}
-                  title={item.title}
-                  author={item.author}
-                  coverUrl={item.coverUrl}
-                  downloadCount={item.downloadCount}
-                  variant="horizontal"
-                  coverSize="md"
-                  onPress={() => goToDetail(item)}
-                />
-              )}
-            />
+            <View style={{ marginTop: Spacing.md }}>
+              <SectionHeader title={t('recommended_books')} />
+              <FlatList
+                data={recommended}
+                keyExtractor={(item) => 'rec-' + item.id}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.carousel}
+                renderItem={({ item }) => (
+                  <BookCard
+                    id={item.id}
+                    title={item.title}
+                    author={item.author}
+                    coverUrl={item.coverUrl}
+                    downloadCount={item.downloadCount}
+                    variant="horizontal"
+                    coverSize="md"
+                    onPress={() => goToDetail(item)}
+                  />
+                )}
+              />
+            </View>
 
             {/* Popular — Vertical List */}
             <View style={styles.popularSection}>
-              <SectionHeader title="Populyar Kitablar" />
+              <SectionHeader title={t('popular_books')} />
               {popular.map((item) => (
                 <View key={'pop-' + item.id} style={styles.popularItem}>
                   <BookCard
@@ -354,6 +453,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xxxl,
     paddingBottom: Spacing.md,
+  },
+  pressed: {
+    opacity: 0.85,
+  },
+  sectionPadding: {
+    paddingHorizontal: Spacing.xl,
+    marginTop: Spacing.md,
+  },
+  heroCard: {
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    padding: Spacing.xs,
+    marginTop: Spacing.xs,
+  },
+  categoryRow: {
+    gap: 8,
+    paddingVertical: Spacing.xs,
+  },
+  categoryChip: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 8,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+  },
+  categoryChipText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   greeting: {
     fontSize: FontSize.hero,

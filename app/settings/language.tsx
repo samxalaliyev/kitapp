@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -9,46 +9,57 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
+import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { SUPPORTED_LANGUAGES, type LanguageCode } from '@/lib/i18n/constants';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
-import { clearTranslationCache } from '@/lib/i18n/cache';
+import { useAppTheme } from '@/lib/theme';
 
-export default function LanguageSettings() {
+export default function TargetLanguageSettings() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { targetLang, setLanguage } = useLanguage();
+  const { colors } = useAppTheme();
+  const { targetLang, setTargetLang, t } = useLanguage();
   const [saving, setSaving] = useState(false);
 
   const onPick = async (code: LanguageCode) => {
     if (saving || code === targetLang) return;
     setSaving(true);
     try {
-      await setLanguage(code);
-      // yeni dile kohne cache uygun olmaya biler, amma oxuma progressi qorunur.
-      // isteye bagli: clearTranslationCache() burada cagrila biler,
-      // amma caching faydali oldugu ucun saxlayiriq.
+      await setTargetLang(code);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 }]}>
+    <View
+      style={[
+        styles.root,
+        {
+          backgroundColor: colors.bg,
+          paddingTop: insets.top + 8,
+          paddingBottom: insets.bottom + 16,
+        },
+      ]}
+    >
       <View style={styles.headerRow}>
         <Pressable
           onPress={() => router.back()}
-          style={({ pressed }) => [styles.backBtn, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.backBtn,
+            { backgroundColor: colors.surfaceBorder },
+            pressed && styles.pressed,
+          ]}
           hitSlop={12}
         >
-          <Text style={styles.backIcon}>{'<'}</Text>
+          <Text style={[styles.backIcon, { color: colors.text }]}>‹</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>Ter cume dili</Text>
-        <View style={styles.backBtn} />
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('target_language')}</Text>
+        <View style={styles.backPlaceholder} />
       </View>
 
-      <Text style={styles.subtitle}>
-        Sözlər üçün istifadə olunan tərcümə dilini seçin. Sonradan buradan dəyişə bilərsiniz.
+      <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+        {t('lang_onboarding_sub')}
       </Text>
 
       <ScrollView
@@ -63,21 +74,32 @@ export default function LanguageSettings() {
               onPress={() => onPick(lang.code)}
               style={({ pressed }) => [
                 styles.row,
-                active && styles.rowActive,
+                {
+                  backgroundColor: active ? colors.primaryBg : colors.surface,
+                  borderColor: active ? colors.primary : colors.surfaceBorder,
+                },
                 pressed && styles.pressed,
               ]}
             >
-              <View style={styles.flagBadge}>
+              <View style={[styles.flagBadge, { backgroundColor: colors.surfaceBorder }]}>
                 <Text style={styles.flagText}>{lang.flag}</Text>
               </View>
               <View style={styles.rowText}>
-                <Text style={[styles.rowLabel, active && styles.rowLabelActive]}>
+                <Text style={[styles.rowLabel, { color: active ? colors.primary : colors.text }]}>
                   {lang.nativeLabel}
                 </Text>
-                <Text style={styles.rowSub}>{lang.label}</Text>
+                <Text style={[styles.rowSub, { color: colors.textMuted }]}>{lang.label}</Text>
               </View>
-              <View style={[styles.check, active && styles.checkActive]}>
-                {active ? <Text style={styles.checkMark}>OK</Text> : null}
+              <View
+                style={[
+                  styles.check,
+                  {
+                    backgroundColor: active ? colors.primary : colors.surfaceBorder,
+                    borderColor: active ? colors.primary : colors.surfaceBorder,
+                  },
+                ]}
+              >
+                {active ? <Text style={styles.checkMark}>✓</Text> : null}
               </View>
             </Pressable>
           );
@@ -90,7 +112,6 @@ export default function LanguageSettings() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: Colors.bg,
     paddingHorizontal: Spacing.xl,
   },
   headerRow: {
@@ -102,94 +123,74 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 40,
     height: 40,
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.surface,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  backPlaceholder: {
+    width: 40,
+    height: 40,
+  },
   backIcon: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-    color: Colors.text,
+    fontSize: 26,
+    lineHeight: 28,
   },
   headerTitle: {
     fontSize: FontSize.lg,
-    fontWeight: FontWeight.semibold,
-    color: Colors.text,
+    fontWeight: FontWeight.bold,
   },
   subtitle: {
     fontSize: FontSize.sm,
-    color: Colors.textMuted,
-    marginBottom: Spacing.lg,
     lineHeight: 20,
+    marginBottom: Spacing.xl,
   },
   list: {
     gap: Spacing.md,
+    paddingBottom: Spacing.xxxl,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: Spacing.lg,
+    borderRadius: Radius.xl,
+    borderWidth: 1.5,
     gap: Spacing.md,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.lg,
-  },
-  rowActive: {
-    borderColor: Colors.primary,
-    backgroundColor: '#fffbeb',
-  },
-  pressed: {
-    opacity: 0.85,
   },
   flagBadge: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: '#f1ece1',
+    borderRadius: Radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   flagText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.text,
-    letterSpacing: 0.5,
+    fontSize: 22,
   },
   rowText: {
     flex: 1,
   },
   rowLabel: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.semibold,
-    color: Colors.text,
-  },
-  rowLabelActive: {
-    color: Colors.primary,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
   },
   rowSub: {
-    fontSize: FontSize.sm,
-    color: Colors.textMuted,
+    fontSize: FontSize.xs,
     marginTop: 2,
   },
   check: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
   checkMark: {
     color: '#ffffff',
-    fontSize: 10,
-    fontWeight: FontWeight.bold,
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  pressed: {
+    opacity: 0.85,
   },
 });

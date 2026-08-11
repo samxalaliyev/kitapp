@@ -1,8 +1,9 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
+import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import type { SavedWord } from '@/lib/vocabulary/db';
+import { useAppTheme } from '@/lib/theme';
 
 export interface WordCardProps {
   item: SavedWord;
@@ -10,6 +11,7 @@ export interface WordCardProps {
 }
 
 export function WordCard({ item, onDelete }: WordCardProps) {
+  const { colors } = useAppTheme();
   const [flipped, setFlipped] = useState(false);
 
   return (
@@ -18,42 +20,37 @@ export function WordCard({ item, onDelete }: WordCardProps) {
       onLongPress={onDelete ? () => onDelete(item.id) : undefined}
       style={({ pressed }) => [
         styles.card,
+        { backgroundColor: colors.cardBg, borderColor: colors.surfaceBorder },
         pressed && styles.pressed,
       ]}
     >
       <View style={styles.headerRow}>
-        <Text style={styles.langBadge}>{item.language.toUpperCase()}</Text>
-        <Text style={styles.hint}>{flipped ? 'Cevirmek ucun klikle' : 'Tercume ucun klikle'}</Text>
+        <Text style={[styles.langBadge, { backgroundColor: colors.badgeBg, color: colors.badgeText }]}>
+          {item.language.toUpperCase()}
+        </Text>
+        <Text style={[styles.hint, { color: colors.textSubtle }]}>
+          {flipped ? 'Çevirmək üçün kliklə' : 'Tərcümə üçün kliklə'}
+        </Text>
       </View>
 
-      {flipped ? (
-        <>
-          <Text style={styles.secondary}>{item.word}</Text>
-          {item.phonetic ? (
-            <Text style={styles.phonetic}>{item.phonetic}</Text>
-          ) : null}
-          <Text style={styles.translation}>
-            {item.translation ?? 'Tercume yoxdur'}
-          </Text>
-        </>
-      ) : (
-        <>
-          <Text style={styles.word}>{item.word}</Text>
-          {item.phonetic ? (
-            <Text style={styles.phonetic}>{item.phonetic}</Text>
-          ) : null}
-          <Text style={styles.translation}>
-            {item.translation ?? 'Tercume yoxdur'}
-          </Text>
-        </>
-      )}
+      <View style={styles.body}>
+        <Text style={[styles.word, { color: colors.text }]}>{item.word}</Text>
+        {item.phonetic ? (
+          <Text style={[styles.phonetic, { color: colors.primary }]}>{item.phonetic}</Text>
+        ) : null}
+        <Text style={[styles.translation, { color: colors.textMuted }]}>
+          {item.translation ?? 'Tərcümə yoxdur'}
+        </Text>
+      </View>
 
       <View style={styles.footerRow}>
-        <Text style={styles.meta}>
-          Tekrar: {item.reviewCount}
+        <Text style={[styles.meta, { color: colors.textSubtle }]}>
+          Təkrar: {item.reviewCount}
         </Text>
         {onDelete ? (
-          <Text style={styles.deleteHint}>Silmek ucun basili saxlayin</Text>
+          <Text style={[styles.deleteHint, { color: colors.textSubtle }]}>
+            Silmək üçün basılı saxlayın
+          </Text>
         ) : null}
       </View>
     </Pressable>
@@ -62,11 +59,9 @@ export function WordCard({ item, onDelete }: WordCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
     gap: Spacing.sm,
   },
   pressed: {
@@ -80,35 +75,26 @@ const styles = StyleSheet.create({
   langBadge: {
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
-    color: Colors.textMuted,
-    backgroundColor: Colors.progressTrack,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     borderRadius: Radius.sm,
   },
   hint: {
     fontSize: FontSize.xs,
-    color: Colors.textSubtle,
+  },
+  body: {
+    gap: 4,
   },
   word: {
-    fontSize: FontSize.xxl,
+    fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
-    color: Colors.text,
-  },
-  secondary: {
-    fontSize: FontSize.xxl,
-    fontWeight: FontWeight.bold,
-    color: Colors.textMuted,
-    textDecorationLine: 'line-through',
   },
   phonetic: {
-    fontSize: FontSize.md,
-    color: '#7c3aed',
-    fontStyle: 'italic',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   translation: {
-    fontSize: FontSize.lg,
-    color: Colors.text,
+    fontSize: FontSize.md,
     fontWeight: FontWeight.medium,
   },
   footerRow: {
@@ -119,10 +105,8 @@ const styles = StyleSheet.create({
   },
   meta: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
   },
   deleteHint: {
     fontSize: FontSize.xs,
-    color: Colors.danger,
   },
 });

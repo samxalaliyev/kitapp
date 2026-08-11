@@ -12,7 +12,9 @@ import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { BookCover } from '@/components/BookCover';
 import { BookPrepareModal } from '@/components/BookPrepareModal';
 import { StarRating } from '@/components/StarRating';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
+import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { useAppTheme } from '@/lib/theme';
 import { computeRating, formatRating } from '@/lib/rating';
 import { isBookReady, prepareBookForReading } from '@/lib/book-service';
 import { getSavedStatus, setSavedStatus, removeSaved } from '@/lib/db';
@@ -130,17 +132,19 @@ export default function BookDetailScreen() {
     }
   }, [bookId, savedStatus]);
 
+  const { colors } = useAppTheme();
+  const { t } = useLanguage();
   const isSaved = savedStatus !== null;
   const savedLabel = isSaved
     ? savedStatus === 'reading'
-      ? 'Oxunur'
+      ? t('reading_status')
       : savedStatus === 'finished'
-      ? 'Bitmiş'
-      : 'Kitabxanada'
-    : 'Kitabxanaya Əlavə Et';
+      ? t('finished_status')
+      : t('in_library')
+    : t('add_to_library');
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -157,14 +161,14 @@ export default function BookDetailScreen() {
         </View>
 
         {/* Basliq ve muellif */}
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.author}>{author}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+        <Text style={[styles.author, { color: colors.textMuted }]}>{author}</Text>
 
         {/* Reytinq */}
         {rating.average > 0 ? (
           <View style={styles.ratingRow}>
             <StarRating rating={rating.average} size={20} />
-            <Text style={styles.ratingText}>{formatRating(rating)}</Text>
+            <Text style={[styles.ratingText, { color: colors.textMuted }]}>{formatRating(rating)}</Text>
           </View>
         ) : null}
 
@@ -173,17 +177,18 @@ export default function BookDetailScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.primaryButton,
+              { backgroundColor: colors.primary },
               pressed && styles.buttonPressed,
             ]}
             onPress={handleStartReading}
           >
-            <Text style={styles.primaryButtonText}>📖  Oxumağa Başla</Text>
+            <Text style={styles.primaryButtonText}>{t('start_reading')}</Text>
           </Pressable>
 
           <Pressable
             style={({ pressed }) => [
               styles.secondaryButton,
-              isSaved && styles.secondaryButtonActive,
+              { backgroundColor: isSaved ? colors.surface : colors.surface, borderColor: colors.surfaceBorder },
               pressed && styles.buttonPressed,
             ]}
             onPress={toggleSaved}
@@ -192,10 +197,10 @@ export default function BookDetailScreen() {
             <Text
               style={[
                 styles.secondaryButtonText,
-                isSaved && styles.secondaryButtonTextActive,
+                { color: isSaved ? colors.primary : colors.text },
               ]}
             >
-              {isSaved ? '✓  ' : '📋  '}{savedLabel}
+              {isSaved ? '✓  ' : ''}{savedLabel}
             </Text>
           </Pressable>
         </View>
@@ -203,25 +208,25 @@ export default function BookDetailScreen() {
         {/* Ozet */}
         {summary ? (
           <View style={styles.summarySection}>
-            <Text style={styles.summaryTitle}>Xülasə</Text>
-            <Text style={styles.summaryText}>{summary}</Text>
+            <Text style={[styles.summaryTitle, { color: colors.text }]}>{t('summary')}</Text>
+            <Text style={[styles.summaryText, { color: colors.textMuted }]}>{summary}</Text>
           </View>
         ) : null}
 
         {/* Melumatlar */}
         <View style={styles.infoSection}>
-          <Text style={styles.infoTitle}>Məlumat</Text>
+          <Text style={[styles.infoTitle, { color: colors.text }]}>{t('info')}</Text>
           {downloadCount > 0 ? (
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Yüklənmə sayı</Text>
-              <Text style={styles.infoValue}>
+              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{t('downloads')}</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>
                 {downloadCount.toLocaleString()}
               </Text>
             </View>
           ) : null}
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Mənbə</Text>
-            <Text style={styles.infoValue}>Project Gutenberg</Text>
+            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Mənbə</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>Project Gutenberg</Text>
           </View>
         </View>
       </ScrollView>
@@ -240,7 +245,6 @@ export default function BookDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bg,
   },
   scrollContent: {
     paddingBottom: Spacing.xxxl,
@@ -254,14 +258,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
-    color: Colors.text,
     textAlign: 'center',
     paddingHorizontal: Spacing.xxl,
     marginBottom: Spacing.xs,
   },
   author: {
     fontSize: FontSize.md,
-    color: Colors.textMuted,
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
@@ -273,7 +275,6 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: FontSize.md,
-    color: Colors.textMuted,
     fontWeight: FontWeight.medium,
   },
 
@@ -285,35 +286,23 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xxl,
   },
   primaryButton: {
-    backgroundColor: Colors.primary,
     borderRadius: 24,
     paddingVertical: 18,
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#111111',
+    color: '#ffffff',
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },
   secondaryButton: {
-    backgroundColor: Colors.surface,
     borderRadius: 24,
     paddingVertical: 18,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: Colors.border,
-  },
-  secondaryButtonActive: {
-    backgroundColor: '#111111',
-    borderColor: '#111111',
+    borderWidth: 1,
   },
   secondaryButtonText: {
-    color: Colors.text,
     fontSize: FontSize.md,
-    fontWeight: FontWeight.medium,
-  },
-  secondaryButtonTextActive: {
-    color: '#fccb35',
     fontWeight: FontWeight.bold,
   },
   buttonPressed: {
@@ -329,12 +318,10 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
-    color: Colors.text,
     marginBottom: Spacing.md,
   },
   summaryText: {
     fontSize: FontSize.md,
-    color: Colors.textMuted,
     lineHeight: 24,
   },
 
@@ -346,7 +333,6 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
-    color: Colors.text,
     marginBottom: Spacing.md,
   },
   infoRow: {
@@ -354,15 +340,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: 'rgba(150, 150, 150, 0.15)',
   },
   infoLabel: {
     fontSize: FontSize.md,
-    color: Colors.textMuted,
   },
   infoValue: {
     fontSize: FontSize.md,
-    color: Colors.text,
     fontWeight: FontWeight.medium,
   },
 });

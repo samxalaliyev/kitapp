@@ -2,8 +2,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { BookCover, type BookCoverSize } from '@/components/BookCover';
 import { StarRating } from '@/components/StarRating';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
+import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { computeRating } from '@/lib/rating';
+import { useAppTheme } from '@/lib/theme';
 
 export type BookCardVariant = 'horizontal' | 'vertical';
 
@@ -13,7 +14,7 @@ interface BookCardProps {
   author: string;
   coverUrl?: string;
   downloadCount?: number;
-  /** Oxuma progressi (0-100). Yalniz variant='vertical' da gosterilir. */
+  /** Oxuma progressi (0-100). */
   readingPercent?: number;
   /** Kartın layoutu */
   variant?: BookCardVariant;
@@ -22,12 +23,6 @@ interface BookCardProps {
   onPress?: () => void;
 }
 
-/**
- * Standart kitab karti komponenti.
- *
- * - `horizontal` (default): Ust-ust (cover + melumat). Ana ekran ucun.
- * - `vertical`: Sol-sag (cover + melumat). Kitabxana ucun.
- */
 export function BookCard({
   title,
   author,
@@ -38,6 +33,7 @@ export function BookCard({
   coverSize,
   onPress,
 }: BookCardProps) {
+  const { colors } = useAppTheme();
   const rating = computeRating(downloadCount);
   const effectiveCoverSize = coverSize ?? (variant === 'horizontal' ? 'md' : 'sm');
 
@@ -46,6 +42,7 @@ export function BookCard({
       <Pressable
         style={({ pressed }) => [
           styles.verticalCard,
+          { backgroundColor: colors.cardBg, borderColor: colors.surfaceBorder },
           pressed && styles.pressed,
         ]}
         onPress={onPress}
@@ -57,26 +54,31 @@ export function BookCard({
           size={effectiveCoverSize}
         />
         <View style={styles.verticalInfo}>
-          <Text style={styles.verticalTitle} numberOfLines={2}>
+          <Text style={[styles.verticalTitle, { color: colors.text }]} numberOfLines={2}>
             {title}
           </Text>
-          <Text style={styles.verticalAuthor} numberOfLines={1}>
+          <Text style={[styles.verticalAuthor, { color: colors.textMuted }]} numberOfLines={1}>
             {author}
           </Text>
           {rating.average > 0 ? (
             <StarRating rating={rating.average} size={12} showLabel />
           ) : null}
-          {readingPercent != null && readingPercent > 0 ? (
-            <View style={styles.progressContainer}>
-              <View style={styles.progressTrack}>
+          {readingPercent != null ? (
+            <View style={styles.progressRow}>
+              <View style={[styles.progressTrack, { backgroundColor: colors.surfaceBorder }]}>
                 <View
                   style={[
                     styles.progressFill,
-                    { width: `${Math.min(100, readingPercent)}%` },
+                    {
+                      width: `${Math.min(100, readingPercent)}%`,
+                      backgroundColor: colors.primary,
+                    },
                   ]}
                 />
               </View>
-              <Text style={styles.progressText}>{readingPercent}%</Text>
+              <Text style={[styles.progressText, { color: colors.textMuted }]}>
+                {readingPercent}%
+              </Text>
             </View>
           ) : null}
         </View>
@@ -84,7 +86,6 @@ export function BookCard({
     );
   }
 
-  // Horizontal variant — ana ekrandaki karuseldeki kartlar
   return (
     <Pressable
       style={({ pressed }) => [
@@ -100,10 +101,10 @@ export function BookCard({
         size={effectiveCoverSize}
       />
       <View style={styles.horizontalInfo}>
-        <Text style={styles.horizontalTitle} numberOfLines={2}>
+        <Text style={[styles.horizontalTitle, { color: colors.text }]} numberOfLines={2}>
           {title}
         </Text>
-        <Text style={styles.horizontalAuthor} numberOfLines={1}>
+        <Text style={[styles.horizontalAuthor, { color: colors.textMuted }]} numberOfLines={1}>
           {author}
         </Text>
         {rating.average > 0 ? (
@@ -130,22 +131,18 @@ const styles = StyleSheet.create({
   horizontalTitle: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Colors.text,
   },
   horizontalAuthor: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
   },
 
   // --- Vertical (list item) ---
   verticalCard: {
     flexDirection: 'row',
-    backgroundColor: Colors.card,
     borderRadius: Radius.lg,
     padding: Spacing.md,
     gap: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   verticalInfo: {
     flex: 1,
@@ -155,15 +152,13 @@ const styles = StyleSheet.create({
   verticalTitle: {
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
-    color: Colors.text,
   },
   verticalAuthor: {
     fontSize: FontSize.sm,
-    color: Colors.textMuted,
   },
 
   // --- Progress bar ---
-  progressContainer: {
+  progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
@@ -172,19 +167,16 @@ const styles = StyleSheet.create({
   progressTrack: {
     flex: 1,
     height: 4,
-    backgroundColor: Colors.progressTrack,
     borderRadius: 2,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.progressFill,
     borderRadius: 2,
   },
   progressText: {
     fontSize: FontSize.xs,
     fontWeight: FontWeight.medium,
-    color: Colors.textMuted,
     minWidth: 32,
   },
 });

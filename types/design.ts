@@ -1,4 +1,4 @@
-﻿export type BookCategory = 'recommended' | 'popular' | 'random' | 'reading';
+export type BookCategory = 'recommended' | 'popular' | 'random' | 'reading';
 
 export type LibraryStatus = 'saved' | 'reading' | 'finished';
 
@@ -9,8 +9,9 @@ export interface BookRating {
 
 export interface ReadingProgress {
   bookId: string;
-  currentChapter: number; // 0-index
-  totalChapters: number;
+  currentChapter?: number; // 0-index
+  totalChapters?: number;
+  lastLocation?: string;
   percent: number;        // 0-100
   updatedAt: number;
 }

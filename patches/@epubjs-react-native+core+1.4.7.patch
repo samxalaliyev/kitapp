@@ -1,0 +1,266 @@
+diff --git a/node_modules/@epubjs-react-native/core/lib/commonjs/template.js b/node_modules/@epubjs-react-native/core/lib/commonjs/template.js
+index 889bb46..44eaab6 100644
+--- a/node_modules/@epubjs-react-native/core/lib/commonjs/template.js
++++ b/node_modules/@epubjs-react-native/core/lib/commonjs/template.js
+@@ -152,18 +152,118 @@ var _default = exports.default = `
+             + ')'
+       }
+ 
+-      if (!enableSelection) {
+-        rendition.themes.default({
+-          'body': {
+-            '-webkit-touch-callout': 'none', /* iOS Safari */
+-            '-webkit-user-select': 'none', /* Safari */
+-            '-khtml-user-select': 'none', /* Konqueror HTML */
+-            '-moz-user-select': 'none', /* Firefox */
+-            '-ms-user-select': 'none', /* Internet Explorer/Edge */
+-            'user-select': 'none'
++      window.__isSelectionMode = false;
++      window.clearHighlights = function() {
++        try {
++          var contentsList = rendition.getContents ? rendition.getContents() : [];
++          contentsList.forEach(function(c) {
++            if (!c || !c.window || !c.window.document) return;
++            var marks = Array.from(c.window.document.querySelectorAll('mark.kitapapp-mark'));
++            marks.forEach(function(mark) {
++              var parent = mark.parentNode;
++              while (mark.firstChild) {
++                parent.insertBefore(mark.firstChild, mark);
++              }
++              parent.removeChild(mark);
++              parent.normalize();
++            });
++          });
++        } catch(e) {}
++      };
++
++      rendition.hooks.content.register(function(contents) {
++        var doc = contents.window.document;
++        if (!doc) return;
++
++        var style = doc.createElement('style');
++        style.textContent = '* { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; -webkit-tap-highlight-color: transparent !important; }';
++        (doc.head || doc.documentElement).appendChild(style);
++
++        doc.addEventListener('contextmenu', function(e) { e.preventDefault(); }, false);
++        doc.addEventListener('selectstart', function(e) { e.preventDefault(); }, false);
++
++        var startX = 0, startY = 0, startTime = 0;
++
++        doc.addEventListener('touchstart', function(e) {
++          if (e.touches && e.touches.length === 1) {
++            startX = e.touches[0].clientX;
++            startY = e.touches[0].clientY;
++            startTime = Date.now();
++          }
++        }, { passive: true });
++
++        doc.addEventListener('touchend', function(e) {
++          var elapsed = Date.now() - startTime;
++          if (elapsed > 400) return;
++
++          var touch = e.changedTouches && e.changedTouches[0];
++          if (!touch) return;
++
++          var dx = Math.abs(touch.clientX - startX);
++          var dy = Math.abs(touch.clientY - startY);
++          if (dx > 10 || dy > 10) return;
++
++          var x = touch.clientX;
++          var y = touch.clientY;
++          var word = null;
++
++          if (doc.caretRangeFromPoint) {
++            var range = doc.caretRangeFromPoint(x, y);
++            if (range && range.startContainer && range.startContainer.nodeType === 3) {
++              var textNode = range.startContainer;
++              var offset = range.startOffset;
++              var text = textNode.textContent || "";
++              var start = offset;
++              while (start > 0 && /[^\\s\\,\\.\\!\\?\\;\\:\\"\\'\\(\\)\\[\\]\\{\\}]/.test(text[start - 1])) start--;
++              var end = offset;
++              while (end < text.length && /[^\\s\\,\\.\\!\\?\\;\\:\\"\\'\\(\\)\\[\\]\\{\\}]/.test(text[end])) end++;
++              word = text.slice(start, end).replace(/^[^a-zA-Z0-9\\u00C0-\\u024F]+|[^a-zA-Z0-9\\u00C0-\\u024F]+$/g, "");
++            }
++          }
++
++          if (word && word.trim().length > 0) {
++            var cleanWord = word.trim();
++            var isHighlighted = false;
++
++            if (window.__isSelectionMode && range && range.startContainer) {
++              var parentEl = range.startContainer.parentElement;
++              if (parentEl && parentEl.classList && parentEl.classList.contains('kitapapp-mark')) {
++                var parentNode = parentEl.parentNode;
++                while (parentEl.firstChild) {
++                  parentNode.insertBefore(parentEl.firstChild, parentEl);
++                }
++                parentNode.removeChild(parentEl);
++                parentNode.normalize();
++                isHighlighted = false;
++              } else if (range.startContainer.nodeType === 3) {
++                try {
++                  var mark = doc.createElement('mark');
++                  mark.className = 'kitapapp-mark';
++                  mark.style.backgroundColor = '#fde047';
++                  mark.style.color = '#000000';
++                  mark.style.borderRadius = '3px';
++                  mark.style.padding = '0 2px';
++                  mark.style.fontWeight = 'bold';
++                  
++                  var wordRange = doc.createRange();
++                  wordRange.setStart(textNode, start);
++                  wordRange.setEnd(textNode, end);
++                  wordRange.surroundContents(mark);
++                  isHighlighted = true;
++                } catch(err) {
++                  // silent
++                }
++              }
++            }
++
++            reactNativeWebview.postMessage(JSON.stringify({
++              type: "onWordClick",
++              word: cleanWord,
++              isHighlighted: isHighlighted
++            }));
+           }
+         });
+-      }
++      });
+ 
+       book.ready
+         .then(function () {
+diff --git a/node_modules/@epubjs-react-native/core/lib/module/template.js b/node_modules/@epubjs-react-native/core/lib/module/template.js
+index dadb7a6..b03c02e 100644
+--- a/node_modules/@epubjs-react-native/core/lib/module/template.js
++++ b/node_modules/@epubjs-react-native/core/lib/module/template.js
+@@ -144,18 +144,118 @@ export default `
+             + ')'
+       }
+ 
+-      if (!enableSelection) {
+-        rendition.themes.default({
+-          'body': {
+-            '-webkit-touch-callout': 'none', /* iOS Safari */
+-            '-webkit-user-select': 'none', /* Safari */
+-            '-khtml-user-select': 'none', /* Konqueror HTML */
+-            '-moz-user-select': 'none', /* Firefox */
+-            '-ms-user-select': 'none', /* Internet Explorer/Edge */
+-            'user-select': 'none'
++      window.__isSelectionMode = false;
++      window.clearHighlights = function() {
++        try {
++          var contentsList = rendition.getContents ? rendition.getContents() : [];
++          contentsList.forEach(function(c) {
++            if (!c || !c.window || !c.window.document) return;
++            var marks = Array.from(c.window.document.querySelectorAll('mark.kitapapp-mark'));
++            marks.forEach(function(mark) {
++              var parent = mark.parentNode;
++              while (mark.firstChild) {
++                parent.insertBefore(mark.firstChild, mark);
++              }
++              parent.removeChild(mark);
++              parent.normalize();
++            });
++          });
++        } catch(e) {}
++      };
++
++      rendition.hooks.content.register(function(contents) {
++        var doc = contents.window.document;
++        if (!doc) return;
++
++        var style = doc.createElement('style');
++        style.textContent = '* { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; -webkit-tap-highlight-color: transparent !important; }';
++        (doc.head || doc.documentElement).appendChild(style);
++
++        doc.addEventListener('contextmenu', function(e) { e.preventDefault(); }, false);
++        doc.addEventListener('selectstart', function(e) { e.preventDefault(); }, false);
++
++        var startX = 0, startY = 0, startTime = 0;
++
++        doc.addEventListener('touchstart', function(e) {
++          if (e.touches && e.touches.length === 1) {
++            startX = e.touches[0].clientX;
++            startY = e.touches[0].clientY;
++            startTime = Date.now();
++          }
++        }, { passive: true });
++
++        doc.addEventListener('touchend', function(e) {
++          var elapsed = Date.now() - startTime;
++          if (elapsed > 400) return;
++
++          var touch = e.changedTouches && e.changedTouches[0];
++          if (!touch) return;
++
++          var dx = Math.abs(touch.clientX - startX);
++          var dy = Math.abs(touch.clientY - startY);
++          if (dx > 10 || dy > 10) return;
++
++          var x = touch.clientX;
++          var y = touch.clientY;
++          var word = null;
++
++          if (doc.caretRangeFromPoint) {
++            var range = doc.caretRangeFromPoint(x, y);
++            if (range && range.startContainer && range.startContainer.nodeType === 3) {
++              var textNode = range.startContainer;
++              var offset = range.startOffset;
++              var text = textNode.textContent || "";
++              var start = offset;
++              while (start > 0 && /[^\\s\\,\\.\\!\\?\\;\\:\\"\\'\\(\\)\\[\\]\\{\\}]/.test(text[start - 1])) start--;
++              var end = offset;
++              while (end < text.length && /[^\\s\\,\\.\\!\\?\\;\\:\\"\\'\\(\\)\\[\\]\\{\\}]/.test(text[end])) end++;
++              word = text.slice(start, end).replace(/^[^a-zA-Z0-9\\u00C0-\\u024F]+|[^a-zA-Z0-9\\u00C0-\\u024F]+$/g, "");
++            }
++          }
++
++          if (word && word.trim().length > 0) {
++            var cleanWord = word.trim();
++            var isHighlighted = false;
++
++            if (window.__isSelectionMode && range && range.startContainer) {
++              var parentEl = range.startContainer.parentElement;
++              if (parentEl && parentEl.classList && parentEl.classList.contains('kitapapp-mark')) {
++                var parentNode = parentEl.parentNode;
++                while (parentEl.firstChild) {
++                  parentNode.insertBefore(parentEl.firstChild, parentEl);
++                }
++                parentNode.removeChild(parentEl);
++                parentNode.normalize();
++                isHighlighted = false;
++              } else if (range.startContainer.nodeType === 3) {
++                try {
++                  var mark = doc.createElement('mark');
++                  mark.className = 'kitapapp-mark';
++                  mark.style.backgroundColor = '#fde047';
++                  mark.style.color = '#000000';
++                  mark.style.borderRadius = '3px';
++                  mark.style.padding = '0 2px';
++                  mark.style.fontWeight = 'bold';
++                  
++                  var wordRange = doc.createRange();
++                  wordRange.setStart(textNode, start);
++                  wordRange.setEnd(textNode, end);
++                  wordRange.surroundContents(mark);
++                  isHighlighted = true;
++                } catch(err) {
++                  // silent
++                }
++              }
++            }
++
++            reactNativeWebview.postMessage(JSON.stringify({
++              type: "onWordClick",
++              word: cleanWord,
++              isHighlighted: isHighlighted
++            }));
+           }
+         });
+-      }
++      });
+ 
+       book.ready
+         .then(function () {

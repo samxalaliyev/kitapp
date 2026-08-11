@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,8 +11,11 @@ import {
 import { useRouter, useFocusEffect } from 'expo-router';
 
 import { BookCard } from '@/components/BookCard';
+import { BookLoader } from '@/components/BookLoader';
 import { SectionHeader } from '@/components/SectionHeader';
-import { Colors, FontSize, FontWeight, Spacing } from '@/lib/design';
+import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { useAppTheme } from '@/lib/theme';
 import {
   getAllSavedBooks,
   getAllReadingProgress,
@@ -175,10 +179,14 @@ export default function LibraryScreen() {
     [router],
   );
 
+  const { colors } = useAppTheme();
+  const { t } = useLanguage();
+  const [activeTab, setActiveTab] = useState<'books' | 'authors' | 'collections'>('books');
+
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <View style={[styles.centered, { backgroundColor: colors.bg }]}>
+        <BookLoader size={80} message={t('loading')} />
       </View>
     );
   }
@@ -186,24 +194,61 @@ export default function LibraryScreen() {
   const isEmpty = reading.length === 0 && saved.length === 0 && finished.length === 0;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Kitabxana</Text>
-          <Text style={styles.subtitle}>
-            Saxladığınız və oxuduğunuz kitablar
+          <Text style={[styles.title, { color: colors.text }]}>{t('library_title')}</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+            {t('library_subtitle')}
           </Text>
+
+          {/* Litera Top Tabs */}
+          <View style={[styles.tabBarRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Pressable
+              onPress={() => setActiveTab('books')}
+              style={[
+                styles.tabItem,
+                activeTab === 'books' && { backgroundColor: colors.primary },
+              ]}
+            >
+              <Text style={[styles.tabItemText, { color: activeTab === 'books' ? '#ffffff' : colors.textMuted }]}>
+                {t('sub_books')}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setActiveTab('authors')}
+              style={[
+                styles.tabItem,
+                activeTab === 'authors' && { backgroundColor: colors.primary },
+              ]}
+            >
+              <Text style={[styles.tabItemText, { color: activeTab === 'authors' ? '#ffffff' : colors.textMuted }]}>
+                {t('sub_authors')}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setActiveTab('collections')}
+              style={[
+                styles.tabItem,
+                activeTab === 'collections' && { backgroundColor: colors.primary },
+              ]}
+            >
+              <Text style={[styles.tabItemText, { color: activeTab === 'collections' ? '#ffffff' : colors.textMuted }]}>
+                {t('sub_collections')}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         {isEmpty ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>📚</Text>
-            <Text style={styles.emptyTitle}>Kitabxananız boşdur</Text>
-            <Text style={styles.emptyText}>
-              Ana səhifədən kitab seçib kitabxananıza əlavə edin
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('empty_library')}</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+              {t('empty_library_sub')}
             </Text>
           </View>
         ) : null}
@@ -283,13 +328,11 @@ export default function LibraryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bg,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.bg,
   },
   scrollContent: {
     paddingBottom: Spacing.xxxl,
@@ -297,17 +340,34 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xxxl,
-    paddingBottom: Spacing.xl,
+    paddingBottom: Spacing.md,
+    gap: Spacing.xs,
+  },
+  tabBarRow: {
+    flexDirection: 'row',
+    borderRadius: Radius.pill,
+    padding: 4,
+    borderWidth: 1,
+    marginTop: Spacing.md,
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabItemText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   title: {
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
-    color: Colors.text,
     marginBottom: Spacing.xs,
   },
   subtitle: {
     fontSize: FontSize.md,
-    color: Colors.textMuted,
   },
   listSection: {
     paddingHorizontal: Spacing.xl,
@@ -327,11 +387,9 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
-    color: Colors.text,
   },
   emptyText: {
     fontSize: FontSize.md,
-    color: Colors.textMuted,
     textAlign: 'center',
     lineHeight: 22,
   },

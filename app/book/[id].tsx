@@ -1,195 +1,219 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Reader, ReaderProvider, useReader } from "@epubjs-react-native/core";
+import { useFileSystem } from "@epubjs-react-native/expo-file-system";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
   View,
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import WebView, { type WebViewMessageEvent } from 'react-native-webview';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { QuoteStoryModal } from '@/components/QuoteStoryModal';
-import { WordPopup } from '@/components/WordPopup';
-import { getBook, getChapter, getChapterCount, setReadingProgress, setSavedStatus } from '@/lib/db';
-import { wrapChapterHtml, WORD_SELECT_MESSAGE_TYPE } from '@/lib/reader-html';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
+import { BookLoader } from "@/components/BookLoader";
+import { QuoteStoryModal } from "@/components/QuoteStoryModal";
+import { ReaderSettingsModal } from "@/components/reader/ReaderSettingsModal";
+import { WordPopup } from "@/components/WordPopup";
+import {
+  getBook,
+  getReadingProgress,
+  setReadingProgress,
+  setSavedStatus,
+} from "@/lib/db";
+import { Colors, FontSize, FontWeight, Radius, Spacing } from "@/lib/design";
+import { useAppTheme } from "@/lib/theme";
+import {
+  FONT_FAMILY_CSS,
+  FONT_SIZE_PX,
+  THEMES,
+  getReaderSettings,
+  type ReaderSettings,
+  type ThemeChoice,
+  type ThemeConfig,
+} from "@/lib/reader/settings";
 
-export default function ReaderScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+function InnerReader({
+  bookId,
+  bookTitle,
+  epubFilePath,
+  initialLocation,
+}: {
+  bookId: string;
+  bookTitle: string;
+  epubFilePath: string;
+  initialLocation?: string;
+}) {
   const router = useRouter();
-  const bookId = id ?? '';
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
 
-  const [bookTitle, setBookTitle] = useState('');
-  const [bookAuthor, setBookAuthor] = useState('');
-  const [chapterIndex, setChapterIndex] = useState(0);
-  const [chapterCount, setChapterCount] = useState(0);
-  const [chapterTitle, setChapterTitle] = useState('');
-  const [html, setHtml] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedWord, setSelectedWord] = useState<string | null>(null);
-
-  // Selection mode (story uchun soz secimi)
+  // Selection mode: sozleri ard-arda klikleyerek toplamaq uchun.
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const isSelectionModeRef = useRef(isSelectionMode);
+  useEffect(() => {
+    isSelectionModeRef.current = isSelectionMode;
+  }, [isSelectionMode]);
+
   const [selectedWords, setSelectedWords] = useState<string[]>([]);
   const [storyVisible, setStoryVisible] = useState(false);
-  const webViewRef = useRef<WebView>(null);
+  const [settingsVisible, setSettingsVisible] = useState(false);
 
-  const updateProgress = useCallback(
-    async (index: number, count: number) => {
-      if (!bookId || count <= 0) return;
-      const percent = Math.round(((index + 1) / count) * 100);
+  // Tek soz popup state.
+  const [popupWord, setPopupWord] = useState<string | null>(null);
+
+  const { goNext, goPrevious, progress, changeTheme, currentLocation, injectJavascript } =
+    useReader();
+
+  const [currentTheme, setCurrentTheme] = useState<ThemeConfig>(
+    colors.isDark ? THEMES.black : THEMES.paper
+  );
+
+  function applyReaderTheme(settings: ReaderSettings) {
+    let themeKey: ThemeChoice = settings.theme;
+    if (colors.isDark && (!themeKey || themeKey === 'paper')) {
+      themeKey = 'black';
+    }
+    const theme = THEMES[themeKey] ?? (colors.isDark ? THEMES.black : THEMES.paper);
+    setCurrentTheme(theme);
+    const fontPx = FONT_SIZE_PX[settings.fontSize];
+    const fontFamily = FONT_FAMILY_CSS[settings.fontFamily];
+
+    changeTheme({
+      html: {
+        "background-color": theme.bg + " !important",
+        "background": theme.bg + " !important",
+      },
+      body: {
+        "background-color": theme.bg + " !important",
+        "background": theme.bg + " !important",
+        "color": theme.text + " !important",
+        "font-size": fontPx + "px !important",
+        "font-family": fontFamily + " !important",
+        "line-height": String(settings.lineHeight) + " !important",
+        "letter-spacing": settings.letterSpacing + "px !important",
+        "text-align": settings.textAlign + " !important",
+        "padding": "18px 22px !important",
+        "margin": "0 !important",
+        "box-sizing": "border-box !important",
+        "-webkit-user-select": "none !important",
+        "user-select": "none !important",
+        "-webkit-touch-callout": "none !important",
+      },
+      "p, div, span, a, li, h1, h2, h3, h4, h5, h6, blockquote, em, strong, i, b": {
+        "background-color": "transparent !important",
+        "color": theme.text + " !important",
+        "font-size": fontPx + "px !important",
+        "font-family": fontFamily + " !important",
+        "line-height": String(settings.lineHeight) + " !important",
+        "letter-spacing": settings.letterSpacing + "px !important",
+        "text-align": settings.textAlign + " !important",
+      },
+      p: {
+        "margin-bottom": settings.paragraphSpacing + "px !important",
+      },
+      img: {
+        "max-width": "100% !important",
+        "height": "auto !important",
+      },
+    });
+  }
+
+  // Reader ayarlarini EPUB.js-e tetbiq et.
+  useEffect(() => {
+    let cancelled = false;
+    const apply = async () => {
+      const settings = await getReaderSettings();
+      if (cancelled) return;
+      applyReaderTheme(settings);
+    };
+    apply();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [changeTheme, colors.isDark]);
+
+  // Settings modal bağlananda hemin anki setting-ləri tetbiq et.
+  useEffect(() => {
+    if (!settingsVisible) {
+      let cancelled = false;
+      getReaderSettings().then((s) => {
+        if (!cancelled) applyReaderTheme(s);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settingsVisible]);
+
+  // Page saygaci.
+  const loc: any = currentLocation as any;
+  const totalLocations: number =
+    loc?.totalLocations ?? loc?.pages?.length ?? loc?.totalPages ?? 0;
+  const currentPage: number =
+    loc?.cfiPage ?? loc?.currentPage ?? loc?.page ?? -1;
+  const percentInt = Math.round((progress ?? 0) * 100);
+  const pageLabel =
+    totalLocations > 0 && currentPage >= 0
+      ? currentPage + 1 + " / " + totalLocations
+      : percentInt + "%";
+
+  const handleLocationChange = useCallback(
+    async (
+      _totalLocations: number,
+      currentLoc: any,
+      prog: number,
+      _section: any | null,
+    ) => {
+      if (!bookId || !currentLoc?.start?.cfi) return;
       await setReadingProgress({
         bookId,
-        currentChapter: index,
-        totalChapters: count,
-        percent,
+        lastLocation: currentLoc.start.cfi,
+        percent: Math.round(prog * 100) || 0,
         updatedAt: Date.now(),
       });
     },
     [bookId],
   );
 
-  const loadChapter = useCallback(
-    async (index: number, total: number) => {
-      if (!bookId) return;
 
-      setLoading(true);
-      setError(null);
+  const handleWebViewMessage = useCallback((event: any) => {
+    if (event?.type === "onWordClick" && event.word) {
+      const cleaned = String(event.word).trim();
+      if (!cleaned) return;
 
-      try {
-        const chapter = await getChapter(bookId, index);
-
-        if (!chapter) {
-          throw new Error('Bolme tapilmadi');
-        }
-
-        setChapterTitle(chapter.title);
-        setHtml(wrapChapterHtml(chapter.content.content, chapter.title));
-
-        // Progressi yenile
-        await updateProgress(index, total);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Bolme oxunmadi',
-        );
-        setHtml(null);
-      } finally {
-        setLoading(false);
+      if (isSelectionModeRef.current) {
+        setSelectedWords((current) => {
+          const index = current.indexOf(cleaned);
+          if (index !== -1) {
+            const updated = [...current];
+            updated.splice(index, 1);
+            return updated;
+          } else {
+            return [...current, cleaned];
+          }
+        });
+      } else {
+        setPopupWord(cleaned);
       }
-    },
-    [bookId, updateProgress],
-  );
-
-  useEffect(() => {
-    const bootstrap = async () => {
-      if (!bookId) {
-        setError('Kitab ID tapilmadi');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const bookRecord = await getBook(bookId);
-        const count = await getChapterCount(bookId);
-
-        if (!bookRecord?.isDownloaded || count === 0) {
-          throw new Error('Kitab lokalda hazir deyil. Evvelce yukleyin.');
-        }
-
-        setBookTitle(bookRecord.title);
-        setChapterCount(count);
-        await loadChapter(0, count);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Kitab acilmadi');
-        setLoading(false);
-      }
-    };
-
-    bootstrap();
-  }, [bookId, loadChapter]);
-
-  // Reader-ə daxil olan kimi status-u 'reading' olaraq isaretle
-  useEffect(() => {
-    if (bookId) {
-      setSavedStatus(bookId, 'reading').catch(() => {
-        // ignore - istifadeci hele kitabxanaya elave etmeyib
-      });
     }
-  }, [bookId]);
-
-  // Selection mode deyisende WebView icindeki JS-ə bildir
-  useEffect(() => {
-    if (!webViewRef.current) return;
-    const js = 'window.__setSelectionMode && window.__setSelectionMode(' + (isSelectionMode ? 'true' : 'false') + '); true;';
-    webViewRef.current.injectJavaScript(js);
-  }, [isSelectionMode]);
-
-  const canGoPrev = chapterIndex > 0;
-  const canGoNext = chapterIndex < chapterCount - 1;
-
-  const goPrev = async () => {
-    if (!canGoPrev) return;
-    const nextIndex = chapterIndex - 1;
-    setChapterIndex(nextIndex);
-    setSelectedWord(null);
-    await loadChapter(nextIndex, chapterCount);
-  };
-
-  const goNext = async () => {
-    if (!canGoNext) return;
-    const nextIndex = chapterIndex + 1;
-    setChapterIndex(nextIndex);
-    setSelectedWord(null);
-    await loadChapter(nextIndex, chapterCount);
-  };
+  }, []);
 
   const toggleSelectionMode = useCallback(() => {
     setIsSelectionMode((prev) => {
       const next = !prev;
+      injectJavascript(`window.__isSelectionMode = ${next}; true;`);
       if (!next) {
         setSelectedWords([]);
+        injectJavascript(`window.clearHighlights && window.clearHighlights(); true;`);
       }
       return next;
     });
-    setSelectedWord(null);
-  }, []);
-
-  const handleWebViewMessage = useCallback(
-    (event: WebViewMessageEvent) => {
-      try {
-        const data = JSON.parse(event.nativeEvent.data);
-        if (data?.type !== WORD_SELECT_MESSAGE_TYPE) return;
-        if (typeof data.word !== 'string') return;
-        const cleaned = data.word.trim();
-        if (cleaned.length < 1) return;
-
-        if (data.mode === 'select_all') {
-          // WebView artıq bütün seçilmiş sözləri sırası ilə göndərir
-          const wordsArray = cleaned.split(/\s+/).filter(Boolean);
-          setSelectedWords(wordsArray);
-        } else if (data.mode === 'select' || isSelectionMode) {
-          // Köhnə ehtiyat məntiq
-          setSelectedWords((current) => {
-            if (current[current.length - 1] === cleaned) return current;
-            return [...current, cleaned];
-          });
-        } else {
-          setSelectedWord(cleaned);
-        }
-      } catch {
-        // ignore parse errors
-      }
-    },
-    [isSelectionMode],
-  );
-
-  const closeWordPopup = useCallback(() => {
-    setSelectedWord(null);
-  }, []);
+  }, [injectJavascript]);
 
   const openStory = useCallback(() => {
     if (selectedWords.length === 0) return;
@@ -200,56 +224,89 @@ export default function ReaderScreen() {
     setStoryVisible(false);
     setSelectedWords([]);
     setIsSelectionMode(false);
+    injectJavascript(`window.__isSelectionMode = false; window.clearHighlights && window.clearHighlights(); true;`);
+  }, [injectJavascript]);
+
+  const closePopup = useCallback(() => {
+    setPopupWord(null);
   }, []);
 
-  const selectedText = selectedWords.join(' ');
+  const activeReaderTheme = currentTheme;
+  const isDarkTheme = activeReaderTheme.bg === THEMES.black.bg || activeReaderTheme.bg === THEMES.dark.bg;
+  const selectedText = selectedWords.join(" ");
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: activeReaderTheme.bg, paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
+    >
+      <StatusBar style={isDarkTheme ? "light" : "dark"} />
       {/* Header */}
-      <View style={styles.header}>
-        <Pressable
-          style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-          onPress={() => router.back()}
-          hitSlop={12}
-        >
-          <Text style={styles.iconText}>{'<'}</Text>
-        </Pressable>
-
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {bookTitle || 'Oxuma'}
-          </Text>
-          <Text style={styles.headerSubtitle} numberOfLines={1}>
-            {chapterTitle}
-          </Text>
-        </View>
-
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: activeReaderTheme.bg,
+            borderBottomColor: isDarkTheme ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+            borderBottomWidth: 1,
+          },
+        ]}
+      >
         <Pressable
           style={({ pressed }) => [
             styles.iconButton,
-            isSelectionMode && styles.iconButtonActive,
+            { backgroundColor: isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)" },
+            pressed && styles.pressed,
+          ]}
+          onPress={() => router.back()}
+          hitSlop={12}
+        >
+          <Text style={[styles.iconText, { color: activeReaderTheme.text }]}>{"‹"}</Text>
+        </Pressable>
+
+        <View style={styles.headerTitleContainer}>
+          <Text style={[styles.headerTitle, { color: activeReaderTheme.text }]} numberOfLines={1}>
+            {bookTitle || "Oxuma"}
+          </Text>
+        </View>
+
+        {/* Reader ayarlari */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.iconButton,
+            { backgroundColor: isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)" },
+            pressed && styles.pressed,
+          ]}
+          onPress={() => setSettingsVisible(true)}
+          hitSlop={12}
+        >
+          <Text style={[styles.iconText, { color: activeReaderTheme.text }]}>Aa</Text>
+        </Pressable>
+
+        {/* Selection mode toggle */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.iconButton,
+            { backgroundColor: isSelectionMode ? colors.primary : (isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)") },
             pressed && styles.pressed,
           ]}
           onPress={toggleSelectionMode}
           hitSlop={12}
         >
           <Text
-            style={[
-              styles.iconText,
-              isSelectionMode && styles.iconTextActive,
-            ]}
+            style={[styles.iconText, { color: isSelectionMode ? '#ffffff' : activeReaderTheme.text }]}
           >
-            {isSelectionMode ? 'V' : '+'}
+            {isSelectionMode ? "✓" : "+"}
           </Text>
         </Pressable>
       </View>
 
-      {/* Selection mode banner */}
       {isSelectionMode ? (
-        <View style={styles.selectionBanner}>
+        <View style={[styles.selectionBannerFloating, { top: insets.top + 52 }]}>
           <Text style={styles.selectionBannerText}>
-            Story ucun sozleri secin. Bitdikde "Story yarat" basin.
+            Sozleri klikleyerek secin. Bitdikde story acmaq ucun + basin.
           </Text>
           <Pressable onPress={toggleSelectionMode} hitSlop={6}>
             <Text style={styles.selectionCancelText}>Cix</Text>
@@ -257,67 +314,47 @@ export default function ReaderScreen() {
         </View>
       ) : null}
 
-      {/* Content */}
-      <View style={styles.content}>
-        {loading ? (
-          <View style={styles.centered}>
-            <ActivityIndicator size="large" color={Colors.primary} />
-          </View>
-        ) : error ? (
-          <View style={styles.centered}>
-            <Text style={styles.error}>{error}</Text>
-          </View>
-        ) : (
-          <WebView
-            ref={webViewRef}
-            originWhitelist={['*']}
-            source={{ html: html ?? '' }}
-            style={styles.webview}
-            showsVerticalScrollIndicator={false}
-            onMessage={handleWebViewMessage}
-            bounces={false}
-          />
-        )}
+      <View style={[styles.content, { backgroundColor: activeReaderTheme.bg }]}>
+        <Reader
+          src={epubFilePath}
+          fileSystem={useFileSystem}
+          onLocationChange={handleLocationChange}
+          onWebViewMessage={handleWebViewMessage}
+          menuItems={[]}
+          initialLocation={initialLocation}
+          enableSelection={false}
+        />
       </View>
 
-      {/* Footer */}
-      <View style={styles.footer}>
+      <View
+        style={[
+          styles.footer,
+          {
+            backgroundColor: activeReaderTheme.bg,
+            borderTopColor: isDarkTheme ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+            borderTopWidth: 1,
+          },
+        ]}
+      >
         <Pressable
-          style={({ pressed }) => [
-            styles.navButton,
-            !canGoPrev && styles.navButtonDisabled,
-            pressed && canGoPrev && styles.pressed,
-          ]}
-          disabled={!canGoPrev || loading}
-          onPress={goPrev}
+          style={({ pressed }) => [styles.navButton, pressed && styles.pressed]}
+          onPress={() => goPrevious()}
           hitSlop={16}
         >
-          <Text style={[styles.navIcon, !canGoPrev && styles.navIconDisabled]}>
-            {'<'}
-          </Text>
+          <Text style={[styles.navIcon, { color: activeReaderTheme.text }]}>{"‹"}</Text>
         </Pressable>
 
-        <Text style={styles.pageIndicator}>
-          {chapterCount > 0 ? chapterIndex + 1 : 0} / {chapterCount}
-        </Text>
+        <Text style={[styles.pageIndicator, { color: activeReaderTheme.text }]}>{pageLabel}</Text>
 
         <Pressable
-          style={({ pressed }) => [
-            styles.navButton,
-            !canGoNext && styles.navButtonDisabled,
-            pressed && canGoNext && styles.pressed,
-          ]}
-          disabled={!canGoNext || loading}
-          onPress={goNext}
+          style={({ pressed }) => [styles.navButton, pressed && styles.pressed]}
+          onPress={() => goNext()}
           hitSlop={16}
         >
-          <Text style={[styles.navIcon, !canGoNext && styles.navIconDisabled]}>
-            {'>'}
-          </Text>
+          <Text style={[styles.navIcon, { color: activeReaderTheme.text }]}>{"›"}</Text>
         </Pressable>
       </View>
 
-      {/* Floating "Create Story" button */}
       {isSelectionMode && selectedWords.length > 0 ? (
         <View style={[styles.floatingWrap, { bottom: insets.bottom + 80 }]}>
           <Pressable
@@ -328,66 +365,138 @@ export default function ReaderScreen() {
             onPress={openStory}
           >
             <Text style={styles.storyFabText}>
-              {`Story yarat - ${selectedWords.length} söz`}
+              Story yarat - {selectedWords.length} soz
             </Text>
           </Pressable>
         </View>
       ) : null}
 
       <WordPopup
-        visible={selectedWord !== null}
-        word={selectedWord}
-        onClose={closeWordPopup}
+        visible={popupWord !== null}
+        word={popupWord}
+        onClose={closePopup}
       />
 
       <QuoteStoryModal
         visible={storyVisible}
         quote={selectedText}
         bookTitle={bookTitle}
-        bookAuthor={bookAuthor}
+        bookAuthor=""
         bookId={bookId}
         onClose={closeStory}
       />
+
+      <ReaderSettingsModal
+        visible={settingsVisible}
+        onClose={() => setSettingsVisible(false)}
+      />
     </View>
+  );
+}
+
+export default function ReaderScreen() {
+  const { colors } = useAppTheme();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const bookId = id ?? "";
+
+  const [bookTitle, setBookTitle] = useState("");
+  const [epubFilePath, setEpubFilePath] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [initialLocation, setInitialLocation] = useState<string | undefined>();
+
+  useEffect(() => {
+    const bootstrap = async () => {
+      if (!bookId) {
+        setError("Kitab ID tapilmadi");
+        setLoading(false);
+        return;
+      }
+      try {
+        const bookRecord = await getBook(bookId);
+        if (!bookRecord?.isDownloaded || !bookRecord.epubFilePath) {
+          throw new Error("Kitab lokalda hazir deyil. Evvelce yukleyin.");
+        }
+
+        setBookTitle(bookRecord.title);
+        setEpubFilePath(bookRecord.epubFilePath);
+
+        const prog = await getReadingProgress(bookId);
+        if (prog?.lastLocation) {
+          setInitialLocation(prog.lastLocation);
+        }
+
+        await setSavedStatus(bookId, "reading").catch(() => {});
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Kitab acilmadi");
+      } finally {
+        setLoading(false);
+      }
+    };
+    bootstrap();
+  }, [bookId]);
+
+  if (loading) {
+    return (
+      <View style={[styles.centered, { backgroundColor: colors.bg }]}>
+        <BookLoader size={80} message={bookTitle ? `"${bookTitle}" hazırlanır...` : 'Kitab açılır...'} />
+      </View>
+    );
+  }
+
+  if (error || !epubFilePath) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.error}>{error || "EPUB yolu tapilmadi"}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ReaderProvider>
+      <InnerReader
+        bookId={bookId}
+        bookTitle={bookTitle}
+        epubFilePath={epubFilePath}
+        initialLocation={initialLocation}
+      />
+    </ReaderProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingHorizontal: 10,
     backgroundColor: Colors.readerBg,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     backgroundColor: Colors.readerBg,
+    gap: 8,
   },
   headerTitleContainer: {
     flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
+    alignItems: "center",
+    paddingHorizontal: 4,
   },
   headerTitle: {
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
     color: Colors.readerText,
   },
-  headerSubtitle: {
-    fontSize: FontSize.xs,
-    color: Colors.textMuted,
-    marginTop: 2,
-  },
   iconButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 38,
+    height: 38,
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: Colors.surface,
     borderRadius: Radius.pill,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -397,59 +506,65 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   iconText: {
-    fontSize: FontSize.lg,
+    fontSize: 18,
     fontWeight: FontWeight.bold,
     color: Colors.readerNav,
   },
   iconTextActive: {
-    color: '#ffffff',
+    color: "#ffffff",
   },
   pressed: {
     opacity: 0.7,
   },
-  selectionBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xl,
+  selectionBannerFloating: {
+    position: "absolute",
+    left: 12,
+    right: 12,
+    zIndex: 100,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
-    backgroundColor: '#fef3c7',
+    backgroundColor: "#fef3c7",
+    borderRadius: Radius.md,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
   },
   selectionBannerText: {
     flex: 1,
-    fontSize: FontSize.xs,
-    color: '#92400e',
+    fontSize: 12,
+    color: "#92400e",
     fontWeight: FontWeight.medium,
   },
   selectionCancelText: {
-    fontSize: FontSize.xs,
-    color: '#92400e',
-    fontWeight: FontWeight.semibold,
+    fontSize: 12,
+    color: "#92400e",
+    fontWeight: FontWeight.bold,
     marginLeft: Spacing.md,
   },
   content: {
     flex: 1,
     backgroundColor: Colors.readerBg,
   },
-  webview: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
   centered: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   error: {
     color: Colors.danger,
     paddingHorizontal: Spacing.xl,
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: FontSize.md,
   },
   footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: Spacing.xxl,
     paddingVertical: Spacing.lg,
     backgroundColor: Colors.readerBg,
@@ -457,19 +572,13 @@ const styles = StyleSheet.create({
   navButton: {
     width: 48,
     height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navButtonDisabled: {
-    opacity: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   navIcon: {
     fontSize: FontSize.hero,
-    fontWeight: FontWeight.regular,
+    fontWeight: "400",
     color: Colors.readerNav,
-  },
-  navIconDisabled: {
-    color: Colors.readerNavDisabled,
   },
   pageIndicator: {
     fontSize: FontSize.sm,
@@ -478,24 +587,24 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   floatingWrap: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     right: 0,
-    alignItems: 'center',
+    alignItems: "center",
   },
   storyFab: {
     backgroundColor: Colors.primary,
     paddingHorizontal: Spacing.xxl,
     paddingVertical: Spacing.md,
     borderRadius: Radius.pill,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.18,
     shadowRadius: 12,
     elevation: 6,
   },
   storyFabText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
   },

@@ -9,14 +9,19 @@ module.exports = function withAndroidQueries(config) {
       manifest.queries = [];
     }
 
-    if (!manifest.queries[0].package) {
-      manifest.queries[0].package = [];
+    let packageQuery = manifest.queries.find((q) => q && q.package);
+    if (!packageQuery) {
+      packageQuery = { package: [] };
+      manifest.queries.push(packageQuery);
     }
 
-    const packages = manifest.queries[0].package;
+    if (!packageQuery.package) {
+      packageQuery.package = [];
+    }
 
+    const packages = packageQuery.package;
     const hasInstagram = packages.some(
-      (pkg) => pkg.$['android:name'] === 'com.instagram.android'
+      (pkg) => pkg && pkg.$ && pkg.$['android:name'] === 'com.instagram.android'
     );
 
     if (!hasInstagram) {

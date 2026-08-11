@@ -1,4 +1,4 @@
-﻿export type LanguageCode = 'az' | 'tr' | 'ru' | 'es' | 'de' | 'fr';
+export type LanguageCode = 'az' | 'en' | 'tr' | 'ru' | 'es' | 'de' | 'fr';
 
 export interface LanguageOption {
   code: LanguageCode;
@@ -8,15 +8,16 @@ export interface LanguageOption {
 }
 
 export const SUPPORTED_LANGUAGES: LanguageOption[] = [
-  { code: 'az', label: 'Azerbaijani',  nativeLabel: 'Azerbaycan', flag: 'AZ' },
-  { code: 'tr', label: 'Turkish',      nativeLabel: 'Turkce',    flag: 'TR' },
-  { code: 'ru', label: 'Russian',      nativeLabel: 'Russkiy',   flag: 'RU' },
-  { code: 'es', label: 'Spanish',      nativeLabel: 'Espanol',   flag: 'ES' },
-  { code: 'de', label: 'German',       nativeLabel: 'Deutsch',   flag: 'DE' },
-  { code: 'fr', label: 'French',       nativeLabel: 'Francais',  flag: 'FR' },
+  { code: 'az', label: 'Azerbaijani', nativeLabel: 'Azərbaycan', flag: 'AZ' },
+  { code: 'en', label: 'English', nativeLabel: 'English', flag: 'US' },
+  { code: 'tr', label: 'Turkish', nativeLabel: 'Türkçe', flag: 'TR' },
+  { code: 'ru', label: 'Russian', nativeLabel: 'Русский', flag: 'RU' },
+  { code: 'es', label: 'Spanish', nativeLabel: 'Español', flag: 'ES' },
+  { code: 'de', label: 'German', nativeLabel: 'Deutsch', flag: 'DE' },
+  { code: 'fr', label: 'French', nativeLabel: 'Français', flag: 'FR' },
 ];
 
-export const DEFAULT_LANGUAGE: LanguageCode = 'az';
+export const DEFAULT_LANGUAGE: LanguageCode = 'en';
 
 export function getLanguage(code: string): LanguageOption {
   const found = SUPPORTED_LANGUAGES.find((lang) => lang.code === code);

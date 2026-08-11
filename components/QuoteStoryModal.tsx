@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
+  Linking,
   Modal,
   Pressable,
   ScrollView,
@@ -12,7 +13,9 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system/legacy';
 
+// react-native-share yalniz development build-de isleyir, Expo Go-da yox.
 let RNShare: any = null;
 let RNSocial: any = null;
 try {
@@ -20,8 +23,7 @@ try {
   RNShare = shareModule.default;
   RNSocial = shareModule.Social;
 } catch (e) {
-  // Expo Go daxilində işləyərkən RNShare tapılmayacaq və bu xəta verəcək.
-  // Catch blokuna düşdükdə proqram çökməyəcək.
+  // Platforma desteklemir, fallback istifade olunacaq.
 }
 
 export interface QuoteStoryModalProps {
@@ -61,7 +63,7 @@ const THEMES: Theme[] = [
   },
   {
     id: 'forest',
-    name: 'Meşə',
+    name: 'Mese',
     colors: ['#064e3b', '#065f46', '#10b981'],
     textColor: '#f0fdf4',
     subTextColor: 'rgba(240,253,244,0.8)',
@@ -78,10 +80,13 @@ const THEMES: Theme[] = [
 ];
 
 const STORY_ASPECT = 9 / 16;
-// Real story olcusu 1080x1920; screen genisliyine gore preview scale et
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const PREVIEW_WIDTH = Math.min(SCREEN_WIDTH * 0.78, 320);
 const PREVIEW_HEIGHT = PREVIEW_WIDTH / STORY_ASPECT;
+
+// Instagram Facebook Developer app-id sahesidir. Production build-de
+// real app-id ile deyisilmelidir.
+const INSTAGRAM_APP_ID = '123456789';
 
 export function QuoteStoryModal({
   visible,
@@ -98,45 +103,127 @@ export function QuoteStoryModal({
 
   const deepLink = 'kitapapp://book/' + bookId;
 
-  const onShare = async (type: 'instagram' | 'other') => {
-    if (!viewShotRef.current?.capture) return;
+  async function capture(): Promise<string | null> {
+    if (!viewShotRef.current?.capture) return null;
+    try {
+      return await viewShotRef.current.capture();
+    } catch (e) {
+      console.log('Capture xetasi:', e);
+      return null;
+    }
+  }
+
+  // Instagram Stories-in paylashilmasi üçün
+  // react-native-share və ya deep link fallback mexanizmindən istifadə olunur.
+  async function onInstagram() {
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {
-      const uri = await viewShotRef.current.capture();
+      const uri = await capture();
+      if (!uri) {
+        setError('Story hazirlana bilmedi');
+        return;
+      }
 
-      if (type === 'instagram') {
-        if (RNShare && RNSocial) {
-          // Birbasha Instagram Story-ye gonderirik (Native Build)
-          await RNShare.shareSingle({
-            social: RNSocial.InstagramStories,
-            appId: '123456789',
-            backgroundImage: uri,
-            backgroundBottomColor: theme.colors[0],
-            backgroundTopColor: theme.colors[2],
-          });
-        } else {
-          // Expo Go ucun fallback
-          await Sharing.shareAsync(uri, { dialogTitle: 'Sitata paylash' });
+      let fileUri = uri;
+      if (!fileUri.startsWith('file://')) {
+        fileUri = 'file://' + fileUri;
+      }
+
+      let base64Image = '';
+      try {
+        base64Image = await FileSystem.readAsStringAsync(uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+      } catch (e) {
+        console.log('Base64 read error:', e);
+      }
+
+      const base64Uri = base64Image ? `data:image/png;base64,${base64Image}` : fileUri;
+
+      if (RNShare) {
+        if (RNSocial && RNSocial.InstagramStories) {
+          try {
+            await RNShare.shareSingle({
+              social: RNSocial.InstagramStories,
+              appId: INSTAGRAM_APP_ID,
+              stickerImage: fileUri,
+              backgroundBottomColor: theme.colors[0],
+              backgroundTopColor: theme.colors[2],
+              attributionURL: deepLink,
+            });
+            return;
+          } catch (igErr: any) {
+            if (igErr?.message === 'User did not share' || igErr?.message?.includes('cancel')) return;
+            console.log('IG Stories shareSingle error:', igErr);
+          }
         }
-      } else {
-        if (RNShare) {
-          // Standart share pencereni ac (Native Build)
-          await RNShare.open({
-            url: uri,
-            title: 'Sitata paylash',
-          });
-        } else {
-          // Expo Go ucun fallback
-          await Sharing.shareAsync(uri, { dialogTitle: 'Sitata paylash' });
+
+        if (RNSocial && RNSocial.Instagram) {
+          try {
+            await RNShare.shareSingle({
+              social: RNSocial.Instagram,
+              url: fileUri,
+              type: 'image/png',
+            });
+            return;
+          } catch (igErr: any) {
+            if (igErr?.message === 'User did not share' || igErr?.message?.includes('cancel')) return;
+            console.log('IG direct shareSingle error:', igErr);
+          }
         }
       }
+
+      // System share sheet (opens Instagram, WhatsApp, Stories etc.)
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'image/png',
+        UTI: 'public.png',
+        dialogTitle: 'Instagram Stories-də paylaş',
+      });
     } catch (err: any) {
-      console.log('Share xetasi (ve ya cancel):', err);
+      if (err?.message !== 'User did not share') {
+        console.log('IG share overall error:', err);
+      }
     } finally {
       setBusy(false);
     }
-  };
+  }
+
+  async function onOtherShare() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const uri = await capture();
+      if (!uri) {
+        setError('Story hazirlana bilmedi');
+        return;
+      }
+      if (RNShare) {
+        await RNShare.open({
+          url: uri,
+          type: 'image/png',
+          filename: 'kitapapp-story.png',
+          title: 'KitapApp-den sitat',
+          message: quoteText(quote, bookTitle, bookAuthor, deepLink),
+          failOnCancel: false,
+        });
+      } else {
+        await Sharing.shareAsync(uri, {
+          mimeType: 'image/png',
+          UTI: 'public.png',
+          dialogTitle: 'Sitata paylash',
+        });
+      }
+    } catch (err: any) {
+      if (err?.message !== 'User did not share') {
+        console.log('Share xetasi:', err);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <Modal
@@ -178,18 +265,12 @@ export function QuoteStoryModal({
 
                 <View style={styles.quoteWrap}>
                   <Text
-                    style={[
-                      styles.quoteMark,
-                      { color: theme.accent, opacity: 0.5 },
-                    ]}
+                    style={[styles.quoteMark, { color: theme.accent, opacity: 0.5 }]}
                   >
                     "
                   </Text>
                   <Text
-                    style={[
-                      styles.quoteText,
-                      { color: theme.textColor },
-                    ]}
+                    style={[styles.quoteText, { color: theme.textColor }]}
                   >
                     {quote}
                   </Text>
@@ -219,10 +300,7 @@ export function QuoteStoryModal({
                     </Text>
                   </View>
                   <View
-                    style={[
-                      styles.appBadge,
-                      { borderColor: theme.accent },
-                    ]}
+                    style={[styles.appBadge, { borderColor: theme.accent }]}
                   >
                     <Text style={[styles.appBadgeText, { color: theme.accent }]}>
                       K
@@ -258,10 +336,7 @@ export function QuoteStoryModal({
                     style={styles.themeSwatch}
                   />
                   <Text
-                    style={[
-                      styles.themeName,
-                      active && styles.themeNameActive,
-                    ]}
+                    style={[styles.themeName, active && styles.themeNameActive]}
                   >
                     {item.name}
                   </Text>
@@ -274,7 +349,7 @@ export function QuoteStoryModal({
 
           <View style={styles.shareButtonsRow}>
             <Pressable
-              onPress={() => onShare('instagram')}
+              onPress={onInstagram}
               disabled={busy || !quote.trim()}
               style={({ pressed }) => [
                 styles.shareBtn,
@@ -286,12 +361,12 @@ export function QuoteStoryModal({
               {busy ? (
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
-                <Text style={styles.shareBtnTextIg}>📱 Story</Text>
+                <Text style={styles.shareBtnTextIg}>IG Story</Text>
               )}
             </Pressable>
 
             <Pressable
-              onPress={() => onShare('other')}
+              onPress={onOtherShare}
               disabled={busy || !quote.trim()}
               style={({ pressed }) => [
                 styles.shareBtn,
@@ -303,7 +378,7 @@ export function QuoteStoryModal({
               {busy ? (
                 <ActivityIndicator color="#0f172a" size="small" />
               ) : (
-                <Text style={styles.shareBtnTextOther}>🔗 Digər</Text>
+                <Text style={styles.shareBtnTextOther}>Diger</Text>
               )}
             </Pressable>
           </View>
@@ -311,6 +386,22 @@ export function QuoteStoryModal({
       </View>
     </Modal>
   );
+}
+
+function quoteText(
+  quote: string,
+  title: string,
+  author: string,
+  link: string,
+): string {
+  const parts = [
+    '"' + quote + '"',
+    title && ' - ' + title,
+    author && ' / ' + author,
+    link,
+    '\nKitapApp ile oxundu',
+  ].filter(Boolean);
+  return parts.join('\n');
 }
 
 const styles = StyleSheet.create({
@@ -467,7 +558,7 @@ const styles = StyleSheet.create({
   },
   shareButtonsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   shareBtn: {
     flex: 1,
@@ -480,9 +571,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f172a',
   },
   shareBtnOther: {
-    backgroundColor: '#f1f5f9',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    backgroundColor: '#e2e8f0',
   },
   shareBtnDisabled: {
     opacity: 0.5,
