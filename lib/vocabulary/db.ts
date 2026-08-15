@@ -140,3 +140,8 @@ export async function deleteSavedWordDb(id: number): Promise<void> {
   const db = await ensureReady();
   await db.runAsync('DELETE FROM saved_words WHERE id = ?', [id]);
 }
+
+export async function clearAllSavedWordsDb(): Promise<void> {
+  const db = await ensureReady();
+  await db.execAsync('DELETE FROM saved_words');
+}

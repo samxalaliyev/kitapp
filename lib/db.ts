@@ -235,3 +235,9 @@ export async function getAllReadingProgress(): Promise<{ bookId: string; lastLoc
     updatedAt: r.updated_at,
   }));
 }
+
+export async function clearAllUserLocalData(): Promise<void> {
+  const db = await ensureReady();
+  await db.execAsync('DELETE FROM saved_books');
+  await db.execAsync('DELETE FROM reading_progress');
+}

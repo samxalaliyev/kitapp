@@ -85,9 +85,51 @@ export type TranslationKey =
   | 'size_small'
   | 'size_normal'
   | 'size_large'
-  | 'size_xlarge';
+  | 'size_xlarge'
+  | 'premium_title'
+  | 'premium_sub'
+  | 'feature_no_ads'
+  | 'feature_unlimited_translations'
+  | 'feature_unlimited_downloads'
+  | 'feature_all_fonts_themes'
+  | 'plan_yearly'
+  | 'plan_yearly_sub'
+  | 'plan_monthly'
+  | 'plan_monthly_sub'
+  | 'discount_badge'
+  | 'per_year'
+  | 'per_month'
+  | 'current_plan'
+  | 'subscribe_now'
+  | 'connecting'
+  | 'limit_translations_title'
+  | 'limit_downloads_title'
+  | 'limit_translations_sub'
+  | 'limit_downloads_sub'
+  | 'watch_ad_translations'
+  | 'watch_ad_downloads'
+  | 'upgrade_premium_btn'
+  | 'not_now'
+  | 'ad_badge'
+  | 'premium_banner_title'
+  | 'premium_banner_sub'
+  | 'upgrade_btn'
+  | 'plan_free_badge'
+  | 'daily_translation_label'
+  | 'words_unit'
+  | 'watch_ad_words_btn'
+  | 'remove_ads_upgrade'
+  | 'cloud_sync_btn'
+  | 'syncing_btn'
+  | 'login_btn'
+  | 'logout_btn'
+  | 'sync_success_title'
+  | 'sync_success_msg'
+  | 'guest_user'
+  | 'guest_sub'
+  | 'login_register_btn';
 
-const TRANSLATIONS: Record<LanguageCode, Record<TranslationKey, string>> = {
+const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>> = {
   az: {
     tab_home: 'Ana səhifə',
     tab_library: 'Kitabxana',
@@ -174,6 +216,48 @@ const TRANSLATIONS: Record<LanguageCode, Record<TranslationKey, string>> = {
     size_normal: 'Normal (20px)',
     size_large: 'Böyük (23px)',
     size_xlarge: 'Ən Böyük (27px)',
+    premium_title: 'Litera Premium 🌟',
+    premium_sub: 'Sərhədsiz kitab oxu, sözləri anında tərcümə et və reklamları tamamilə unut!',
+    feature_no_ads: '100% Reklamsız Kəsintisiz Oxu',
+    feature_unlimited_translations: 'Sərhədsiz Anlıq Söz Tərcüməsi',
+    feature_unlimited_downloads: 'Sərhədsiz Oflayn Kitab Endirmə',
+    feature_all_fonts_themes: 'Bütün Xüsusi Şriftlər və OLED Mövzular',
+    plan_yearly: 'İllik Abunəlik',
+    plan_yearly_sub: 'Ayda cəmi $2.49 (İldə 1 dəfə ödənir)',
+    plan_monthly: 'Aylıq Abunəlik',
+    plan_monthly_sub: 'İstədiyiniz an ləğv edə bilərsiniz',
+    discount_badge: '🔥 40% QƏNAƏT',
+    per_year: '/ il',
+    per_month: '/ ay',
+    current_plan: '✓ Hazırki Planınız',
+    subscribe_now: '🌟 Qoşul və İndi Başla',
+    connecting: 'Qoşulur...',
+    limit_translations_title: 'Gündəlik Tərcümə Limiti Doldu (30/30)',
+    limit_downloads_title: 'Oflayn Kitab Endirmə Limiti Doldu (1/1)',
+    limit_translations_sub: 'Bu gün üçün 30 pulsuz söz tərcüməsi limitinizə çatdınız. Nə etmək istəyirsiniz?',
+    limit_downloads_sub: 'Pulsuz versiyada maksimum 1 oflayn kitab saxlanıla bilər. Nə etmək istəyirsiniz?',
+    watch_ad_translations: '🎥 30s Video İzlə -> +10 Söz Qazan',
+    watch_ad_downloads: '🎥 30s Video İzlə -> +1 Kitab Yüklə',
+    upgrade_premium_btn: '🌟 Premium-a Keç (Sərhədsiz + Reklamsız)',
+    not_now: 'Hələ Yox',
+    ad_badge: 'REKLAM',
+    premium_banner_title: 'Litera Premium 🌟',
+    premium_banner_sub: 'Reklamları sil və kəsintisiz oxu!',
+    upgrade_btn: 'Keçid Et',
+    plan_free_badge: 'FREE PLAN 📖',
+    daily_translation_label: 'Gündəlik Tərcümə Limiti:',
+    words_unit: 'söz',
+    watch_ad_words_btn: '🎥 Video İzlə (+10 Tərcümə Qazan)',
+    remove_ads_upgrade: '🌟 Reklamları Sil & Premium-a Keç',
+    cloud_sync_btn: '☁️ Buludla Sinxronla',
+    syncing_btn: 'Sinxronlaşır...',
+    login_btn: 'Daxil Ol',
+    logout_btn: 'Çıxış',
+    sync_success_title: 'Uğurlu Sinxronizasiya',
+    sync_success_msg: 'Bütün kitablarınız və sözləriniz buludla sinxronlaşdırıldı.',
+    guest_user: 'Qonaq İstifadəçi',
+    guest_sub: 'Hesabınıza daxil olun və kitablarınızı buludda saxlayın',
+    login_register_btn: '🔑 Daxil Ol / Qeydiyyat',
   },
   en: {
     tab_home: 'Home',
@@ -261,6 +345,48 @@ const TRANSLATIONS: Record<LanguageCode, Record<TranslationKey, string>> = {
     size_normal: 'Normal (20px)',
     size_large: 'Large (23px)',
     size_xlarge: 'Extra Large (27px)',
+    premium_title: 'Litera Premium 🌟',
+    premium_sub: 'Read unlimited books, translate words instantly, and forget ads completely!',
+    feature_no_ads: '100% Ad-Free Uninterrupted Reading',
+    feature_unlimited_translations: 'Unlimited Instant Word Translations',
+    feature_unlimited_downloads: 'Unlimited Offline Book Downloads',
+    feature_all_fonts_themes: 'All Custom Fonts & OLED Themes',
+    plan_yearly: 'Yearly Subscription',
+    plan_yearly_sub: 'Only $2.49/month (Billed annually)',
+    plan_monthly: 'Monthly Subscription',
+    plan_monthly_sub: 'Cancel anytime',
+    discount_badge: '🔥 SAVE 40%',
+    per_year: '/ year',
+    per_month: '/ month',
+    current_plan: '✓ Current Plan',
+    subscribe_now: '🌟 Subscribe & Start Now',
+    connecting: 'Connecting...',
+    limit_translations_title: 'Daily Translation Limit Reached (30/30)',
+    limit_downloads_title: 'Offline Download Limit Reached (1/1)',
+    limit_translations_sub: 'You have reached your daily free translation limit. What would you like to do?',
+    limit_downloads_sub: 'Free plan allows a maximum of 1 offline book.',
+    watch_ad_translations: '🎥 Watch 30s Video -> Get +10 Words',
+    watch_ad_downloads: '🎥 Watch 30s Video -> Download +1 Book',
+    upgrade_premium_btn: '🌟 Upgrade to Premium (Unlimited & Ad-Free)',
+    not_now: 'Not Now',
+    ad_badge: 'AD',
+    premium_banner_title: 'Litera Premium 🌟',
+    premium_banner_sub: 'Remove ads and read uninterrupted!',
+    upgrade_btn: 'Upgrade',
+    plan_free_badge: 'FREE PLAN 📖',
+    daily_translation_label: 'Daily Translation Limit:',
+    words_unit: 'words',
+    watch_ad_words_btn: '🎥 Watch Video (Get +10 Words)',
+    remove_ads_upgrade: '🌟 Remove Ads & Upgrade to Premium',
+    cloud_sync_btn: '☁️ Cloud Sync',
+    syncing_btn: 'Syncing...',
+    login_btn: 'Log In',
+    logout_btn: 'Log Out',
+    sync_success_title: 'Sync Successful',
+    sync_success_msg: 'All your books and words have been synced to the cloud.',
+    guest_user: 'Guest Reader',
+    guest_sub: 'Sign in to sync your books and vocabulary across devices',
+    login_register_btn: '🔑 Log In / Register',
   },
   ru: {
     tab_home: 'Главная',

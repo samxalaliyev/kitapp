@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 
+import { AdBannerContainer } from '@/components/AdBannerContainer';
 import { BookCard } from '@/components/BookCard';
 import { BookLoader } from '@/components/BookLoader';
 import { SectionHeader } from '@/components/SectionHeader';
@@ -66,29 +67,36 @@ export default function LibraryScreen() {
 
       await Promise.all(
         Array.from(allIds).map(async (bookId) => {
-          // Evvelce lokal DB-den bax
+          let title = 'Kitab #' + bookId;
+          let author = '';
+          let coverUrl: string | undefined;
+          let downloadCount: number | undefined;
+
+          // Evvelce lokal DB-den bakh
           const local = await getBook(bookId);
           if (local) {
-            // API-den cover ve muellif ucun cek (lightweight)
-            try {
-              const apiBook = await fetchBookById(bookId);
-              if (apiBook) {
-                bookMetaMap.set(bookId, {
-                  title: apiBook.title,
-                  author: apiBook.author,
-                  coverUrl: apiBook.coverUrl,
-                  downloadCount: apiBook.downloadCount,
-                });
-                return;
-              }
-            } catch {
-              // API olmasa lokal datani istifade et
-            }
-            bookMetaMap.set(bookId, {
-              title: local.title,
-              author: '',
-            });
+            title = local.title;
           }
+
+          // Sonra API-den detallari tamasala (lightweight)
+          try {
+            const apiBook = await fetchBookById(bookId);
+            if (apiBook) {
+              title = apiBook.title;
+              author = apiBook.author;
+              coverUrl = apiBook.coverUrl;
+              downloadCount = apiBook.downloadCount;
+            }
+          } catch {
+            // Network fallback
+          }
+
+          bookMetaMap.set(bookId, {
+            title,
+            author,
+            coverUrl,
+            downloadCount,
+          });
         }),
       );
 
@@ -252,6 +260,9 @@ export default function LibraryScreen() {
             </Text>
           </View>
         ) : null}
+
+        {/* Google Ad Banner */}
+        <AdBannerContainer />
 
         {/* Oxunur */}
         {reading.length > 0 ? (

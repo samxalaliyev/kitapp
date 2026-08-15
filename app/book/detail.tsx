@@ -16,8 +16,10 @@ import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
 import { computeRating, formatRating } from '@/lib/rating';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { isBookReady, prepareBookForReading } from '@/lib/book-service';
-import { getSavedStatus, setSavedStatus, removeSaved } from '@/lib/db';
+import { getSavedStatus, setSavedStatus, removeSaved, upsertBook } from '@/lib/db';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { BookPrepareProgress } from '@/types/book';
 import type { LibraryStatus } from '@/types/design';
 
@@ -121,16 +123,29 @@ export default function BookDetailScreen() {
     }
   }, [prepareError]);
 
+  const { user } = useAuth();
+
   const toggleSaved = useCallback(async () => {
     if (!bookId) return;
     if (savedStatus) {
       await removeSaved(bookId);
       setSavedStatusState(null);
+      if (user && isSupabaseConfigured) {
+        try {
+          await supabase.from('user_saved_books').delete().eq('user_id', user.id).eq('book_id', bookId);
+        } catch {}
+      }
     } else {
+      await upsertBook({ id: bookId, title, isDownloaded: false });
       await setSavedStatus(bookId, 'saved');
       setSavedStatusState('saved');
+      if (user && isSupabaseConfigured) {
+        try {
+          await supabase.from('user_saved_books').upsert({ user_id: user.id, book_id: bookId, status: 'saved' });
+        } catch {}
+      }
     }
-  }, [bookId, savedStatus]);
+  }, [bookId, savedStatus, title, user]);
 
   const { colors } = useAppTheme();
   const { t } = useLanguage();

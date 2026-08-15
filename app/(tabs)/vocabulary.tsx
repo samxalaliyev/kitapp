@@ -10,6 +10,7 @@ import {
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AdBannerContainer } from '@/components/AdBannerContainer';
 import { BookLoader } from '@/components/BookLoader';
 import { WordCard } from '@/components/WordCard';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
@@ -106,6 +107,9 @@ export default function VocabularyScreen() {
           <Text style={[styles.trendText, { color: colors.primary }]}>{t('this_week')}</Text>
         </View>
       </View>
+
+      {/* Google Ad Banner */}
+      <AdBannerContainer />
 
       {items.length === 0 ? (
         <View style={styles.empty}>

@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
+import { AuthProvider } from '@/lib/auth/AuthContext';
 import { LanguageProvider, useLanguage } from '@/lib/i18n/LanguageContext';
 import { ThemeProvider as AppThemeProvider } from '@/lib/theme';
 
@@ -31,7 +32,9 @@ export default function RootLayout() {
   return (
     <AppThemeProvider>
       <LanguageProvider>
-        <RootLayoutNav />
+        <AuthProvider>
+          <RootLayoutNav />
+        </AuthProvider>
       </LanguageProvider>
     </AppThemeProvider>
   );
@@ -66,6 +69,8 @@ function RootLayoutNav() {
           name="onboarding/language"
           options={{ headerShown: false, gestureEnabled: false }}
         />
+        <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)/register" options={{ headerShown: false }} />
         <Stack.Screen name="book" options={{ headerShown: false }} />
         <Stack.Screen name="settings/language" options={{ headerShown: false }} />
         <Stack.Screen name="settings/ui-language" options={{ headerShown: false }} />

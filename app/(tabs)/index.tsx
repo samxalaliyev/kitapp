@@ -11,12 +11,14 @@ import {
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 
+import { AdBannerContainer } from '@/components/AdBannerContainer';
 import { BookCard } from '@/components/BookCard';
 import { BookLoader } from '@/components/BookLoader';
 import { BookPrepareModal } from '@/components/BookPrepareModal';
 import { SectionHeader } from '@/components/SectionHeader';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
-import { fetchBooksPage } from '@/lib/api';
+import { fetchBooksPage, fetchBookById } from '@/lib/api';
+import { getAllReadingProgress, getBook } from '@/lib/db';
 import { Colors, FontSize, FontWeight, Spacing, Radius } from '@/lib/design';
 import { isBookReady, prepareBookForReading } from '@/lib/book-service';
 import type {
@@ -109,13 +111,60 @@ export default function HomeScreen() {
     loadBooks();
   }, [loadBooks]);
 
-  // Focus qayitdiqda axtarisi sifirla ve modal-i bagla.
+  const [currentlyReading, setCurrentlyReading] = useState<{
+    id: string;
+    title: string;
+    author: string;
+    coverUrl?: string;
+    readingPercent: number;
+  } | null>(null);
+
+  const loadActiveReadingBook = useCallback(async () => {
+    try {
+      const progressList = await getAllReadingProgress();
+      if (progressList.length === 0) {
+        setCurrentlyReading(null);
+        return;
+      }
+      const sorted = [...progressList].sort((a, b) => b.updatedAt - a.updatedAt);
+      const latest = sorted[0];
+      if (!latest) {
+        setCurrentlyReading(null);
+        return;
+      }
+      const local = await getBook(latest.bookId);
+      let title = local?.title || 'Kitab #' + latest.bookId;
+      let author = '';
+      let coverUrl: string | undefined;
+
+      try {
+        const apiBook = await fetchBookById(latest.bookId);
+        if (apiBook) {
+          title = apiBook.title;
+          author = apiBook.author;
+          coverUrl = apiBook.coverUrl;
+        }
+      } catch {}
+
+      setCurrentlyReading({
+        id: latest.bookId,
+        title,
+        author,
+        coverUrl,
+        readingPercent: latest.percent,
+      });
+    } catch {
+      setCurrentlyReading(null);
+    }
+  }, []);
+
+  // Focus qayitdiqda axtarisi sifirla ve real oxunan kitabi yukle.
   useFocusEffect(
     useCallback(() => {
-      // Focus olduqda
       setSearchQuery('');
       setSearchActive(false);
       setSearchResults([]);
+      loadActiveReadingBook();
 
       return () => {
         setSearchQuery('');
@@ -126,7 +175,7 @@ export default function HomeScreen() {
         setOpeningError(null);
         navigationLock.current = false;
       };
-    }, []),
+    }, [loadActiveReadingBook]),
   );
 
   const refreshLocalStatus = useCallback(async (bookId: string) => {
@@ -220,9 +269,6 @@ export default function HomeScreen() {
   const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState(t('filter_all'));
 
-  // Currently reading book (first ready book in recommended or popular)
-  const currentlyReading = recommended.find((b) => b.isReady) ?? popular.find((b) => b.isReady);
-
   // --- Loading state ---
   if (loading) {
     return (
@@ -315,22 +361,24 @@ export default function HomeScreen() {
                     { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
                     pressed && styles.pressed,
                   ]}
-                  onPress={() => goToDetail(currentlyReading)}
+                  onPress={() => goToDetail(currentlyReading as any)}
                 >
                   <BookCard
                     id={currentlyReading.id}
                     title={currentlyReading.title}
                     author={currentlyReading.author}
                     coverUrl={currentlyReading.coverUrl}
-                    downloadCount={currentlyReading.downloadCount}
-                    readingPercent={45}
+                    readingPercent={currentlyReading.readingPercent}
                     variant="vertical"
                     coverSize="sm"
-                    onPress={() => goToDetail(currentlyReading)}
+                    onPress={() => goToDetail(currentlyReading as any)}
                   />
                 </Pressable>
               </View>
             ) : null}
+
+            {/* Google Ad Banner */}
+            <AdBannerContainer />
 
             {/* My Library Categories Bar */}
             <View style={styles.sectionPadding}>

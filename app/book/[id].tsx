@@ -13,9 +13,13 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BookLoader } from "@/components/BookLoader";
+import { FullscreenAdModal } from "@/components/FullscreenAdModal";
 import { QuoteStoryModal } from "@/components/QuoteStoryModal";
 import { ReaderSettingsModal } from "@/components/reader/ReaderSettingsModal";
+import { RewardedAdModal } from "@/components/RewardedAdModal";
+import { SubscriptionPaywallModal } from "@/components/SubscriptionPaywallModal";
 import { WordPopup } from "@/components/WordPopup";
+import { useAuth } from "@/lib/auth/AuthContext";
 import {
   getBook,
   getReadingProgress,
@@ -23,6 +27,8 @@ import {
   setSavedStatus,
 } from "@/lib/db";
 import { Colors, FontSize, FontWeight, Radius, Spacing } from "@/lib/design";
+import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { trackPageTurn } from "@/lib/monetization/interstitial-ads";
 import { useAppTheme } from "@/lib/theme";
 import {
   FONT_FAMILY_CSS,
@@ -48,6 +54,10 @@ function InnerReader({
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
+  const { role, subscriptionPlan, consumeTranslation, watchAdForWords } = useAuth();
+  const [limitModalVisible, setLimitModalVisible] = useState(false);
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const [fullscreenAdVisible, setFullscreenAdVisible] = useState(false);
 
   // Selection mode: sozleri ard-arda klikleyerek toplamaq uchun.
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -150,17 +160,45 @@ function InnerReader({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsVisible]);
 
+  const { user } = useAuth();
+
+  const calculateAccuratePercent = useCallback((prog: number, currentLoc: any, totalLocs: number): number => {
+    if (!currentLoc) return 0;
+    const cfiPct = currentLoc?.start?.percentage;
+    if (typeof cfiPct === 'number' && cfiPct > 0 && cfiPct < 1) {
+      return Math.round(cfiPct * 100);
+    }
+    if (typeof prog === 'number' && prog > 0 && prog < 1) {
+      return Math.round(prog * 100);
+    }
+    const currentLocNum = currentLoc?.start?.location;
+    if (typeof currentLocNum === 'number' && typeof totalLocs === 'number' && totalLocs > 0) {
+      const locPct = Math.round((currentLocNum / totalLocs) * 100);
+      if (locPct >= 0 && locPct <= 100) return locPct;
+    }
+    const chapterIdx = currentLoc?.start?.index;
+    const totalChapters = currentLoc?.start?.displayed?.totalChapters || currentLoc?.totalChapters;
+    if (typeof chapterIdx === 'number' && typeof totalChapters === 'number' && totalChapters > 1) {
+      return Math.min(99, Math.max(0, Math.round((chapterIdx / totalChapters) * 100)));
+    }
+    if (prog === 1 || cfiPct === 1) {
+      if (currentLoc?.atEnd) return 100;
+      return 1;
+    }
+    return 0;
+  }, []);
+
   // Page saygaci.
   const loc: any = currentLocation as any;
-  const totalLocations: number =
-    loc?.totalLocations ?? loc?.pages?.length ?? loc?.totalPages ?? 0;
-  const currentPage: number =
-    loc?.cfiPage ?? loc?.currentPage ?? loc?.page ?? -1;
-  const percentInt = Math.round((progress ?? 0) * 100);
+  const totalLocations: number = loc?.totalLocations ?? loc?.pages?.length ?? loc?.totalPages ?? 0;
+  const displayedPage = loc?.start?.displayed?.page;
+  const displayedTotal = loc?.start?.displayed?.total;
+  const realPercent = calculateAccuratePercent(progress, loc, totalLocations);
+
   const pageLabel =
-    totalLocations > 0 && currentPage >= 0
-      ? currentPage + 1 + " / " + totalLocations
-      : percentInt + "%";
+    displayedPage !== undefined && displayedTotal !== undefined
+      ? `Səhifə ${displayedPage} / ${displayedTotal} • ${realPercent}%`
+      : `${realPercent}%`;
 
   const handleLocationChange = useCallback(
     async (
@@ -170,38 +208,61 @@ function InnerReader({
       _section: any | null,
     ) => {
       if (!bookId || !currentLoc?.start?.cfi) return;
+      trackPageTurn(role, subscriptionPlan, () => setFullscreenAdVisible(true));
+
+      const computedPercent = calculateAccuratePercent(prog, currentLoc, _totalLocations);
+
       await setReadingProgress({
         bookId,
         lastLocation: currentLoc.start.cfi,
-        percent: Math.round(prog * 100) || 0,
+        percent: computedPercent,
         updatedAt: Date.now(),
       });
+
+      if (user && isSupabaseConfigured) {
+        try {
+          await supabase.from('user_reading_progress').upsert({
+            user_id: user.id,
+            book_id: bookId,
+            last_location: currentLoc.start.cfi,
+            percent: computedPercent,
+          });
+        } catch {}
+      }
     },
-    [bookId],
+    [bookId, calculateAccuratePercent, role, subscriptionPlan, user],
   );
 
 
-  const handleWebViewMessage = useCallback((event: any) => {
-    if (event?.type === "onWordClick" && event.word) {
-      const cleaned = String(event.word).trim();
-      if (!cleaned) return;
+  const handleWebViewMessage = useCallback(
+    (event: any) => {
+      if (event?.type === "onWordClick" && event.word) {
+        const cleaned = String(event.word).trim();
+        if (!cleaned) return;
 
-      if (isSelectionModeRef.current) {
-        setSelectedWords((current) => {
-          const index = current.indexOf(cleaned);
-          if (index !== -1) {
-            const updated = [...current];
-            updated.splice(index, 1);
-            return updated;
-          } else {
-            return [...current, cleaned];
+        if (isSelectionModeRef.current) {
+          setSelectedWords((current) => {
+            const index = current.indexOf(cleaned);
+            if (index !== -1) {
+              const updated = [...current];
+              updated.splice(index, 1);
+              return updated;
+            } else {
+              return [...current, cleaned];
+            }
+          });
+        } else {
+          const allowed = consumeTranslation();
+          if (!allowed) {
+            setLimitModalVisible(true);
+            return;
           }
-        });
-      } else {
-        setPopupWord(cleaned);
+          setPopupWord(cleaned);
+        }
       }
-    }
-  }, []);
+    },
+    [consumeTranslation],
+  );
 
   const toggleSelectionMode = useCallback(() => {
     setIsSelectionMode((prev) => {
@@ -390,6 +451,25 @@ function InnerReader({
         visible={settingsVisible}
         onClose={() => setSettingsVisible(false)}
       />
+
+      <RewardedAdModal
+        visible={limitModalVisible}
+        type="translations"
+        onClose={() => setLimitModalVisible(false)}
+        onWatchAd={watchAdForWords}
+        onUpgradePremium={() => setPaywallVisible(true)}
+      />
+
+      <SubscriptionPaywallModal
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
+      />
+
+      <FullscreenAdModal
+        visible={fullscreenAdVisible}
+        onClose={() => setFullscreenAdVisible(false)}
+        onUpgradePremium={() => setPaywallVisible(true)}
+      />
     </View>
   );
 }
@@ -467,16 +547,14 @@ export default function ReaderScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 10,
-    backgroundColor: Colors.readerBg,
+    paddingHorizontal: 0,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    backgroundColor: Colors.readerBg,
+    paddingVertical: 4,
     gap: 8,
   },
   headerTitleContainer: {
@@ -566,8 +644,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: Spacing.xxl,
-    paddingVertical: Spacing.lg,
-    backgroundColor: Colors.readerBg,
+    paddingVertical: Spacing.md,
   },
   navButton: {
     width: 48,

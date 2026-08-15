@@ -148,9 +148,7 @@ export function QuoteStoryModal({
             await RNShare.shareSingle({
               social: RNSocial.InstagramStories,
               appId: INSTAGRAM_APP_ID,
-              stickerImage: fileUri,
-              backgroundBottomColor: theme.colors[0],
-              backgroundTopColor: theme.colors[2],
+              backgroundImage: fileUri,
               attributionURL: deepLink,
             });
             return;
@@ -163,9 +161,9 @@ export function QuoteStoryModal({
         if (RNSocial && RNSocial.Instagram) {
           try {
             await RNShare.shareSingle({
-              social: RNSocial.Instagram,
-              url: fileUri,
-              type: 'image/png',
+              social: RNSocial.InstagramStories,
+              backgroundImage: fileUri,
+              attributionURL: deepLink,
             });
             return;
           } catch (igErr: any) {
