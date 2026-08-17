@@ -2,13 +2,12 @@ import { Reader, ReaderProvider, useReader } from "@epubjs-react-native/core";
 import { useFileSystem } from "@epubjs-react-native/expo-file-system";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
-  View,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -27,9 +26,7 @@ import {
   setSavedStatus,
 } from "@/lib/db";
 import { Colors, FontSize, FontWeight, Radius, Spacing } from "@/lib/design";
-import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { trackPageTurn } from "@/lib/monetization/interstitial-ads";
-import { useAppTheme } from "@/lib/theme";
 import {
   FONT_FAMILY_CSS,
   FONT_SIZE_PX,
@@ -39,6 +36,8 @@ import {
   type ThemeChoice,
   type ThemeConfig,
 } from "@/lib/reader/settings";
+import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { useAppTheme } from "@/lib/theme";
 
 function InnerReader({
   bookId,
@@ -78,6 +77,27 @@ function InnerReader({
 
   const [currentTheme, setCurrentTheme] = useState<ThemeConfig>(
     colors.isDark ? THEMES.black : THEMES.paper
+  );
+
+  const activeReaderTheme = currentTheme;
+  const isDarkTheme = activeReaderTheme.bg === THEMES.black.bg || activeReaderTheme.bg === THEMES.dark.bg || colors.isDark;
+  const selectedText = selectedWords.join(" ");
+
+  const defaultThemeStyles = useMemo(
+    () => ({
+      body: {
+        "background-color": activeReaderTheme.bg + " !important",
+        "background": activeReaderTheme.bg + " !important",
+        "color": activeReaderTheme.text + " !important",
+        "padding": "24px 28px !important",
+        "margin": "0 !important",
+      },
+      "p, div, span, a, li, h1, h2, h3, h4, h5, h6": {
+        "background-color": "transparent !important",
+        "color": activeReaderTheme.text + " !important",
+      },
+    }),
+    [activeReaderTheme],
   );
 
   function applyReaderTheme(settings: ReaderSettings) {
@@ -134,6 +154,17 @@ function InnerReader({
         "height": "auto !important",
       },
     });
+
+    injectJavascript(`
+      (function() {
+        var bg = "${theme.bg}";
+        var fg = "${theme.text}";
+        document.documentElement.style.backgroundColor = bg;
+        document.body.style.backgroundColor = bg;
+        document.body.style.color = fg;
+      })();
+      true;
+    `);
   }
 
   // Reader ayarlarini EPUB.js-e tetbiq et.
@@ -145,8 +176,17 @@ function InnerReader({
       applyReaderTheme(settings);
     };
     apply();
+    const t1 = setTimeout(apply, 100);
+    const t2 = setTimeout(apply, 300);
+    const t3 = setTimeout(apply, 600);
+    const t4 = setTimeout(apply, 1000);
+
     return () => {
       cancelled = true;
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [changeTheme, colors.isDark]);
@@ -214,6 +254,18 @@ function InnerReader({
       _section: any | null,
     ) => {
       if (!bookId || !currentLoc?.start?.cfi) return;
+
+      injectJavascript(`
+        (function() {
+          var bg = "${activeReaderTheme.bg}";
+          var fg = "${activeReaderTheme.text}";
+          document.documentElement.style.backgroundColor = bg;
+          document.body.style.backgroundColor = bg;
+          document.body.style.color = fg;
+        })();
+        true;
+      `);
+
       trackPageTurn(role, subscriptionPlan, () => setFullscreenAdVisible(true));
 
       const computedPercent = calculateAccuratePercent(prog, currentLoc, _totalLocations);
@@ -233,10 +285,10 @@ function InnerReader({
             last_location: currentLoc.start.cfi,
             percent: computedPercent,
           });
-        } catch {}
+        } catch { }
       }
     },
-    [bookId, calculateAccuratePercent, role, subscriptionPlan, user],
+    [activeReaderTheme, bookId, calculateAccuratePercent, injectJavascript, role, subscriptionPlan, user],
   );
 
 
@@ -297,10 +349,6 @@ function InnerReader({
   const closePopup = useCallback(() => {
     setPopupWord(null);
   }, []);
-
-  const activeReaderTheme = currentTheme;
-  const isDarkTheme = activeReaderTheme.bg === THEMES.black.bg || activeReaderTheme.bg === THEMES.dark.bg || colors.isDark;
-  const selectedText = selectedWords.join(" ");
 
   return (
     <View
@@ -388,6 +436,7 @@ function InnerReader({
           menuItems={[]}
           initialLocation={initialLocation}
           enableSelection={false}
+          defaultTheme={defaultThemeStyles}
         />
       </View>
 
@@ -493,7 +542,7 @@ export default function ReaderScreen() {
           setInitialLocation(prog.lastLocation);
         }
 
-        await setSavedStatus(bookId, "reading").catch(() => {});
+        await setSavedStatus(bookId, "reading").catch(() => { });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Kitab acilmadi");
       } finally {
