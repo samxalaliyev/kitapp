@@ -82,8 +82,14 @@ function InnerReader({
 
   function applyReaderTheme(settings: ReaderSettings) {
     let themeKey: ThemeChoice = settings.theme;
-    if (colors.isDark && (!themeKey || themeKey === 'paper')) {
-      themeKey = 'black';
+    if (colors.isDark) {
+      if (!themeKey || themeKey === 'paper') {
+        themeKey = 'black';
+      }
+    } else {
+      if (themeKey === 'black' || themeKey === 'dark') {
+        themeKey = 'paper';
+      }
     }
     const theme = THEMES[themeKey] ?? (colors.isDark ? THEMES.black : THEMES.paper);
     setCurrentTheme(theme);
@@ -104,7 +110,7 @@ function InnerReader({
         "line-height": String(settings.lineHeight) + " !important",
         "letter-spacing": settings.letterSpacing + "px !important",
         "text-align": settings.textAlign + " !important",
-        "padding": "18px 22px !important",
+        "padding": "24px 28px !important",
         "margin": "0 !important",
         "box-sizing": "border-box !important",
         "-webkit-user-select": "none !important",
@@ -197,7 +203,7 @@ function InnerReader({
 
   const pageLabel =
     displayedPage !== undefined && displayedTotal !== undefined
-      ? `Səhifə ${displayedPage} / ${displayedTotal} • ${realPercent}%`
+      ? `${displayedPage}-dən ${displayedTotal}`
       : `${realPercent}%`;
 
   const handleLocationChange = useCallback(
@@ -293,7 +299,7 @@ function InnerReader({
   }, []);
 
   const activeReaderTheme = currentTheme;
-  const isDarkTheme = activeReaderTheme.bg === THEMES.black.bg || activeReaderTheme.bg === THEMES.dark.bg;
+  const isDarkTheme = activeReaderTheme.bg === THEMES.black.bg || activeReaderTheme.bg === THEMES.dark.bg || colors.isDark;
   const selectedText = selectedWords.join(" ");
 
   return (
@@ -304,25 +310,23 @@ function InnerReader({
       ]}
     >
       <StatusBar style={isDarkTheme ? "light" : "dark"} />
-      {/* Header */}
+      {/* Sleek Minimal Header */}
       <View
         style={[
           styles.header,
           {
             backgroundColor: activeReaderTheme.bg,
-            borderBottomColor: isDarkTheme ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-            borderBottomWidth: 1,
           },
         ]}
       >
         <Pressable
           style={({ pressed }) => [
             styles.iconButton,
-            { backgroundColor: isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)" },
+            { backgroundColor: isDarkTheme ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)" },
             pressed && styles.pressed,
           ]}
           onPress={() => router.back()}
-          hitSlop={12}
+          hitSlop={14}
         >
           <Text style={[styles.iconText, { color: activeReaderTheme.text }]}>{"‹"}</Text>
         </Pressable>
@@ -337,11 +341,11 @@ function InnerReader({
         <Pressable
           style={({ pressed }) => [
             styles.iconButton,
-            { backgroundColor: isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)" },
+            { backgroundColor: isDarkTheme ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)" },
             pressed && styles.pressed,
           ]}
           onPress={() => setSettingsVisible(true)}
-          hitSlop={12}
+          hitSlop={14}
         >
           <Text style={[styles.iconText, { color: activeReaderTheme.text }]}>Aa</Text>
         </Pressable>
@@ -350,11 +354,11 @@ function InnerReader({
         <Pressable
           style={({ pressed }) => [
             styles.iconButton,
-            { backgroundColor: isSelectionMode ? colors.primary : (isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)") },
+            { backgroundColor: isSelectionMode ? colors.primary : (isDarkTheme ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)") },
             pressed && styles.pressed,
           ]}
           onPress={toggleSelectionMode}
-          hitSlop={12}
+          hitSlop={14}
         >
           <Text
             style={[styles.iconText, { color: isSelectionMode ? '#ffffff' : activeReaderTheme.text }]}
@@ -387,33 +391,16 @@ function InnerReader({
         />
       </View>
 
+      {/* Subtle Minimal Footer (Matching Reference UI) */}
       <View
         style={[
           styles.footer,
           {
             backgroundColor: activeReaderTheme.bg,
-            borderTopColor: isDarkTheme ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-            borderTopWidth: 1,
           },
         ]}
       >
-        <Pressable
-          style={({ pressed }) => [styles.navButton, pressed && styles.pressed]}
-          onPress={() => goPrevious()}
-          hitSlop={16}
-        >
-          <Text style={[styles.navIcon, { color: activeReaderTheme.text }]}>{"‹"}</Text>
-        </Pressable>
-
         <Text style={[styles.pageIndicator, { color: activeReaderTheme.text }]}>{pageLabel}</Text>
-
-        <Pressable
-          style={({ pressed }) => [styles.navButton, pressed && styles.pressed]}
-          onPress={() => goNext()}
-          hitSlop={16}
-        >
-          <Text style={[styles.navIcon, { color: activeReaderTheme.text }]}>{"›"}</Text>
-        </Pressable>
       </View>
 
       {isSelectionMode && selectedWords.length > 0 ? (
@@ -568,17 +555,11 @@ const styles = StyleSheet.create({
     color: Colors.readerText,
   },
   iconButton: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.surface,
     borderRadius: Radius.pill,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   iconButtonActive: {
     backgroundColor: Colors.primary,
@@ -642,26 +623,15 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: Spacing.xxl,
-    paddingVertical: Spacing.md,
-  },
-  navButton: {
-    width: 48,
-    height: 48,
-    alignItems: "center",
     justifyContent: "center",
-  },
-  navIcon: {
-    fontSize: FontSize.hero,
-    fontWeight: "400",
-    color: Colors.readerNav,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: 8,
   },
   pageIndicator: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-    color: Colors.textMuted,
-    letterSpacing: 1,
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.medium,
+    opacity: 0.5,
+    letterSpacing: 0.5,
   },
   floatingWrap: {
     position: "absolute",

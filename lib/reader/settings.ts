@@ -53,11 +53,11 @@ export interface ThemeConfig {
 }
 
 export const THEMES: Record<ThemeChoice, ThemeConfig> = {
-  paper: { bg: '#FAF8F5', text: '#1E2022', panel: '#F2ECE4' },
-  sepia: { bg: '#F4ECD8', text: '#4A3B32', panel: '#E8DEC6' },
+  paper: { bg: '#FFFFFF', text: '#18181B', panel: '#F4F4F5' },
+  sepia: { bg: '#F5EFE6', text: '#4A3B32', panel: '#E8DEC6' },
   cream: { bg: '#FAF3E0', text: '#3E2C1C', panel: '#EFE6CF' },
-  dark:  { bg: '#161F33', text: '#E2E8F0', panel: '#0F172A' },
-  black: { bg: '#0B0F19', text: '#F8FAFC', panel: '#161F33' },
+  dark:  { bg: '#121212', text: '#E4E4E7', panel: '#18181B' },
+  black: { bg: '#000000', text: '#F4F4F5', panel: '#09090B' },
 };
 
 export const FONT_SIZE_LABELS: Record<FontSizeLevel, string> = {
