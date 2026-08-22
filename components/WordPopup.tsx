@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 
+import * as Speech from 'expo-speech';
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
   getPronunciationCached,
@@ -21,6 +22,7 @@ import { getAudioDataUrl } from "@/lib/audio";
 export interface WordPopupProps {
   visible: boolean;
   word: string | null;
+  sentenceContext?: string | null;
   onClose: () => void;
 }
 
@@ -93,7 +95,12 @@ function buildPlayerHtml(audioUrl: string, autoplay: boolean): string {
 
 import { useAppTheme } from "@/lib/theme";
 
-export function WordPopup({ visible, word, onClose }: WordPopupProps) {
+export function WordPopup({
+  visible,
+  word,
+  sentenceContext,
+  onClose,
+}: WordPopupProps) {
   const { colors } = useAppTheme();
   const { targetLang, t } = useLanguage();
   const [pronunciation, setPronunciation] =
@@ -113,7 +120,13 @@ export function WordPopup({ visible, word, onClose }: WordPopupProps) {
   const [audioLoading, setAudioLoading] = useState(false);
   const webViewRef = useRef<WebView>(null);
 
+  const [sentenceTrans, setSentenceTrans] = useState<string | null>(null);
+  const [loadingSentenceTrans, setLoadingSentenceTrans] = useState(false);
+
   useEffect(() => {
+    setSentenceTrans(null);
+    setLoadingSentenceTrans(false);
+
     if (!visible || !word) {
       setPronunciation(null);
       setTranslation(null);
@@ -199,20 +212,30 @@ export function WordPopup({ visible, word, onClose }: WordPopupProps) {
       cancelled = true;
       void activeAudioUrl;
     };
-  }, [visible, word]);
+  }, [visible, word, sentenceContext]);
+
+  const loadSentenceTranslation = useCallback(async () => {
+    if (!sentenceContext || loadingSentenceTrans) return;
+    setLoadingSentenceTrans(true);
+    try {
+      const res = await translateWord(sentenceContext);
+      setSentenceTrans(res?.translated || t('no_translation'));
+    } catch {
+      setSentenceTrans(t('no_translation'));
+    } finally {
+      setLoadingSentenceTrans(false);
+    }
+  }, [sentenceContext, loadingSentenceTrans, t]);
 
   const onPlayPress = useCallback(() => {
-    if (audioLoading) return;
-    if (audioError && !audioDataUrl) {
-      // data-URL yuklenmedi, fallback URL-ə artiq sinadik, daha yox.
-      return;
+    if (audioDataUrl) {
+      setIsSpeaking(true);
+      setAutoPlay(true);
+      setPlayerKey((k) => k + 1);
+    } else if (word) {
+      Speech.speak(word, { language: "en-US" });
     }
-    if (!audioDataUrl) return;
-    setAudioError(false);
-    setIsSpeaking(true);
-    setAutoPlay(true);
-    setPlayerKey((k) => k + 1);
-  }, [audioDataUrl, audioError, audioLoading]);
+  }, [audioDataUrl, word]);
 
   const handlePlayerMessage = useCallback((event: WebViewMessageEvent) => {
     const msg = event.nativeEvent.data;
@@ -357,6 +380,51 @@ export function WordPopup({ visible, word, onClose }: WordPopupProps) {
               <Text style={[styles.translation, { color: colors.text }]}>{translation.translated}</Text>
             )}
           </View>
+
+          {sentenceContext ? (
+            <View style={{ marginBottom: 12 }}>
+              <Pressable
+                onPress={loadSentenceTranslation}
+                style={({ pressed }) => [
+                  {
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    paddingVertical: 8,
+                    paddingHorizontal: 12,
+                    borderRadius: 8,
+                    backgroundColor: colors.surfaceBorder,
+                    gap: 6,
+                  },
+                  pressed && styles.pressed,
+                ]}
+              >
+                {loadingSentenceTrans ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Text style={{ fontSize: 13, fontWeight: "600", color: colors.text }}>
+                    📄 {t('translating_sentence')}
+                  </Text>
+                )}
+              </Pressable>
+              {sentenceTrans ? (
+                <Text
+                  style={{
+                    marginTop: 6,
+                    fontSize: 13,
+                    lineHeight: 18,
+                    color: colors.text,
+                    fontStyle: "italic",
+                    backgroundColor: colors.primaryBg,
+                    padding: 8,
+                    borderRadius: 8,
+                  }}
+                >
+                  "{sentenceTrans}"
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
 
           <Pressable
             onPress={handleSave}

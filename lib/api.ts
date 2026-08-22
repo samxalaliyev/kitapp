@@ -1,132 +1,113 @@
-import type {
-  ApiBook,
-  BooksPageResult,
-  GutendexBook,
-  GutendexBooksResponse,
-} from '@/types/book';
+import standardEbooksData from '@/assets/data/standard_ebooks.json';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
+import type { ApiBook, BooksPageResult } from '@/types/book';
 
-const GUTENDEX_BASE_URL = 'https://gutendex.com';
+const LOCAL_CATALOG: ApiBook[] = standardEbooksData as ApiBook[];
 
-const EPUB_MIME_PREFIX = 'application/epub';
-
-async function fetchGutendex<T>(
-  path: string,
-  params?: Record<string, string | number>,
-): Promise<T> {
-  const url = new URL(path, GUTENDEX_BASE_URL);
-
-  if (params) {
-    for (const [key, value] of Object.entries(params)) {
-      url.searchParams.set(key, String(value));
-    }
-  }
-
-  const response = await fetch(url.toString());
-
-  if (!response.ok) {
-    throw new Error(`Gutendex API xətası (${response.status})`);
-  }
-
-  return response.json() as Promise<T>;
-}
-
-function formatAuthors(authors: GutendexBook['authors']): string {
-  if (authors.length === 0) {
-    return 'Naməlum müəllif';
-  }
-
-  return authors.map((author) => author.name).join(', ');
-}
-
-function pickEpubUrl(formats: Record<string, string>): string | null {
-  const epubEntries = Object.entries(formats).filter(([mimeType]) =>
-    mimeType.startsWith(EPUB_MIME_PREFIX),
-  );
-
-  if (epubEntries.length === 0) {
-    return null;
-  }
-
-  const noImages = epubEntries.find(([, url]) => url.includes('noimages'));
-  if (noImages) {
-    return noImages[1];
-  }
-
-  return epubEntries[0][1];
-}
-
-function pickCoverUrl(formats: Record<string, string>): string | undefined {
-  return formats['image/jpeg'] ?? formats['image/png'];
-}
-
-function getPageFromNextUrl(next: string | null): number | null {
-  if (!next) {
-    return null;
-  }
-
-  try {
-    const page = new URL(next).searchParams.get('page');
-    return page ? Number.parseInt(page, 10) : null;
-  } catch {
-    return null;
-  }
-}
-
-function mapGutendexBookToApiBook(book: GutendexBook): ApiBook | null {
-  const epubUrl = pickEpubUrl(book.formats);
-
-  if (!epubUrl) {
-    return null;
-  }
-
-  return {
-    id: String(book.id),
-    title: book.title.trim(),
-    author: formatAuthors(book.authors),
-    coverUrl: pickCoverUrl(book.formats),
-    epubUrl,
-    summary: book.summaries?.[0],
-    downloadCount: book.download_count,
-    languages: book.languages,
-  };
-}
+const PAGE_SIZE = 20;
 
 /**
- * Gutendex-dən EPUB formatında olan kitabların səhifələnmiş siyahısını gətir.
- * @see https://gutendex.com/
+ * Standard Ebooks master kataloqundan səhifələnmiş kitab siyahısını gətirir.
+ * Əvvəlcə Supabase-dən çəkir, internet olmadıqda isə offline lokal kataloqdan istifadə edir.
  */
 export async function fetchBooksPage(
   page = 1,
   search?: string,
 ): Promise<BooksPageResult> {
-  const params: Record<string, string | number> = {
-    page,
-    mime_type: EPUB_MIME_PREFIX,
-  };
+  const query = search?.trim().toLowerCase();
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
 
-  if (search?.trim()) {
-    params.search = search.trim();
+  if (isSupabaseConfigured) {
+    try {
+      let req = supabase
+        .from('books')
+        .select('*', { count: 'exact' })
+        .order('download_count', { ascending: false });
+
+      if (query) {
+        req = req.or(`title.ilike.%${query}%,author.ilike.%${query}%`);
+      }
+
+      const { data, count, error } = await req.range(from, to);
+
+      if (!error && data && data.length > 0) {
+        const books: ApiBook[] = data.map((b: any) => ({
+          id: b.id,
+          title: b.title,
+          author: b.author,
+          coverUrl: b.cover_url,
+          epubUrl: b.epub_url,
+          summary: b.summary,
+          downloadCount: b.download_count,
+          languages: b.languages ?? ['en'],
+        }));
+
+        const total = count ?? books.length;
+        const hasNext = to + 1 < total;
+
+        return {
+          books,
+          nextPage: hasNext ? page + 1 : null,
+          totalCount: total,
+        };
+      }
+    } catch {
+      // Supabase xətası zamanı lokal offline kataloqa keçid
+    }
   }
 
-  const data = await fetchGutendex<GutendexBooksResponse>('/books/', params);
+  // Offline / Fallback Kataloq Axtarışı
+  let filtered = LOCAL_CATALOG;
+  if (query) {
+    filtered = LOCAL_CATALOG.filter(
+      (b) =>
+        b.title.toLowerCase().includes(query) ||
+        b.author.toLowerCase().includes(query),
+    );
+  }
 
-  const books = data.results
-    .map(mapGutendexBookToApiBook)
-    .filter((book): book is ApiBook => book !== null);
+  const paginated = filtered.slice(from, from + PAGE_SIZE);
+  const hasNext = from + PAGE_SIZE < filtered.length;
 
   return {
-    books,
-    nextPage: getPageFromNextUrl(data.next),
-    totalCount: data.count,
+    books: paginated,
+    nextPage: hasNext ? page + 1 : null,
+    totalCount: filtered.length,
   };
 }
 
 /**
- * Project Gutenberg ID ilə tək kitabın metadata-sını gətir.
+ * Kitab ID-si ilə tək kitabın məlumatlarını gətirir.
  */
 export async function fetchBookById(id: string): Promise<ApiBook | null> {
-  const data = await fetchGutendex<GutendexBook>(`/books/${id}/`);
-  return mapGutendexBookToApiBook(data);
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('books')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (!error && data) {
+        return {
+          id: data.id,
+          title: data.title,
+          author: data.author,
+          coverUrl: data.cover_url,
+          epubUrl: data.epub_url,
+          summary: data.summary,
+          downloadCount: data.download_count,
+          languages: data.languages ?? ['en'],
+        };
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  const localBook = LOCAL_CATALOG.find((b) => b.id === id);
+  return localBook ?? null;
 }
 
 /**

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
@@ -25,7 +25,7 @@ export default function WelcomeScreen() {
     >
       {/* Top Brand Logo Emblem */}
       <View style={styles.brandHeader}>
-        <View style={[styles.logoIconBadge, { backgroundColor: colors.isDark ? '#1e1b4b' : '#1e1b4b' }]}>
+        <View style={[styles.logoIconBadge, { backgroundColor: '#1e1b4b' }]}>
           <Text style={styles.logoLetter}>L</Text>
           <View style={styles.logoPageLine} />
         </View>
@@ -46,14 +46,7 @@ export default function WelcomeScreen() {
         </Text>
       </View>
 
-      {/* Cozy Nook Illustration */}
-      <View style={styles.illustrationWrapper}>
-        <Image
-          source={require('../../assets/images/welcome_nook.png')}
-          style={styles.illustrationImage}
-          resizeMode="cover"
-        />
-      </View>
+
 
       {/* Bottom Action CTA Button */}
       <View style={styles.actionRow}>
@@ -141,21 +134,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     maxWidth: 300,
   },
-  illustrationWrapper: {
-    width: '100%',
-    height: 220,
-    borderRadius: Radius.xl,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 4,
-  },
-  illustrationImage: {
-    width: '100%',
-    height: '100%',
-  },
+
   actionRow: {
     width: '100%',
     marginBottom: Spacing.sm,

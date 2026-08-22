@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
+import { Feather } from '@expo/vector-icons';
 
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
@@ -24,7 +24,7 @@ export default function TabLayout() {
           borderRadius: 40,
           height: 68,
           paddingBottom: 0,
-          paddingTop: 15,
+          paddingTop: 18,
           elevation: 10,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
@@ -38,15 +38,7 @@ export default function TabLayout() {
         options={{
           title: t('tab_home'),
           tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'house.fill',
-                android: 'home',
-                web: 'home',
-              }}
-              tintColor={color}
-              size={24}
-            />
+            <Feather name="home" size={22} color={color} />
           ),
         }}
       />
@@ -55,15 +47,7 @@ export default function TabLayout() {
         options={{
           title: t('tab_library'),
           tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'books.vertical.fill',
-                android: 'menu_book',
-                web: 'menu_book',
-              }}
-              tintColor={color}
-              size={24}
-            />
+            <Feather name="book-open" size={22} color={color} />
           ),
         }}
       />
@@ -72,15 +56,7 @@ export default function TabLayout() {
         options={{
           title: t('tab_vocabulary'),
           tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'heart.fill',
-                android: 'favorite',
-                web: 'favorite',
-              }}
-              tintColor={color}
-              size={24}
-            />
+            <Feather name="heart" size={22} color={color} />
           ),
         }}
       />
@@ -89,22 +65,8 @@ export default function TabLayout() {
         options={{
           title: t('tab_settings'),
           tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'gearshape.fill',
-                android: 'settings',
-                web: 'settings',
-              }}
-              tintColor={color}
-              size={24}
-            />
+            <Feather name="settings" size={22} color={color} />
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="two"
-        options={{
-          href: null,
         }}
       />
     </Tabs>

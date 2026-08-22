@@ -22,8 +22,7 @@ import {
   FONT_FAMILY_LABELS,
   FONT_SIZE_LABELS,
   getReaderSettings,
-  setFontFamily,
-  setFontSize,
+  saveReaderSettings,
   type FontFamilyChoice,
   type FontSizeLevel,
 } from '@/lib/reader/settings';
@@ -138,7 +137,7 @@ export default function SettingsScreen() {
   } = useAuth();
 
   const [fontSize, setFontSizeState] = useState<FontSizeLevel>('normal');
-  const [fontFamily, setFontFamilyState] = useState<FontFamilyChoice>('system');
+  const [fontFamily, setFontFamilyState] = useState<FontFamilyChoice>('serif');
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
@@ -220,11 +219,10 @@ export default function SettingsScreen() {
   ];
 
   const fontFamilyOptions: OptionItem<FontFamilyChoice>[] = [
-    { id: 'system', label: FONT_FAMILY_LABELS.system },
     { id: 'serif', label: FONT_FAMILY_LABELS.serif },
     { id: 'sans', label: FONT_FAMILY_LABELS.sans },
-    { id: 'mono', label: FONT_FAMILY_LABELS.mono },
-    { id: 'georgia', label: FONT_FAMILY_LABELS.georgia },
+    { id: 'noah', label: FONT_FAMILY_LABELS.noah },
+    { id: 'lovelo', label: FONT_FAMILY_LABELS.lovelo },
   ];
 
   const currentTargetLang = getLanguage(targetLang);
@@ -491,7 +489,7 @@ export default function SettingsScreen() {
           selectedId={fontSize}
           onSelect={(id: FontSizeLevel) => {
             setFontSizeState(id);
-            setFontSize(id).catch(() => {});
+            saveReaderSettings({ fontSize: id }).catch(() => {});
           }}
           onClose={() => setActivePicker(null)}
         />
@@ -503,7 +501,7 @@ export default function SettingsScreen() {
           selectedId={fontFamily}
           onSelect={(id: FontFamilyChoice) => {
             setFontFamilyState(id);
-            setFontFamily(id).catch(() => {});
+            saveReaderSettings({ fontFamily: id }).catch(() => {});
           }}
           onClose={() => setActivePicker(null)}
         />

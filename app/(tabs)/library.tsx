@@ -1,6 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   ScrollView,
@@ -10,21 +9,23 @@ import {
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 
+import standardEbooksCatalog from '@/assets/data/standard_ebooks.json';
 import { AdBannerContainer } from '@/components/AdBannerContainer';
 import { BookCard } from '@/components/BookCard';
+import { BookDetailModal } from '@/components/BookDetailModal';
 import { BookLoader } from '@/components/BookLoader';
 import { SectionHeader } from '@/components/SectionHeader';
+import { fetchBookById } from '@/lib/api';
+import {
+  getAllReadingProgress,
+  getAllSavedBooks,
+  getBook,
+} from '@/lib/db';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
-import {
-  getAllSavedBooks,
-  getAllReadingProgress,
-  getBook,
-} from '@/lib/db';
-import { fetchBookById } from '@/lib/api';
-import type { ReadingProgress, LibraryStatus } from '@/types/design';
 import type { ApiBook } from '@/types/book';
+import type { LibraryStatus, ReadingProgress } from '@/types/design';
 
 interface LibraryBook {
   id: string;
@@ -38,10 +39,15 @@ interface LibraryBook {
 
 export default function LibraryScreen() {
   const router = useRouter();
+  const { colors } = useAppTheme();
+  const { t } = useLanguage();
+
   const [reading, setReading] = useState<LibraryBook[]>([]);
   const [saved, setSaved] = useState<LibraryBook[]>([]);
   const [finished, setFinished] = useState<LibraryBook[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'all' | 'reading' | 'authors'>('all');
+  const [selectedBook, setSelectedBook] = useState<ApiBook | null>(null);
 
   const loadLibrary = useCallback(async () => {
     setLoading(true);
@@ -51,104 +57,54 @@ export default function LibraryScreen() {
         getAllReadingProgress(),
       ]);
 
-      // Progress map (bookId -> progress)
       const progressMap = new Map<string, ReadingProgress>();
       for (const p of progressList) {
         progressMap.set(p.bookId, p);
       }
 
-      // Butun unique kitab ID-lerini topla
       const allIds = new Set<string>();
       savedBooks.forEach((s) => allIds.add(s.bookId));
       progressList.forEach((p) => allIds.add(p.bookId));
 
-      // Her kitab ucun metadata getir (DB-den ve ya API-den)
-      const bookMetaMap = new Map<string, { title: string; author: string; coverUrl?: string; downloadCount?: number }>();
-
-      await Promise.all(
-        Array.from(allIds).map(async (bookId) => {
-          let title = 'Kitab #' + bookId;
-          let author = '';
-          let coverUrl: string | undefined;
-          let downloadCount: number | undefined;
-
-          // Evvelce lokal DB-den bakh
-          const local = await getBook(bookId);
-          if (local) {
-            title = local.title;
-          }
-
-          // Sonra API-den detallari tamasala (lightweight)
-          try {
-            const apiBook = await fetchBookById(bookId);
-            if (apiBook) {
-              title = apiBook.title;
-              author = apiBook.author;
-              coverUrl = apiBook.coverUrl;
-              downloadCount = apiBook.downloadCount;
-            }
-          } catch {
-            // Network fallback
-          }
-
-          bookMetaMap.set(bookId, {
-            title,
-            author,
-            coverUrl,
-            downloadCount,
-          });
-        }),
-      );
+      const catalogMap = new Map<string, ApiBook>();
+      for (const b of standardEbooksCatalog as ApiBook[]) {
+        catalogMap.set(b.id, b);
+      }
 
       const readingList: LibraryBook[] = [];
       const savedList: LibraryBook[] = [];
       const finishedList: LibraryBook[] = [];
 
-      // Saved books-dan gelen melumatlar
-      for (const sb of savedBooks) {
-        const meta = bookMetaMap.get(sb.bookId);
-        if (!meta) continue;
+      for (const bookId of allIds) {
+        const catalogBook = catalogMap.get(bookId);
+        const local = await getBook(bookId);
+        const progress = progressMap.get(bookId);
 
-        const progress = progressMap.get(sb.bookId);
+        const title = catalogBook?.title || local?.title || 'Kitab #' + bookId;
+        const author = catalogBook?.author || 'Klassik Ədəbiyyat';
+        const coverUrl = catalogBook?.coverUrl;
+        const downloadCount = catalogBook?.downloadCount;
+        const percent = Math.min(100, Math.max(0, progress?.percent ?? 0));
+
+        const savedEntry = savedBooks.find((s) => s.bookId === bookId);
+        const status = savedEntry?.status ?? (percent > 0 ? (percent >= 100 ? 'finished' : 'reading') : 'saved');
+
         const entry: LibraryBook = {
-          id: sb.bookId,
-          title: meta.title,
-          author: meta.author,
-          coverUrl: meta.coverUrl,
-          downloadCount: meta.downloadCount,
-          status: sb.status,
-          readingPercent: progress?.percent ?? 0,
+          id: bookId,
+          title,
+          author,
+          coverUrl,
+          downloadCount,
+          status,
+          readingPercent: percent,
         };
 
-        switch (sb.status) {
-          case 'reading':
-            readingList.push(entry);
-            break;
-          case 'finished':
-            finishedList.push(entry);
-            break;
-          default:
-            savedList.push(entry);
-            break;
-        }
-      }
-
-      // reading_progress-da olub saved_books-da olmayan kitablar da gosterilsin
-      for (const p of progressList) {
-        const alreadyInList = savedBooks.some((s) => s.bookId === p.bookId);
-        if (!alreadyInList && p.percent > 0) {
-          const meta = bookMetaMap.get(p.bookId);
-          if (meta) {
-            readingList.push({
-              id: p.bookId,
-              title: meta.title,
-              author: meta.author,
-              coverUrl: meta.coverUrl,
-              downloadCount: meta.downloadCount,
-              status: 'reading',
-              readingPercent: p.percent,
-            });
-          }
+        if (percent >= 100 || status === 'finished') {
+          finishedList.push(entry);
+        } else if (percent > 0 || status === 'reading') {
+          readingList.push(entry);
+        } else {
+          savedList.push(entry);
         }
       }
 
@@ -156,40 +112,51 @@ export default function LibraryScreen() {
       setSaved(savedList);
       setFinished(finishedList);
     } catch {
-      // Sehv bas verse bos goster
+      // Fallback
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Her defe ekran fokusa dusende yenile
   useFocusEffect(
     useCallback(() => {
       loadLibrary();
     }, [loadLibrary]),
   );
 
-  const goToDetail = useCallback(
-    (book: LibraryBook) => {
-      router.push({
-        pathname: '/book/detail' as any,
-        params: {
-          id: book.id,
-          title: book.title,
-          author: book.author,
-          coverUrl: book.coverUrl ?? '',
-          epubUrl: '',
-          downloadCount: String(book.downloadCount ?? 0),
-          summary: '',
-        },
-      });
-    },
-    [router],
-  );
+  const allBooksList = useMemo(() => {
+    return [...reading, ...saved, ...finished];
+  }, [reading, saved, finished]);
 
-  const { colors } = useAppTheme();
-  const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'books' | 'authors' | 'collections'>('books');
+  // Group books by author
+  const authorGroups = useMemo(() => {
+    const map = new Map<string, LibraryBook[]>();
+    for (const b of allBooksList) {
+      const author = b.author || 'Naməlum Müəllif';
+      if (!map.has(author)) {
+        map.set(author, []);
+      }
+      map.get(author)!.push(b);
+    }
+    return Array.from(map.entries()).map(([author, books]) => ({
+      author,
+      books,
+    }));
+  }, [allBooksList]);
+
+  const openBookDetail = (b: LibraryBook) => {
+    const catalogBook = (standardEbooksCatalog as ApiBook[]).find((x) => x.id === b.id);
+    setSelectedBook(
+      catalogBook ?? {
+        id: b.id,
+        title: b.title,
+        author: b.author,
+        coverUrl: b.coverUrl,
+        epubUrl: '',
+        downloadCount: b.downloadCount,
+      },
+    );
+  };
 
   if (loading) {
     return (
@@ -199,7 +166,7 @@ export default function LibraryScreen() {
     );
   }
 
-  const isEmpty = reading.length === 0 && saved.length === 0 && finished.length === 0;
+  const isEmpty = allBooksList.length === 0;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -208,22 +175,33 @@ export default function LibraryScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>{t('library_title')}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('library_title') || 'Mənim Kitabxanam'}</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            {t('library_subtitle')}
+            Saxladığınız və oxuduğunuz bütün kitablar
           </Text>
 
-          {/* Litera Top Tabs */}
+          {/* Litera Top Functional Tabs */}
           <View style={[styles.tabBarRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <Pressable
-              onPress={() => setActiveTab('books')}
+              onPress={() => setActiveTab('all')}
               style={[
                 styles.tabItem,
-                activeTab === 'books' && { backgroundColor: colors.primary },
+                activeTab === 'all' && { backgroundColor: colors.primary },
               ]}
             >
-              <Text style={[styles.tabItemText, { color: activeTab === 'books' ? '#ffffff' : colors.textMuted }]}>
-                {t('sub_books')}
+              <Text style={[styles.tabItemText, { color: activeTab === 'all' ? '#ffffff' : colors.textMuted }]}>
+                Bütün Kitablar ({allBooksList.length})
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setActiveTab('reading')}
+              style={[
+                styles.tabItem,
+                activeTab === 'reading' && { backgroundColor: colors.primary },
+              ]}
+            >
+              <Text style={[styles.tabItemText, { color: activeTab === 'reading' ? '#ffffff' : colors.textMuted }]}>
+                Oxunanlar ({reading.length})
               </Text>
             </Pressable>
             <Pressable
@@ -234,18 +212,7 @@ export default function LibraryScreen() {
               ]}
             >
               <Text style={[styles.tabItemText, { color: activeTab === 'authors' ? '#ffffff' : colors.textMuted }]}>
-                {t('sub_authors')}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setActiveTab('collections')}
-              style={[
-                styles.tabItem,
-                activeTab === 'collections' && { backgroundColor: colors.primary },
-              ]}
-            >
-              <Text style={[styles.tabItemText, { color: activeTab === 'collections' ? '#ffffff' : colors.textMuted }]}>
-                {t('sub_collections')}
+                Müəlliflər ({authorGroups.length})
               </Text>
             </Pressable>
           </View>
@@ -254,9 +221,9 @@ export default function LibraryScreen() {
         {isEmpty ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>📚</Text>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('empty_library')}</Text>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>Kitabxananız Boşdur</Text>
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              {t('empty_library_sub')}
+              Ana səhifədən və ya axtarışdan istədiyiniz kitabı seçib kitabxananıza əlavə edə bilərsiniz.
             </Text>
           </View>
         ) : null}
@@ -264,74 +231,141 @@ export default function LibraryScreen() {
         {/* Google Ad Banner */}
         <AdBannerContainer />
 
-        {/* Oxunur */}
-        {reading.length > 0 ? (
+        {/* TAB 1: ALL BOOKS */}
+        {activeTab === 'all' && !isEmpty ? (
           <>
-            <SectionHeader title="Oxunur" />
-            <View style={styles.listSection}>
-              {reading.map((item) => (
-                <BookCard
-                  key={'reading-' + item.id}
-                  id={item.id}
-                  title={item.title}
-                  author={item.author}
-                  coverUrl={item.coverUrl}
-                  downloadCount={item.downloadCount}
-                  readingPercent={item.readingPercent}
-                  variant="vertical"
-                  coverSize="sm"
-                  onPress={() => goToDetail(item)}
-                />
-              ))}
-            </View>
+            {reading.length > 0 ? (
+              <View style={styles.sectionWrap}>
+                <SectionHeader title={`Oxumağa Davam Et (${reading.length})`} />
+                <View style={styles.listSection}>
+                  {reading.map((item) => (
+                    <BookCard
+                      key={'all-r-' + item.id}
+                      id={item.id}
+                      title={item.title}
+                      author={item.author}
+                      coverUrl={item.coverUrl}
+                      downloadCount={item.downloadCount}
+                      readingPercent={item.readingPercent}
+                      variant="vertical"
+                      coverSize="sm"
+                      onPress={() => openBookDetail(item)}
+                    />
+                  ))}
+                </View>
+              </View>
+            ) : null}
+
+            {saved.length > 0 ? (
+              <View style={styles.sectionWrap}>
+                <SectionHeader title={`Yadda Saxlanılanlar (${saved.length})`} />
+                <View style={styles.listSection}>
+                  {saved.map((item) => (
+                    <BookCard
+                      key={'all-s-' + item.id}
+                      id={item.id}
+                      title={item.title}
+                      author={item.author}
+                      coverUrl={item.coverUrl}
+                      downloadCount={item.downloadCount}
+                      variant="vertical"
+                      coverSize="sm"
+                      onPress={() => openBookDetail(item)}
+                    />
+                  ))}
+                </View>
+              </View>
+            ) : null}
+
+            {finished.length > 0 ? (
+              <View style={styles.sectionWrap}>
+                <SectionHeader title={`Bitirilmiş Kitablar (${finished.length})`} />
+                <View style={styles.listSection}>
+                  {finished.map((item) => (
+                    <BookCard
+                      key={'all-f-' + item.id}
+                      id={item.id}
+                      title={item.title}
+                      author={item.author}
+                      coverUrl={item.coverUrl}
+                      downloadCount={item.downloadCount}
+                      readingPercent={100}
+                      variant="vertical"
+                      coverSize="sm"
+                      onPress={() => openBookDetail(item)}
+                    />
+                  ))}
+                </View>
+              </View>
+            ) : null}
           </>
         ) : null}
 
-        {/* Qeyd Edilmiş */}
-        {saved.length > 0 ? (
-          <>
-            <SectionHeader title="Qeyd Edilmiş" />
-            <View style={styles.listSection}>
-              {saved.map((item) => (
-                <BookCard
-                  key={'saved-' + item.id}
-                  id={item.id}
-                  title={item.title}
-                  author={item.author}
-                  coverUrl={item.coverUrl}
-                  downloadCount={item.downloadCount}
-                  variant="vertical"
-                  coverSize="sm"
-                  onPress={() => goToDetail(item)}
-                />
-              ))}
-            </View>
-          </>
+        {/* TAB 2: READING ONLY */}
+        {activeTab === 'reading' && !isEmpty ? (
+          <View style={styles.sectionWrap}>
+            {reading.length > 0 ? (
+              <View style={styles.listSection}>
+                {reading.map((item) => (
+                  <BookCard
+                    key={'r-tab-' + item.id}
+                    id={item.id}
+                    title={item.title}
+                    author={item.author}
+                    coverUrl={item.coverUrl}
+                    downloadCount={item.downloadCount}
+                    readingPercent={item.readingPercent}
+                    variant="vertical"
+                    coverSize="sm"
+                    onPress={() => openBookDetail(item)}
+                  />
+                ))}
+              </View>
+            ) : (
+              <Text style={[styles.emptyTabText, { color: colors.textMuted }]}>
+                Hal-hazırda aktiv oxunan kitabınız yoxdur.
+              </Text>
+            )}
+          </View>
         ) : null}
 
-        {/* Bitmiş */}
-        {finished.length > 0 ? (
-          <>
-            <SectionHeader title="Bitmiş" />
-            <View style={styles.listSection}>
-              {finished.map((item) => (
-                <BookCard
-                  key={'fin-' + item.id}
-                  id={item.id}
-                  title={item.title}
-                  author={item.author}
-                  coverUrl={item.coverUrl}
-                  downloadCount={item.downloadCount}
-                  readingPercent={100}
-                  variant="vertical"
-                  coverSize="sm"
-                  onPress={() => goToDetail(item)}
-                />
-              ))}
-            </View>
-          </>
+        {/* TAB 3: AUTHORS GROUPED */}
+        {activeTab === 'authors' && !isEmpty ? (
+          <View style={styles.sectionWrap}>
+            {authorGroups.map((group) => (
+              <View key={'author-' + group.author} style={styles.authorCard}>
+                <Text style={[styles.authorName, { color: colors.text }]}>{group.author}</Text>
+                <Text style={[styles.authorBookCount, { color: colors.primary }]}>
+                  {group.books.length} kitab
+                </Text>
+                <View style={styles.listSection}>
+                  {group.books.map((b) => (
+                    <BookCard
+                      key={'ag-' + b.id}
+                      id={b.id}
+                      title={b.title}
+                      author={b.author}
+                      coverUrl={b.coverUrl}
+                      downloadCount={b.downloadCount}
+                      readingPercent={b.readingPercent > 0 ? b.readingPercent : undefined}
+                      variant="vertical"
+                      coverSize="sm"
+                      onPress={() => openBookDetail(b)}
+                    />
+                  ))}
+                </View>
+              </View>
+            ))}
+          </View>
         ) : null}
       </ScrollView>
+
+      {/* Book Detail Sheet Modal */}
+      <BookDetailModal
+        visible={Boolean(selectedBook)}
+        book={selectedBook}
+        onClose={() => setSelectedBook(null)}
+      />
     </View>
   );
 }
@@ -346,31 +380,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   scrollContent: {
-    paddingBottom: Spacing.xxxl,
+    paddingBottom: Spacing.xxl + 80,
   },
   header: {
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xxxl,
+    paddingTop: Spacing.xxl + 10,
     paddingBottom: Spacing.md,
-    gap: Spacing.xs,
-  },
-  tabBarRow: {
-    flexDirection: 'row',
-    borderRadius: Radius.pill,
-    padding: 4,
-    borderWidth: 1,
-    marginTop: Spacing.md,
-  },
-  tabItem: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: Radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabItemText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
   },
   title: {
     fontSize: FontSize.xxl,
@@ -378,30 +393,70 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   subtitle: {
-    fontSize: FontSize.md,
+    fontSize: FontSize.sm,
+    lineHeight: 20,
+    marginBottom: Spacing.lg,
   },
-  listSection: {
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.md,
-    marginBottom: Spacing.xxl,
+  tabBarRow: {
+    flexDirection: 'row',
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    padding: 3,
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabItemText: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.semibold,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.md,
+    paddingHorizontal: Spacing.xxl,
+    paddingVertical: Spacing.xxl + 20,
   },
   emptyIcon: {
     fontSize: 48,
+    marginBottom: Spacing.md,
   },
   emptyTitle: {
     fontSize: FontSize.lg,
-    fontWeight: FontWeight.semibold,
+    fontWeight: FontWeight.bold,
+    marginBottom: Spacing.xs,
   },
   emptyText: {
-    fontSize: FontSize.md,
+    fontSize: FontSize.sm,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 20,
+  },
+  sectionWrap: {
+    paddingHorizontal: Spacing.xl,
+    marginTop: Spacing.md,
+  },
+  listSection: {
+    gap: Spacing.md,
+    marginTop: Spacing.xs,
+  },
+  emptyTabText: {
+    textAlign: 'center',
+    paddingVertical: Spacing.xl,
+    fontSize: FontSize.sm,
+  },
+  authorCard: {
+    marginBottom: Spacing.xl,
+  },
+  authorName: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+  },
+  authorBookCount: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.semibold,
+    marginBottom: Spacing.sm,
   },
 });

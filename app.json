@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "kitab-oxu",
-    "slug": "kitab-oxu",
+    "name": "Litera",
+    "slug": "litera",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "kitapapp",
+    "scheme": "litera",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
@@ -25,7 +25,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.kitaboxu"
+      "package": "com.litera.app"
     },
     "web": {
       "bundler": "metro",

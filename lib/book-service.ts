@@ -10,19 +10,37 @@ import type {
   BookPrepareProgress,
   BookPrepareStage,
 } from '@/types/book';
-import { documentDirectory, downloadAsync, getInfoAsync } from 'expo-file-system/legacy';
+import { deleteAsync, documentDirectory, downloadAsync, getInfoAsync } from 'expo-file-system/legacy';
 
 // Eyni kitab ucun eyni anda iki defe hazirlamaq olmasin.
 const preparingBooks = new Map<string, Promise<void>>();
+
+const MIN_VALID_EPUB_BYTES = 20000;
 
 export async function isBookReady(bookId: string): Promise<boolean> {
   await initDatabase();
   const book = await getBook(bookId);
   if (!book?.isDownloaded || !book?.epubFilePath) return false;
 
-  // Verify file actually exists
-  const fileInfo = await getInfoAsync(book.epubFilePath);
-  return fileInfo.exists;
+  // Verify file actually exists and is a valid non-empty archive (> 20 KB)
+  try {
+    const fileInfo = await getInfoAsync(book.epubFilePath);
+    if (fileInfo.exists && (fileInfo.size ?? 0) > MIN_VALID_EPUB_BYTES) {
+      return true;
+    }
+    // Corrupt or HTML landing page saved by mistake - clean it up
+    if (fileInfo.exists) {
+      await deleteAsync(book.epubFilePath, { idempotent: true });
+    }
+    await upsertBook({
+      id: book.id,
+      title: book.title,
+      isDownloaded: false,
+    });
+    return false;
+  } catch {
+    return false;
+  }
 }
 
 export async function prepareBookForReading(
@@ -64,7 +82,7 @@ async function runPrepare(
     report('downloading', 0, 1, 'Kitab melumati cekilir...');
     const fromApi = await fetchBookById(book.id);
     if (!fromApi) {
-      throw new Error('Kitab Gutendex-de tapilmadi');
+      throw new Error('Kitab kataloqda tapilmadi');
     }
     book = fromApi;
   }
@@ -90,13 +108,27 @@ async function runPrepare(
     throw new Error('Fayl sisteminə giriş mümkün olmadı.');
   }
 
+  let downloadUrl = book.epubUrl;
+  if (downloadUrl.includes('standardebooks.org') && !downloadUrl.includes('?source=download')) {
+    downloadUrl += (downloadUrl.includes('?') ? '&' : '?') + 'source=download';
+  }
+
   const safeFilename = `${book.id}_${book.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.epub`;
   const localUri = `${documentDirectory}${safeFilename}`;
 
-  const downloadResult = await downloadAsync(book.epubUrl, localUri);
+  // Delete any old invalid file at the target path first
+  await deleteAsync(localUri, { idempotent: true }).catch(() => {});
+
+  const downloadResult = await downloadAsync(downloadUrl, localUri);
 
   if (downloadResult.status !== 200) {
     throw new Error('EPUB yuklenmedi (' + downloadResult.status + ')');
+  }
+
+  const downloadedFileInfo = await getInfoAsync(downloadResult.uri);
+  if (!downloadedFileInfo.exists || (downloadedFileInfo.size ?? 0) <= MIN_VALID_EPUB_BYTES) {
+    await deleteAsync(downloadResult.uri, { idempotent: true }).catch(() => {});
+    throw new Error('EPUB faylı natamam və ya xətalı yükləndi. Yenidən cəhd edin.');
   }
 
   report('saving', 1, 1, 'Yerli yaddaşa yazılır...');

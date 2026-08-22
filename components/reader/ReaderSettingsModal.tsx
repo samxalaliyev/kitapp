@@ -30,14 +30,10 @@ export interface ReaderSettingsModalProps {
 
 const SIZE_ORDER: FontSizeLevel[] = ['small', 'normal', 'large', 'xlarge'];
 const FAMILY_ORDER: { key: FontFamilyChoice; label: string }[] = [
-  { key: 'serif', label: 'Serif' },
-  { key: 'poppins', label: 'Poppins' },
-  { key: 'outfit', label: 'Outfit' },
-  { key: 'rounded', label: 'Rounded' },
-  { key: 'sans', label: 'Sans-Serif' },
-  { key: 'georgia', label: 'Georgia' },
-  { key: 'merriweather', label: 'Merriweather' },
-  { key: 'mono', label: 'Monospace' },
+  { key: 'serif', label: 'Serif (Klassik)' },
+  { key: 'sans', label: 'Sans-Serif (Müasir)' },
+  { key: 'noah', label: 'Noah (Zərif Həndəsi)' },
+  { key: 'lovelo', label: 'Lovelo (Ədəbi Şrift)' },
 ];
 const THEME_ORDER: ThemeChoice[] = ['paper', 'sepia', 'cream', 'dark', 'black'];
 
@@ -172,7 +168,7 @@ export function ReaderSettingsModal({
               })}
             </View>
 
-            {/* Font Size & Line Height Row */}
+            {/* Font Size & Line Alignment Row */}
             <View style={styles.twoColumn}>
               <View style={styles.col}>
                 <Text style={[styles.label, { color: themeConfig.text + 'aa' }]}>
@@ -240,7 +236,7 @@ export function ReaderSettingsModal({
                     <Text
                       style={[
                         styles.familyGridText,
-                        { color: active ? '#ffffff' : themeConfig.text },
+                        { color: active ? '#ffffff' : themeConfig.text, fontWeight: active ? '700' : '500' },
                       ]}
                       numberOfLines={1}
                     >
@@ -260,44 +256,38 @@ export function ReaderSettingsModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
   dismissOverlay: {
     flex: 1,
   },
   sheet: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
+    paddingTop: Spacing.sm,
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    gap: Spacing.md,
-    maxHeight: '80%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 10,
+    maxHeight: '75%',
   },
   handleContainer: {
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: Spacing.xs,
   },
   handle: {
-    width: 38,
-    height: 5,
-    borderRadius: 3,
+    width: 36,
+    height: 4,
+    borderRadius: 2,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.sm,
   },
   sheetTitle: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-    letterSpacing: -0.3,
   },
   closeBtn: {
     width: 32,
@@ -311,24 +301,25 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   content: {
+    paddingBottom: Spacing.md,
     gap: Spacing.md,
-    paddingBottom: Spacing.lg,
   },
   label: {
     fontSize: 11,
     fontWeight: FontWeight.bold,
     letterSpacing: 0.8,
-    marginTop: 4,
+    marginBottom: 4,
+    textTransform: 'uppercase',
   },
   themeRow: {
     flexDirection: 'row',
+    gap: Spacing.sm,
     justifyContent: 'space-between',
-    gap: 8,
   },
   themeChip: {
     flex: 1,
     height: 48,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -342,31 +333,31 @@ const styles = StyleSheet.create({
   },
   col: {
     flex: 1,
-    gap: 4,
   },
   pillControl: {
-    height: 44,
-    borderRadius: Radius.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 6,
+    height: 44,
+    borderRadius: Radius.lg,
+    paddingHorizontal: 4,
   },
   pillBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 38,
+    height: 36,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   pillBtnFull: {
     flex: 1,
     height: 36,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   pillBtnText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: FontWeight.bold,
   },
   pillValueText: {
@@ -376,19 +367,19 @@ const styles = StyleSheet.create({
   familyGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: Spacing.sm,
   },
   familyGridPill: {
-    width: '23%',
-    paddingVertical: 10,
-    borderRadius: Radius.md,
+    width: '48%',
+    height: 44,
+    borderRadius: Radius.lg,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: Spacing.sm,
   },
   familyGridText: {
-    fontSize: 12,
-    fontWeight: FontWeight.semibold,
+    fontSize: 13,
   },
   pressed: {
     opacity: 0.7,

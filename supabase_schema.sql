@@ -83,6 +83,23 @@ CREATE TABLE IF NOT EXISTS public.subscription_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 8. BOOKS MASTER CATALOG (Standard Ebooks Collection)
+CREATE TABLE IF NOT EXISTS public.books (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  author TEXT NOT NULL,
+  summary TEXT,
+  cover_url TEXT,
+  epub_url TEXT NOT NULL,
+  languages TEXT[] DEFAULT '{"en"}',
+  download_count INT DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_books_title ON public.books (title);
+CREATE INDEX IF NOT EXISTS idx_books_author ON public.books (author);
+CREATE INDEX IF NOT EXISTS idx_books_download_count ON public.books (download_count DESC);
+
 -- ====================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ====================================================================
@@ -93,6 +110,10 @@ ALTER TABLE public.user_saved_books ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_reading_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_vocabulary ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscription_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.books ENABLE ROW LEVEL SECURITY;
+
+-- Books Public Read Policy
+CREATE POLICY "Public read access on books" ON public.books FOR SELECT USING (true);
 
 -- Profiles Policies
 CREATE POLICY "Users can read own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);

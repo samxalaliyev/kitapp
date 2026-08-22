@@ -4,6 +4,7 @@ import {
   Dimensions,
   Linking,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
+import { SOCIAL_CONFIG } from '@/lib/social';
 
 // react-native-share yalniz development build-de isleyir, Expo Go-da yox.
 let RNShare: any = null;
@@ -101,7 +103,7 @@ export function QuoteStoryModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const deepLink = 'kitapapp://book/' + bookId;
+  const deepLink = 'https://litera.app/book/' + bookId;
 
   async function capture(): Promise<string | null> {
     if (!viewShotRef.current?.capture) return null;
@@ -142,43 +144,41 @@ export function QuoteStoryModal({
 
       const base64Uri = base64Image ? `data:image/png;base64,${base64Image}` : fileUri;
 
-      if (RNShare) {
-        if (RNSocial && RNSocial.InstagramStories) {
-          try {
-            await RNShare.shareSingle({
-              social: RNSocial.InstagramStories,
-              appId: INSTAGRAM_APP_ID,
-              backgroundImage: fileUri,
-              attributionURL: deepLink,
-            });
-            return;
-          } catch (igErr: any) {
-            if (igErr?.message === 'User did not share' || igErr?.message?.includes('cancel')) return;
-            console.log('IG Stories shareSingle error:', igErr);
-          }
-        }
-
-        if (RNSocial && RNSocial.Instagram) {
-          try {
-            await RNShare.shareSingle({
-              social: RNSocial.InstagramStories,
-              backgroundImage: fileUri,
-              attributionURL: deepLink,
-            });
-            return;
-          } catch (igErr: any) {
-            if (igErr?.message === 'User did not share' || igErr?.message?.includes('cancel')) return;
-            console.log('IG direct shareSingle error:', igErr);
-          }
+      if (RNShare && RNSocial && RNSocial.InstagramStories) {
+        try {
+          const shareOptions: any = {
+            social: RNSocial.InstagramStories,
+            appId: SOCIAL_CONFIG.FACEBOOK_APP_ID,
+            backgroundImage: Platform.OS === 'android' ? fileUri : base64Uri,
+            attributionURL: deepLink,
+          };
+          await RNShare.shareSingle(shareOptions);
+          return;
+        } catch (igErr: any) {
+          if (igErr?.message === 'User did not share' || igErr?.message?.includes('cancel')) return;
         }
       }
 
+      if (RNShare) {
+        try {
+          await RNShare.open({
+            url: Platform.OS === 'android' ? fileUri : base64Uri,
+            type: 'image/png',
+            title: 'Instagram Story-də Paylaş',
+            failOnCancel: false,
+          });
+          return;
+        } catch {}
+      }
+
       // System share sheet (opens Instagram, WhatsApp, Stories etc.)
-      await Sharing.shareAsync(fileUri, {
-        mimeType: 'image/png',
-        UTI: 'public.png',
-        dialogTitle: 'Instagram Stories-də paylaş',
-      });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'image/png',
+          UTI: 'public.png',
+          dialogTitle: 'Instagram Stories-də paylaş',
+        });
+      }
     } catch (err: any) {
       if (err?.message !== 'User did not share') {
         console.log('IG share overall error:', err);
@@ -202,9 +202,9 @@ export function QuoteStoryModal({
         await RNShare.open({
           url: uri,
           type: 'image/png',
-          filename: 'kitapapp-story.png',
-          title: 'KitapApp-den sitat',
-          message: quoteText(quote, bookTitle, bookAuthor, deepLink),
+          filename: 'litera-story.png',
+          title: 'Litera-dan sitat',
+          message: `${quote}\n\n— ${bookTitle}${bookAuthor ? ` (${bookAuthor})` : ''}\n${deepLink}`,
           failOnCancel: false,
         });
       } else {
@@ -257,7 +257,7 @@ export function QuoteStoryModal({
               >
                 <View style={styles.brandTopRow}>
                   <Text style={[styles.brandText, { color: theme.subTextColor }]}>
-                    KitapApp ile oxundu
+                    Litera ilə oxundu
                   </Text>
                 </View>
 
@@ -301,7 +301,7 @@ export function QuoteStoryModal({
                     style={[styles.appBadge, { borderColor: theme.accent }]}
                   >
                     <Text style={[styles.appBadgeText, { color: theme.accent }]}>
-                      K
+                      L
                     </Text>
                   </View>
                 </View>

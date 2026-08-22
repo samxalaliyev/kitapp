@@ -124,10 +124,32 @@ export type TranslationKey =
   | 'login_btn'
   | 'logout_btn'
   | 'sync_success_title'
-  | 'sync_success_msg'
   | 'guest_user'
   | 'guest_sub'
-  | 'login_register_btn';
+  | 'login_register_btn'
+  | 'about_book'
+  | 'start_reading_btn'
+  | 'add_to_library_btn'
+  | 'in_library_saved_btn'
+  | 'home_header_subtitle'
+  | 'category_popular'
+  | 'category_fiction'
+  | 'category_adventure'
+  | 'category_philosophy'
+  | 'category_drama'
+  | 'cancel_search'
+  | 'no_results_found'
+  | 'translating_sentence'
+  | 'words_selected_count'
+  | 'share_story_btn'
+  | 'reading_loading'
+  | 'selection_mode_hint'
+  | 'sync_success_msg'
+  | 'page_indicator_of'
+  | 'action_read'
+  | 'action_save'
+  | 'action_saved'
+  | 'action_share';
 
 const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>> = {
   az: {
@@ -258,6 +280,28 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     guest_user: 'Qonaq İstifadəçi',
     guest_sub: 'Hesabınıza daxil olun və kitablarınızı buludda saxlayın',
     login_register_btn: '🔑 Daxil Ol / Qeydiyyat',
+    about_book: 'Kitab Haqqında',
+    start_reading_btn: '📖 Oxumağa Başla',
+    add_to_library_btn: '+ Kitabxanama Əlavə Et',
+    in_library_saved_btn: '✓ Kitabxanamda Saxlanılıb',
+    home_header_subtitle: 'Sizin üçün 1,500+ seçilmiş dünya klassiki topladıq.',
+    category_popular: '🌟 Ən Çox Oxunan Şedevrlər',
+    category_fiction: '📖 Klassik Romanlar və Ədəbiyyat',
+    category_adventure: '🕵️ Macəra və Detektiv',
+    category_philosophy: '🧠 Fəlsəfə və Düşüncə',
+    category_drama: '📜 Qısa Hekayələr və Dram',
+    cancel_search: 'Ləğv et',
+    no_results_found: 'Kitab tapılmadı',
+    translating_sentence: 'Cümlə Tərcüməsi',
+    words_selected_count: 'söz seçildi',
+    share_story_btn: 'Story Paylaş ✨',
+    reading_loading: 'Kitab hazırlanır...',
+    selection_mode_hint: 'Sitat seçmək üçün sözlərə toxunun',
+    page_indicator_of: '-dən',
+    action_read: 'Oxu',
+    action_save: 'Saxla',
+    action_saved: 'Saxlandı',
+    action_share: 'Paylaş',
   },
   en: {
     tab_home: 'Home',
@@ -387,6 +431,28 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     guest_user: 'Guest Reader',
     guest_sub: 'Sign in to sync your books and vocabulary across devices',
     login_register_btn: '🔑 Log In / Register',
+    about_book: 'About the Book',
+    start_reading_btn: '📖 Start Reading',
+    add_to_library_btn: '+ Add to Library',
+    in_library_saved_btn: '✓ Saved in Library',
+    home_header_subtitle: 'We curated 1,500+ world classics for you.',
+    category_popular: '🌟 Trending Masterpieces',
+    category_fiction: '📖 Classic Fiction & Novels',
+    category_adventure: '🕵️ Mystery & Adventure',
+    category_philosophy: '🧠 Philosophy & Thought',
+    category_drama: '📜 Short Stories & Drama',
+    cancel_search: 'Cancel',
+    no_results_found: 'No books found',
+    translating_sentence: 'Sentence Translation',
+    words_selected_count: 'words selected',
+    share_story_btn: 'Share Story ✨',
+    reading_loading: 'Preparing book...',
+    selection_mode_hint: 'Tap words to select a quote',
+    page_indicator_of: 'of',
+    action_read: 'Read',
+    action_save: 'Save',
+    action_saved: 'Saved',
+    action_share: 'Share',
   },
   ru: {
     tab_home: 'Главная',
@@ -474,6 +540,28 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     size_normal: 'Обычный (20px)',
     size_large: 'Большой (23px)',
     size_xlarge: 'Очень большой (27px)',
+    about_book: 'О книге',
+    start_reading_btn: '📖 Начать чтение',
+    add_to_library_btn: '+ Добавить в библиотеку',
+    in_library_saved_btn: '✓ В библиотеке',
+    home_header_subtitle: 'Мы собрали для вас более 1500 мировых классических произведений.',
+    category_popular: '🌟 Популярные шедевры',
+    category_fiction: '📖 Классические романы',
+    category_adventure: '🕵️ Приключения и детективы',
+    category_philosophy: '🧠 Философия и мысль',
+    category_drama: '📜 Рассказы и драма',
+    cancel_search: 'Отмена',
+    no_results_found: 'Книги не найдены',
+    translating_sentence: 'Перевод предложения',
+    words_selected_count: 'слов выбрано',
+    share_story_btn: 'Поделиться историей ✨',
+    reading_loading: 'Подготовка книги...',
+    selection_mode_hint: 'Нажмите на слова для выбора цитаты',
+    page_indicator_of: 'из',
+    action_read: 'Читать',
+    action_save: 'Сохранить',
+    action_saved: 'Сохранено',
+    action_share: 'Поделиться',
   },
   tr: {
     tab_home: 'Ana Sayfa',
@@ -561,6 +649,28 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     size_normal: 'Normal (20px)',
     size_large: 'Büyük (23px)',
     size_xlarge: 'Çok Büyük (27px)',
+    about_book: 'Kitap Hakkında',
+    start_reading_btn: '📖 Okumaya Başla',
+    add_to_library_btn: '+ Kitaplığıma Ekle',
+    in_library_saved_btn: '✓ Kitaplığımda Kayıtlı',
+    home_header_subtitle: 'Sizin için 1.500+ seçilmiş dünya klasiği topladık.',
+    category_popular: '🌟 En Çok Okunan Başyapıtlar',
+    category_fiction: '📖 Klasik Romanlar ve Edebiyat',
+    category_adventure: '🕵️ Macera ve Dedektif',
+    category_philosophy: '🧠 Felsefe ve Düşünce',
+    category_drama: '📜 Kısa Hikayeler ve Tiyatro',
+    cancel_search: 'Vazgeç',
+    no_results_found: 'Kitap bulunamadı',
+    translating_sentence: 'Cümle Çevirisi',
+    words_selected_count: 'kelime seçildi',
+    share_story_btn: 'Hikaye Paylaş ✨',
+    reading_loading: 'Kitap hazırlanıyor...',
+    selection_mode_hint: 'Alıntı seçmek için kelimelere dokunun',
+    page_indicator_of: 'den',
+    action_read: 'Oku',
+    action_save: 'Kaydet',
+    action_saved: 'Kaydedildi',
+    action_share: 'Paylaş',
   },
   es: {
     tab_home: 'Inicio',
@@ -648,6 +758,28 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     size_normal: 'Normal (20px)',
     size_large: 'Grande (23px)',
     size_xlarge: 'Muy grande (27px)',
+    about_book: 'Acerca del libro',
+    start_reading_btn: '📖 Comenzar a leer',
+    add_to_library_btn: '+ Añadir a biblioteca',
+    in_library_saved_btn: '✓ En la biblioteca',
+    home_header_subtitle: 'Hemos seleccionado más de 1.500 clásicos mundiales para ti.',
+    category_popular: '🌟 Obras maestras populares',
+    category_fiction: '📖 Novelas y literatura clásica',
+    category_adventure: '🕵️ Aventura y misterio',
+    category_philosophy: '🧠 Filosofía y pensamiento',
+    category_drama: '📜 Relatos cortos y drama',
+    cancel_search: 'Cancelar',
+    no_results_found: 'No se encontraron libros',
+    translating_sentence: 'Traducción de oración',
+    words_selected_count: 'palabras seleccionadas',
+    share_story_btn: 'Compartir historia ✨',
+    reading_loading: 'Preparando libro...',
+    selection_mode_hint: 'Toca palabras para seleccionar una cita',
+    page_indicator_of: 'de',
+    action_read: 'Leer',
+    action_save: 'Guardar',
+    action_saved: 'Guardado',
+    action_share: 'Compartir',
   },
   de: {
     tab_home: 'Startseite',
@@ -735,6 +867,28 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     size_normal: 'Normal (20px)',
     size_large: 'Groß (23px)',
     size_xlarge: 'Sehr groß (27px)',
+    about_book: 'Über das Buch',
+    start_reading_btn: '📖 Lesen starten',
+    add_to_library_btn: '+ Zur Bibliothek hinzufügen',
+    in_library_saved_btn: '✓ In Bibliothek',
+    home_header_subtitle: 'Wir haben über 1.500 Weltklassiker für Sie zusammengestellt.',
+    category_popular: '🌟 Beliebte Meisterwerke',
+    category_fiction: '📖 Klassische Romane & Literatur',
+    category_adventure: '🕵️ Abenteuer & Krimi',
+    category_philosophy: '🧠 Philosophie & Denken',
+    category_drama: '📜 Kurzgeschichten & Drama',
+    cancel_search: 'Abbrechen',
+    no_results_found: 'Keine Bücher gefunden',
+    translating_sentence: 'Satzübersetzung',
+    words_selected_count: 'Wörter ausgewählt',
+    share_story_btn: 'Story teilen ✨',
+    reading_loading: 'Buch wird vorbereitet...',
+    selection_mode_hint: 'Wörter antippen um Zitat zu wählen',
+    page_indicator_of: 'von',
+    action_read: 'Lesen',
+    action_save: 'Merken',
+    action_saved: 'Gemerkt',
+    action_share: 'Teilen',
   },
   fr: {
     tab_home: 'Accueil',
@@ -822,6 +976,28 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     size_normal: 'Normale (20px)',
     size_large: 'Grande (23px)',
     size_xlarge: 'Très grande (27px)',
+    about_book: 'À propos du livre',
+    start_reading_btn: '📖 Commencer la lecture',
+    add_to_library_btn: '+ Ajouter à la bibliothèque',
+    in_library_saved_btn: '✓ Dans la bibliothèque',
+    home_header_subtitle: 'Nous avons sélectionné plus de 1 500 classiques mondiaux pour vous.',
+    category_popular: '🌟 Chefs-d\'œuvre populaires',
+    category_fiction: '📖 Romans et littérature classiques',
+    category_adventure: '🕵️ Aventure et mystère',
+    category_philosophy: '🧠 Philosophie et pensée',
+    category_drama: '📜 Nouvelles et théâtre',
+    cancel_search: 'Annuler',
+    no_results_found: 'Aucun livre trouvé',
+    translating_sentence: 'Traduction de phrase',
+    words_selected_count: 'mots sélectionnés',
+    share_story_btn: 'Partager en story ✨',
+    reading_loading: 'Préparation du livre...',
+    selection_mode_hint: 'Touchez les mots pour sélectionner une citation',
+    page_indicator_of: 'sur',
+    action_read: 'Lire',
+    action_save: 'Sauvegarder',
+    action_saved: 'Sauvegardé',
+    action_share: 'Partager',
   },
 };
 
