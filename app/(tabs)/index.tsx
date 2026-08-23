@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -9,10 +9,17 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 
 import standardEbooksCatalog from '@/assets/data/standard_ebooks.json';
 import { AdBannerContainer } from '@/components/AdBannerContainer';
+import {
+  AuthorAvatarView,
+  AuthorBooksModal,
+  POPULAR_AUTHORS,
+  type AuthorItem,
+} from '@/components/AuthorBooksModal';
 import { BookCard } from '@/components/BookCard';
 import { BookDetailModal } from '@/components/BookDetailModal';
 import { SectionHeader } from '@/components/SectionHeader';
@@ -37,6 +44,24 @@ function getGreetingPrefix(lang: string): string {
     if (hour < 18) return 'Добрый день';
     return 'Добрый вечер';
   }
+  if (lang === 'es') {
+    if (hour < 6) return 'Buenas noches';
+    if (hour < 12) return 'Buenos días';
+    if (hour < 18) return 'Buenas tardes';
+    return 'Buenas noches';
+  }
+  if (lang === 'de') {
+    if (hour < 6) return 'Gute Nacht';
+    if (hour < 12) return 'Guten Morgen';
+    if (hour < 18) return 'Guten Tag';
+    return 'Guten Abend';
+  }
+  if (lang === 'fr') {
+    if (hour < 6) return 'Bonne nuit';
+    if (hour < 12) return 'Bonjour';
+    if (hour < 18) return 'Bon après-midi';
+    return 'Bonsoir';
+  }
   if (lang === 'en') {
     if (hour < 6) return 'Good night';
     if (hour < 12) return 'Good morning';
@@ -49,13 +74,148 @@ function getGreetingPrefix(lang: string): string {
   return 'Axşamınız xeyir';
 }
 
+// Precompute categories once to save RAM & CPU cycles
+const catalog = (standardEbooksCatalog as ApiBook[]) ?? [];
+
+const POPULAR_BOOKS = [...catalog]
+  .sort((a, b) => (b.downloadCount ?? 0) - (a.downloadCount ?? 0))
+  .slice(0, 12);
+
+const ADVENTURE_AUTHORS = [
+  'arthur-conan-doyle',
+  'anna-katharine-green',
+  'john-meade-falkner',
+  'robert-louis-stevenson',
+  'alexandre-dumas',
+  'jules-verne',
+  'h-g-wells',
+  'bram-stoker',
+  'edgar-allan-poe',
+  'wilkie-collins',
+  'jack-london',
+  'joseph-conrad',
+  'herman-melville',
+  'ridder-haggard',
+];
+const ADVENTURE_BOOKS = catalog
+  .filter(
+    (b) =>
+      ADVENTURE_AUTHORS.some((a) => b.id.includes(a)) ||
+      b.title.toLowerCase().includes('mystery') ||
+      b.title.toLowerCase().includes('adventure') ||
+      b.title.toLowerCase().includes('detective'),
+  )
+  .slice(0, 12);
+
+const FICTION_AUTHORS = [
+  'jane-austen',
+  'charlotte-bronte',
+  'emily-bronte',
+  'leo-tolstoy',
+  'charles-dickens',
+  'thomas-hardy',
+  'george-eliot',
+  'gustave-flaubert',
+  'louisa-may-alcott',
+  'lucy-maud-montgomery',
+  'edith-wharton',
+  'virginia-woolf',
+  'e-m-forster',
+];
+const FICTION_BOOKS = catalog
+  .filter(
+    (b) =>
+      FICTION_AUTHORS.some((a) => b.id.includes(a)) ||
+      b.title.toLowerCase().includes('pride') ||
+      b.title.toLowerCase().includes('love') ||
+      b.title.toLowerCase().includes('heart'),
+  )
+  .slice(0, 12);
+
+const PHILOSOPHY_AUTHORS = [
+  'david-hume',
+  'plato',
+  'aristotle',
+  'marcus-aurelius',
+  'friedrich-nietzsche',
+  'baruch-spinoza',
+  'john-stuart-mill',
+  'rene-descartes',
+  'arthur-schopenhauer',
+  'confucius',
+  'sun-tzu',
+  'laozi',
+  'epictetus',
+  'seneca',
+];
+const PHILOSOPHY_BOOKS = catalog
+  .filter(
+    (b) =>
+      PHILOSOPHY_AUTHORS.some((a) => b.id.includes(a)) ||
+      b.title.toLowerCase().includes('treatise') ||
+      b.title.toLowerCase().includes('philosophy') ||
+      b.title.toLowerCase().includes('ethics') ||
+      b.title.toLowerCase().includes('meditations'),
+  )
+  .slice(0, 12);
+
+const DRAMA_AUTHORS = [
+  'anton-chekhov',
+  'william-shakespeare',
+  'oscar-wilde',
+  'franz-kafka',
+  'guy-de-maupassant',
+  'o-henry',
+  'henrik-ibsen',
+  'moliere',
+  'edgar-saltus',
+  'karel-capek',
+];
+const DRAMA_BOOKS = catalog
+  .filter(
+    (b) =>
+      DRAMA_AUTHORS.some((a) => b.id.includes(a)) ||
+      b.title.toLowerCase().includes('short') ||
+      b.title.toLowerCase().includes('stories') ||
+      b.title.toLowerCase().includes('tragedy') ||
+      b.title.toLowerCase().includes('play'),
+  )
+  .slice(0, 12);
+
 export default function HomeScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
+  const scrollRef = useRef<ScrollView>(null);
   const { colors } = useAppTheme();
   const { t, uiLang } = useLanguage();
   const { user, profile } = useAuth();
 
-  // --- Dynamic Greeting ---
+  // Author Modal State
+  const [selectedAuthor, setSelectedAuthor] = useState<AuthorItem | null>(null);
+
+  // Real-time Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<ApiBook[]>([]);
+  const [searchActive, setSearchActive] = useState(false);
+
+  // Fast Clear Search
+  const clearSearch = useCallback(() => {
+    setSearchQuery('');
+    setSearchActive(false);
+    setSearchResults([]);
+  }, []);
+
+  // Home bottom tab navigation listener: instantly resets search & scrolls to top
+  useEffect(() => {
+    const unsubscribe = (navigation as any)?.addListener('tabPress', () => {
+      clearSearch();
+      setSelectedAuthor(null);
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+    });
+    return unsubscribe;
+  }, [navigation, clearSearch]);
+
+  // Dynamic Greeting
   const greetingText = useMemo(() => {
     const prefix = getGreetingPrefix(uiLang);
     const displayName =
@@ -70,63 +230,16 @@ export default function HomeScreen() {
     return `${prefix}!`;
   }, [profile?.displayName, user, uiLang]);
 
-  // --- Curated Netflix-style Categories from Standard Ebooks Catalog ---
+  // Fast Category Sections with localized titles
   const categorizedSections = useMemo(() => {
-    const catalog = (standardEbooksCatalog as ApiBook[]) ?? [];
-
-    const popular = [...catalog]
-      .sort((a, b) => (b.downloadCount ?? 0) - (a.downloadCount ?? 0))
-      .slice(0, 15);
-
-    const adventureAuthors = ['arthur-conan-doyle', 'anna-katharine-green', 'john-meade-falkner', 'robert-louis-stevenson', 'alexandre-dumas', 'jules-verne', 'h-g-wells', 'bram-stoker', 'edgar-allan-poe', 'wilkie-collins', 'jack-london', 'joseph-conrad', 'herman-melville', 'ridder-haggard'];
-    const adventure = catalog.filter((b) =>
-      adventureAuthors.some((a) => b.id.includes(a)) ||
-      b.title.toLowerCase().includes('mystery') ||
-      b.title.toLowerCase().includes('adventure') ||
-      b.title.toLowerCase().includes('detective') ||
-      b.title.toLowerCase().includes('island') ||
-      b.title.toLowerCase().includes('secret')
-    ).slice(0, 15);
-
-    const fictionAuthors = ['jane-austen', 'charlotte-bronte', 'emily-bronte', 'leo-tolstoy', 'charles-dickens', 'thomas-hardy', 'george-eliot', 'gustave-flaubert', 'louisa-may-alcott', 'lucy-maud-montgomery', 'edith-wharton', 'virginia-woolf', 'e-m-forster'];
-    const classicFiction = catalog.filter((b) =>
-      fictionAuthors.some((a) => b.id.includes(a)) ||
-      b.title.toLowerCase().includes('pride') ||
-      b.title.toLowerCase().includes('love') ||
-      b.title.toLowerCase().includes('heart')
-    ).slice(0, 15);
-
-    const philosophyAuthors = ['david-hume', 'plato', 'aristotle', 'marcus-aurelius', 'friedrich-nietzsche', 'baruch-spinoza', 'john-stuart-mill', 'rene-descartes', 'arthur-schopenhauer', 'confucius', 'sun-tzu', 'laozi', 'epictetus', 'seneca'];
-    const philosophy = catalog.filter((b) =>
-      philosophyAuthors.some((a) => b.id.includes(a)) ||
-      b.title.toLowerCase().includes('treatise') ||
-      b.title.toLowerCase().includes('philosophy') ||
-      b.title.toLowerCase().includes('ethics') ||
-      b.title.toLowerCase().includes('meditations')
-    ).slice(0, 15);
-
-    const dramaAuthors = ['anton-chekhov', 'william-shakespeare', 'oscar-wilde', 'franz-kafka', 'guy-de-maupassant', 'o-henry', 'henrik-ibsen', 'moliere', 'edgar-saltus', 'karel-capek'];
-    const drama = catalog.filter((b) =>
-      dramaAuthors.some((a) => b.id.includes(a)) ||
-      b.title.toLowerCase().includes('short') ||
-      b.title.toLowerCase().includes('stories') ||
-      b.title.toLowerCase().includes('tragedy') ||
-      b.title.toLowerCase().includes('play')
-    ).slice(0, 15);
-
     return [
-      { id: 'popular', title: t('category_popular'), data: popular },
-      { id: 'fiction', title: t('category_fiction'), data: classicFiction.length > 0 ? classicFiction : catalog.slice(15, 30) },
-      { id: 'adventure', title: t('category_adventure'), data: adventure.length > 0 ? adventure : catalog.slice(30, 45) },
-      { id: 'philosophy', title: t('category_philosophy'), data: philosophy.length > 0 ? philosophy : catalog.slice(45, 60) },
-      { id: 'drama', title: t('category_drama'), data: drama.length > 0 ? drama : catalog.slice(60, 75) },
+      { id: 'popular', title: t('category_popular'), data: POPULAR_BOOKS },
+      { id: 'fiction', title: t('category_fiction'), data: FICTION_BOOKS },
+      { id: 'adventure', title: t('category_adventure'), data: ADVENTURE_BOOKS },
+      { id: 'philosophy', title: t('category_philosophy'), data: PHILOSOPHY_BOOKS },
+      { id: 'drama', title: t('category_drama'), data: DRAMA_BOOKS },
     ];
   }, [t]);
-
-  // --- Real-time Search state ---
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<ApiBook[]>([]);
-  const [searchActive, setSearchActive] = useState(false);
 
   const handleSearchTextChange = useCallback((text: string) => {
     setSearchQuery(text);
@@ -138,24 +251,19 @@ export default function HomeScreen() {
     }
 
     setSearchActive(true);
-    const catalog = (standardEbooksCatalog as ApiBook[]) ?? [];
-    const matches = catalog.filter(
-      (b) =>
-        b.title.toLowerCase().includes(q) ||
-        b.author.toLowerCase().includes(q) ||
-        b.id.toLowerCase().includes(q),
-    ).slice(0, 50);
+    const matches = catalog
+      .filter(
+        (b) =>
+          b.title.toLowerCase().includes(q) ||
+          b.author.toLowerCase().includes(q) ||
+          b.id.toLowerCase().includes(q),
+      )
+      .slice(0, 30);
 
     setSearchResults(matches);
   }, []);
 
-  const clearSearch = useCallback(() => {
-    setSearchQuery('');
-    setSearchActive(false);
-    setSearchResults([]);
-  }, []);
-
-  // --- Active Reading Progress ---
+  // Active Reading Progress
   const [currentlyReading, setCurrentlyReading] = useState<{
     id: string;
     title: string;
@@ -179,7 +287,7 @@ export default function HomeScreen() {
       }
       const local = await getBook(latest.bookId);
       const title = local?.title || 'Kitab #' + latest.bookId;
-      const catalogBook = (standardEbooksCatalog as ApiBook[]).find((b) => b.id === latest.bookId);
+      const catalogBook = catalog.find((b) => b.id === latest.bookId);
 
       setCurrentlyReading({
         id: latest.bookId,
@@ -208,6 +316,7 @@ export default function HomeScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -232,7 +341,7 @@ export default function HomeScreen() {
               },
             ]}
           >
-            <Text style={styles.searchIcon}>🔍</Text>
+            <Feather name="search" size={17} color={colors.primary} style={{ marginRight: 8 }} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
               placeholder={t('search_placeholder')}
@@ -244,19 +353,17 @@ export default function HomeScreen() {
               autoCapitalize="none"
             />
             {searchQuery.length > 0 ? (
-              <Pressable
-                onPress={clearSearch}
-                style={styles.clearBtn}
-                hitSlop={12}
-              >
-                <Text style={[styles.clearBtnText, { color: colors.textMuted }]}>✕</Text>
+              <Pressable onPress={clearSearch} style={styles.clearBtn} hitSlop={12}>
+                <Feather name="x" size={16} color={colors.textMuted} />
               </Pressable>
             ) : null}
           </View>
 
           {searchActive ? (
             <Pressable onPress={clearSearch} style={styles.cancelBtn}>
-              <Text style={[styles.cancelBtnText, { color: colors.primary }]}>{t('cancel_search')}</Text>
+              <Text style={[styles.cancelBtnText, { color: colors.primary }]}>
+                {t('cancel_search')}
+              </Text>
             </Pressable>
           ) : null}
         </View>
@@ -285,8 +392,10 @@ export default function HomeScreen() {
             </View>
           ) : (
             <View style={styles.noResultsBox}>
-              <Text style={styles.noResultsIcon}>🔍</Text>
-              <Text style={[styles.noResultsTitle, { color: colors.text }]}>{t('no_results_found')}</Text>
+              <Feather name="search" size={38} color={colors.primary} style={{ marginBottom: 12 }} />
+              <Text style={[styles.noResultsTitle, { color: colors.text }]}>
+                {t('no_results_found')}
+              </Text>
               <Text style={[styles.noResultsSubtitle, { color: colors.textMuted }]}>
                 "{searchQuery}"
               </Text>
@@ -320,6 +429,35 @@ export default function HomeScreen() {
               </View>
             ) : null}
 
+            {/* SECTION: POPULAR AUTHORS CAROUSEL */}
+            <View style={styles.authorsSection}>
+              <View style={styles.sectionHeaderWrap}>
+                <SectionHeader title={t('popular_authors') || 'Məşhur Yazıçılar'} />
+              </View>
+              <FlatList
+                data={POPULAR_AUTHORS}
+                keyExtractor={(item) => item.id}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.authorsCarousel}
+                initialNumToRender={5}
+                maxToRenderPerBatch={5}
+                windowSize={3}
+                removeClippedSubviews={true}
+                renderItem={({ item }) => (
+                  <Pressable
+                    style={({ pressed }) => [styles.authorCard, pressed && styles.pressed]}
+                    onPress={() => setSelectedAuthor(item)}
+                  >
+                    <AuthorAvatarView author={item} size={64} />
+                    <Text style={[styles.authorCardName, { color: colors.text }]} numberOfLines={2}>
+                      {item.name}
+                    </Text>
+                  </Pressable>
+                )}
+              />
+            </View>
+
             {/* Google Ad Banner */}
             <AdBannerContainer />
 
@@ -335,6 +473,10 @@ export default function HomeScreen() {
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.carousel}
+                  initialNumToRender={4}
+                  maxToRenderPerBatch={4}
+                  windowSize={3}
+                  removeClippedSubviews={true}
                   renderItem={({ item }) => (
                     <BookCard
                       id={item.id}
@@ -354,11 +496,24 @@ export default function HomeScreen() {
         )}
       </ScrollView>
 
-      {/* Book Detail Sheet Modal */}
-      <BookDetailModal
-        visible={Boolean(selectedBook)}
-        book={selectedBook}
-        onClose={() => setSelectedBook(null)}
+      {/* Book Detail Modal */}
+      {selectedBook ? (
+        <BookDetailModal
+          book={selectedBook}
+          visible={!!selectedBook}
+          onClose={() => setSelectedBook(null)}
+        />
+      ) : null}
+
+      {/* Author Works Modal */}
+      <AuthorBooksModal
+        author={selectedAuthor}
+        visible={!!selectedAuthor}
+        onClose={() => setSelectedAuthor(null)}
+        onSelectBook={(book) => {
+          setSelectedAuthor(null);
+          setSelectedBook(book);
+        }}
       />
     </View>
   );
@@ -369,28 +524,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: Spacing.xxl + 120,
+    paddingBottom: 110,
+    paddingTop: Spacing.xl,
   },
   header: {
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xxl + 10,
-    paddingBottom: Spacing.md,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
   greeting: {
     fontSize: 26,
     fontWeight: FontWeight.bold,
-    letterSpacing: -0.5,
+    letterSpacing: 0.3,
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: FontSize.sm,
-    lineHeight: 20,
+    fontSize: FontSize.xs,
+    letterSpacing: 0.2,
+    lineHeight: 18,
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.lg,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.md,
     gap: Spacing.sm,
   },
   searchInputWrapper: {
@@ -398,8 +556,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 48,
-    borderWidth: 1,
     borderRadius: Radius.lg,
+    borderWidth: 1,
     paddingHorizontal: Spacing.md,
   },
   searchIcon: {
@@ -409,41 +567,42 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: '100%',
-    fontSize: FontSize.md,
+    fontSize: FontSize.sm,
   },
   clearBtn: {
-    padding: 6,
-    borderRadius: Radius.pill,
+    padding: Spacing.xs,
   },
   clearBtnText: {
-    fontSize: 15,
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
   },
   cancelBtn: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 10,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
   },
   cancelBtnText: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.semibold,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   searchResultsSection: {
     paddingHorizontal: Spacing.xl,
+    marginTop: Spacing.sm,
   },
   searchResultsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: Spacing.md,
     marginTop: Spacing.sm,
   },
   gridItem: {
     width: '47%',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   noResultsBox: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.xxl + 20,
+    paddingVertical: Spacing.xxl * 1.5,
     paddingHorizontal: Spacing.xl,
   },
   noResultsIcon: {
@@ -451,9 +610,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   noResultsTitle: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
-    marginBottom: 4,
+    marginBottom: Spacing.xs,
   },
   noResultsSubtitle: {
     fontSize: FontSize.sm,
@@ -461,32 +620,54 @@ const styles = StyleSheet.create({
   },
   sectionPadding: {
     paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.md,
-  },
-  sectionHeaderWrap: {
-    paddingHorizontal: Spacing.xl,
+    marginTop: Spacing.sm,
   },
   heroCard: {
     borderRadius: Radius.xl,
     borderWidth: 1,
-    padding: Spacing.md,
+    padding: Spacing.sm,
     marginTop: Spacing.xs,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  authorsSection: {
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xs,
+  },
+  authorsCarousel: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.sm,
+    gap: 16,
+  },
+  authorCard: {
+    alignItems: 'center',
+    width: 78,
+  },
+  authorCardName: {
+    fontSize: 11,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center',
+    lineHeight: 14,
+    marginTop: 4,
   },
   categorySection: {
     marginTop: Spacing.lg,
   },
+  sectionHeaderWrap: {
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.xs,
+  },
   carousel: {
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xs,
-    paddingBottom: Spacing.sm,
     gap: Spacing.md,
   },
   pressed: {
-    opacity: 0.9,
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
 });

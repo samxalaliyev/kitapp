@@ -250,7 +250,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password: pass,
     });
     if (!error && data?.user) {
-      await purgeUserLocalCache();
       setUser(data.user);
       setSession(data.session);
       await fetchProfile(data.user.id, data.user.email);

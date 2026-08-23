@@ -32,16 +32,16 @@ export interface ThemeColors {
 export const LIGHT_COLORS: ThemeColors = {
   bg: '#f8fafc',
   surface: '#ffffff',
-  surfaceBorder: '#f1f5f9',
+  surfaceBorder: '#e2e8f0',
   cardBg: '#ffffff',
   text: '#0f172a',
   textMuted: '#64748b',
   textSubtle: '#94a3b8',
-  primary: '#6366f1',
-  primaryBg: '#eef2ff',
-  badgeBg: '#e0e7ff',
-  badgeText: '#4338ca',
-  accentCard: '#6366f1',
+  primary: '#b48a4d',
+  primaryBg: 'rgba(180, 138, 77, 0.12)',
+  badgeBg: 'rgba(180, 138, 77, 0.12)',
+  badgeText: '#b48a4d',
+  accentCard: '#b48a4d',
   accentCardText: '#ffffff',
   danger: '#ef4444',
   readerBg: '#f8fafc',
@@ -49,32 +49,32 @@ export const LIGHT_COLORS: ThemeColors = {
   readerNav: '#334155',
   headerBg: '#f8fafc',
   tabBarBg: '#ffffff',
-  tabBarActive: '#6366f1',
+  tabBarActive: '#b48a4d',
   tabBarInactive: '#94a3b8',
   isDark: false,
 };
 
 export const DARK_COLORS: ThemeColors = {
-  bg: '#0b0f19',
-  surface: '#161f33',
-  surfaceBorder: '#23304a',
-  cardBg: '#161f33',
+  bg: '#0d0f17',
+  surface: '#141724',
+  surfaceBorder: 'rgba(212, 175, 122, 0.2)',
+  cardBg: '#141724',
   text: '#f8fafc',
-  textMuted: '#cbd5e1',
+  textMuted: '#94a3b8',
   textSubtle: '#64748b',
-  primary: '#818cf8',
-  primaryBg: '#1e1b4b',
-  badgeBg: '#23304a',
-  badgeText: '#a5b4fc',
-  accentCard: '#4f46e5',
-  accentCardText: '#ffffff',
-  danger: '#f87171',
-  readerBg: '#0b0f19',
+  primary: '#d4af7a',
+  primaryBg: 'rgba(212, 175, 122, 0.12)',
+  badgeBg: 'rgba(212, 175, 122, 0.12)',
+  badgeText: '#d4af7a',
+  accentCard: '#d4af7a',
+  accentCardText: '#0d0f17',
+  danger: '#ef4444',
+  readerBg: '#0d0f17',
   readerText: '#f8fafc',
   readerNav: '#cbd5e1',
-  headerBg: '#0b0f19',
-  tabBarBg: '#161f33',
-  tabBarActive: '#818cf8',
+  headerBg: '#0d0f17',
+  tabBarBg: '#10131d',
+  tabBarActive: '#d4af7a',
   tabBarInactive: '#64748b',
   isDark: true,
 };
@@ -88,19 +88,22 @@ interface ThemeContextType {
 const THEME_STORAGE_KEY = '@kitab_oxu_theme_mode';
 
 const ThemeContext = createContext<ThemeContextType>({
-  mode: 'system',
+  mode: 'dark',
   setMode: () => {},
-  colors: LIGHT_COLORS,
+  colors: DARK_COLORS,
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useColorScheme();
-  const [mode, setModeState] = useState<ThemeMode>('system');
+  const [mode, setModeState] = useState<ThemeMode>('dark');
 
   useEffect(() => {
     AsyncStorage.getItem(THEME_STORAGE_KEY).then((saved) => {
       if (saved === 'light' || saved === 'dark' || saved === 'system') {
         setModeState(saved);
+      } else {
+        // Default to dark luxury theme
+        setModeState('dark');
       }
     });
   }, []);
@@ -110,8 +113,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(THEME_STORAGE_KEY, newMode).catch(() => {});
   };
 
-  const isDark =
-    mode === 'dark' || (mode === 'system' && systemScheme === 'dark');
+  const isDark = mode === 'dark' || (mode === 'system' && systemScheme !== 'light') || mode === 'system';
 
   const colors = isDark ? DARK_COLORS : LIGHT_COLORS;
 

@@ -1,6 +1,7 @@
 import { clearAllUserLocalData, getAllReadingProgress, getAllSavedBooks, saveReadingProgress, setSavedStatus } from '@/lib/db';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
-import { clearAllSavedWordsDb, getSavedWordsDb, insertSavedWord } from '@/lib/vocabulary/db';
+import { clearAllSavedWordsDb } from '@/lib/vocabulary/db';
+import { listSavedWords, saveWord, deleteSavedWord, type SaveWordInput } from '@/lib/vocabulary/store';
 
 export interface SyncResult {
   syncedBooks: number;
@@ -18,6 +19,45 @@ export async function purgeUserLocalCache(): Promise<void> {
     await clearAllSavedWordsDb();
   } catch (err) {
     console.warn('[Sync] Failed to purge local user cache:', err);
+  }
+}
+
+/**
+ * Instantly synchronizes a newly saved word to Supabase cloud in real-time.
+ */
+export async function syncWordToCloud(userId: string, input: SaveWordInput): Promise<void> {
+  if (!isSupabaseConfigured || !userId) return;
+  try {
+    await supabase.from('user_vocabulary').upsert(
+      {
+        user_id: userId,
+        word: input.word.trim(),
+        translation: input.translation,
+        phonetic: input.phonetic,
+        language: input.language,
+        saved_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,word,language' }
+    );
+  } catch (err) {
+    console.warn('[Sync] Failed to sync word to cloud:', err);
+  }
+}
+
+/**
+ * Instantly removes a deleted word from Supabase cloud.
+ */
+export async function deleteWordFromCloud(userId: string, word: string, language: string): Promise<void> {
+  if (!isSupabaseConfigured || !userId) return;
+  try {
+    await supabase
+      .from('user_vocabulary')
+      .delete()
+      .eq('user_id', userId)
+      .eq('word', word.trim())
+      .eq('language', language);
+  } catch (err) {
+    console.warn('[Sync] Failed to delete word from cloud:', err);
   }
 }
 
@@ -79,8 +119,8 @@ export async function syncCloudData(userId: string): Promise<SyncResult> {
       }
     }
 
-    // 3. Sync Vocabulary
-    const localWords = await getSavedWordsDb('en');
+    // 3. Sync Vocabulary (All Languages)
+    const localWords = await listSavedWords();
     if (localWords.length > 0) {
       const vocabToUpsert = localWords.map((w) => ({
         user_id: userId,
@@ -93,15 +133,15 @@ export async function syncCloudData(userId: string): Promise<SyncResult> {
       await supabase.from('user_vocabulary').upsert(vocabToUpsert, { onConflict: 'user_id,word,language' });
     }
 
-    // Pull Remote Vocabulary
+    // Pull Remote Vocabulary for user
     const { data: remoteVocab } = await supabase
       .from('user_vocabulary')
       .select('word, translation, phonetic, language, review_count')
       .eq('user_id', userId);
 
-    if (remoteVocab) {
+    if (remoteVocab && remoteVocab.length > 0) {
       for (const rv of remoteVocab) {
-        await insertSavedWord({
+        await saveWord({
           word: rv.word,
           translation: rv.translation,
           phonetic: rv.phonetic,
@@ -116,6 +156,7 @@ export async function syncCloudData(userId: string): Promise<SyncResult> {
       syncedVocabulary: remoteVocab?.length ?? localWords.length,
     };
   } catch (err) {
+    console.warn('[Sync] SyncCloudData error:', err);
     return {
       syncedBooks: 0,
       syncedProgress: 0,

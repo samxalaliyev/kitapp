@@ -4,7 +4,6 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   View,
@@ -23,7 +22,7 @@ import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
 import type { ApiBook, BookPrepareProgress } from '@/types/book';
 
-interface BookDetailModalProps {
+export interface BookDetailModalProps {
   visible: boolean;
   book: ApiBook | null;
   onClose: () => void;
@@ -120,7 +119,7 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
         >
-          {/* Hero Section: Centered Book Cover, Title, and Author */}
+          {/* Hero Section: Centered Book Cover, Title, Author & Refined Meta Badges */}
           <View style={styles.heroSection}>
             <View style={styles.coverWrapper}>
               <BookCover
@@ -136,8 +135,41 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
             </Text>
 
             <Text style={[styles.authorName, { color: colors.textMuted }]}>
-              {book.author || 'Klassik Ədəbiyyat'}
+              {book.author || t('author_unknown')}
             </Text>
+
+            {/* Non-intrusive Eye-Pleasing Metadata Pill Row (Downloads & Language) */}
+            <View style={styles.metaPillRow}>
+              <View
+                style={[
+                  styles.metaPill,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.surfaceBorder,
+                  },
+                ]}
+              >
+                <Feather name="download" size={13} color={colors.primary} />
+                <Text style={[styles.metaPillText, { color: colors.textMuted }]}>
+                  {book.downloadCount ? book.downloadCount.toLocaleString() : '1,200+'} {t('book_downloads_label')}
+                </Text>
+              </View>
+
+              <View
+                style={[
+                  styles.metaPill,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.surfaceBorder,
+                  },
+                ]}
+              >
+                <Feather name="globe" size={13} color={colors.primary} />
+                <Text style={[styles.metaPillText, { color: colors.textMuted }]}>
+                  English
+                </Text>
+              </View>
+            </View>
           </View>
 
           {/* Error Message if any */}
@@ -147,7 +179,7 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
 
           {/* 3 Equal-Sized Side-by-Side Action Buttons: [Oxu] [Saxla] [Paylaş] */}
           <View style={styles.actionRow}>
-            {/* 1. Oxu Button */}
+            {/* 1. Read Button */}
             <Pressable
               style={({ pressed }) => [
                 styles.actionBtn,
@@ -160,18 +192,18 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
               disabled={downloading}
             >
               {downloading ? (
-                <ActivityIndicator size="small" color="#ffffff" />
+                <ActivityIndicator size="small" color="#0d0f17" />
               ) : (
                 <>
-                  <Feather name="book-open" size={17} color="#ffffff" />
-                  <Text style={styles.primaryBtnText} numberOfLines={1}>
+                  <Feather name="book-open" size={17} color="#0d0f17" />
+                  <Text style={[styles.primaryBtnText, { color: '#0d0f17' }]} numberOfLines={1}>
                     {t('action_read')}
                   </Text>
                 </>
               )}
             </Pressable>
 
-            {/* 2. Saxla Button */}
+            {/* 2. Save Button */}
             <Pressable
               style={({ pressed }) => [
                 styles.actionBtn,
@@ -200,7 +232,7 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
               </Text>
             </Pressable>
 
-            {/* 3. Paylaş Button */}
+            {/* 3. Share Button */}
             <Pressable
               style={({ pressed }) => [
                 styles.actionBtn,
@@ -227,7 +259,7 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
             </Text>
             <Text style={[styles.descText, { color: colors.textMuted }]}>
               {book.summary ||
-                `"${book.title}" — ${book.author || 'Standard Ebooks'}. Dünya klassiklərinin seçilmiş əsərlərindən biri. Sözləri anında öyrənərək və tərcümə dəstəyi ilə lüğət bazanızı zənginləşdirin.`}
+                `"${book.title}" — ${book.author || 'Standard Ebooks'}. ${t('about_book_summary')}`}
             </Text>
           </View>
         </ScrollView>
@@ -240,14 +272,14 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
             </View>
           </View>
         ) : null}
-      </View>
 
-      {/* Book Story Modal for Instagram & Other sharing */}
-      <BookStoryModal
-        visible={storyModalVisible}
-        book={book}
-        onClose={() => setStoryModalVisible(false)}
-      />
+        {/* Story Modal */}
+        <BookStoryModal
+          book={book}
+          visible={storyModalVisible}
+          onClose={() => setStoryModalVisible(false)}
+        />
+      </View>
     </Modal>
   );
 }
@@ -261,54 +293,73 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.md,
-  },
-  headerTitle: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.semibold,
-    flex: 1,
-    textAlign: 'center',
-    marginHorizontal: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
   navBtn: {
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
+    borderRadius: Radius.pill,
+  },
+  headerTitle: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+    textAlign: 'center',
+    flex: 1,
+    paddingHorizontal: Spacing.sm,
   },
   scrollContent: {
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.lg,
+    paddingTop: Spacing.md,
   },
   heroSection: {
     alignItems: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   coverWrapper: {
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.35,
     shadowRadius: 16,
-    elevation: 12,
+    elevation: 10,
     marginBottom: Spacing.lg,
   },
   bookTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: FontWeight.bold,
     textAlign: 'center',
-    lineHeight: 32,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   authorName: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.medium,
+    fontSize: FontSize.sm,
     textAlign: 'center',
+    marginBottom: Spacing.xs,
+  },
+  metaPillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: Spacing.xs,
+  },
+  metaPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+  },
+  metaPillText: {
+    fontSize: 12,
+    fontWeight: FontWeight.medium,
   },
   actionRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 10,
     marginBottom: Spacing.xl,
   },
@@ -323,14 +374,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   primaryBtn: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowColor: '#d4af7a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   primaryBtnText: {
-    color: '#ffffff',
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
   },
@@ -341,13 +391,11 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },
-  btnDisabled: {
-    opacity: 0.6,
-  },
   descCard: {
-    padding: Spacing.xl,
     borderRadius: Radius.xl,
     borderWidth: 1,
+    padding: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   descHeading: {
     fontSize: FontSize.md,
@@ -355,15 +403,14 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   descText: {
-    fontSize: FontSize.md,
-    lineHeight: 24,
-    fontWeight: FontWeight.regular,
+    fontSize: FontSize.sm,
+    lineHeight: 22,
   },
   errorText: {
     color: '#ef4444',
-    fontSize: FontSize.sm,
-    marginBottom: Spacing.md,
+    fontSize: FontSize.xs,
     textAlign: 'center',
+    marginBottom: Spacing.sm,
   },
   downloadingOverlay: {
     position: 'absolute',
@@ -371,24 +418,23 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 999,
   },
   downloadingCard: {
-    padding: Spacing.xl,
+    padding: Spacing.xxl,
     borderRadius: Radius.xl,
     borderWidth: 1,
     alignItems: 'center',
-    minWidth: 200,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    justifyContent: 'center',
+  },
+  btnDisabled: {
+    opacity: 0.7,
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
 });

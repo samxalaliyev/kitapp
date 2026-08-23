@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 
 import { AdBannerContainer } from '@/components/AdBannerContainer';
 import { IOSOptionPickerModal, type OptionItem } from '@/components/iOSOptionPickerModal';
@@ -30,7 +31,8 @@ import { syncCloudData } from '@/lib/sync/sync-service';
 import { useAppTheme, type ThemeMode } from '@/lib/theme';
 
 interface SettingRowProps {
-  icon: string;
+  iconName: keyof typeof Feather.glyphMap;
+  iconColor?: string;
   iconBgColor?: string;
   label: string;
   value?: string;
@@ -40,8 +42,9 @@ interface SettingRowProps {
 }
 
 function SettingRow({
-  icon,
-  iconBgColor = '#3b82f6',
+  iconName,
+  iconColor = '#d4af7a',
+  iconBgColor = 'rgba(212, 175, 122, 0.12)',
   label,
   value,
   onPress,
@@ -53,7 +56,7 @@ function SettingRow({
     <Pressable
       style={({ pressed }) => [
         styles.settingRow,
-        !isLast && { borderBottomWidth: 0.5, borderBottomColor: colors.surfaceBorder },
+        !isLast && { borderBottomWidth: 0.5, borderBottomColor: 'rgba(255, 255, 255, 0.08)' },
         pressed && onPress ? styles.pressed : undefined,
       ]}
       onPress={onPress}
@@ -61,7 +64,7 @@ function SettingRow({
     >
       <View style={styles.settingLeft}>
         <View style={[styles.iconBadge, { backgroundColor: iconBgColor }]}>
-          <Text style={styles.iconBadgeText}>{icon}</Text>
+          <Feather name={iconName} size={16} color={danger ? '#ef4444' : iconColor} />
         </View>
         <Text
           style={[
@@ -80,7 +83,7 @@ function SettingRow({
           </Text>
         ) : null}
         {onPress ? (
-          <Text style={[styles.chevron, { color: colors.textSubtle }]}>›</Text>
+          <Feather name="chevron-right" size={16} color={colors.textSubtle} />
         ) : null}
       </View>
     </Pressable>
@@ -197,18 +200,18 @@ export default function SettingsScreen() {
   }, [t]);
 
   const planBadgeText = isAdmin
-    ? 'ADMIN 🛠️'
+    ? 'ADMIN'
     : subscriptionPlan === 'premium_yearly'
-    ? t('plan_yearly').toUpperCase() + ' 🌟'
+    ? t('plan_yearly').toUpperCase()
     : subscriptionPlan === 'premium_monthly'
-    ? t('plan_monthly').toUpperCase() + ' 🗓️'
+    ? t('plan_monthly').toUpperCase()
     : t('plan_free_badge');
 
   // Options Data for Pickers
   const themeOptions: OptionItem<ThemeMode>[] = [
     { id: 'system', label: 'Sistem (Avtomatik)' },
-    { id: 'dark', label: 'Karanlık Mod 🌙' },
-    { id: 'light', label: 'Açık Mod ☀️' },
+    { id: 'dark', label: 'Karanlık Mod' },
+    { id: 'light', label: 'Açık Mod' },
   ];
 
   const fontSizeOptions: OptionItem<FontSizeLevel>[] = [
@@ -234,7 +237,6 @@ export default function SettingsScreen() {
     subLabel: l.label,
   }));
 
-  // Usage percentage for Free users
   const dailyLimitNum = typeof limits.dailyTranslationLimit === 'number' ? limits.dailyTranslationLimit : 40;
   const usagePercent = Math.min(100, Math.round((usedTranslationsToday / dailyLimitNum) * 100));
 
@@ -250,7 +252,7 @@ export default function SettingsScreen() {
         <Text style={[styles.pageTitle, { color: colors.text }]}>{t('profile_title')}</Text>
 
         {/* ==================================================================== */}
-        {/* iOS APPLE ID STYLE PROFILE ROW */}
+        {/* PROFILE ROW */}
         {/* ==================================================================== */}
         {!user ? (
           /* Unauthenticated Guest Card */
@@ -262,7 +264,7 @@ export default function SettingsScreen() {
           >
             <View style={styles.profileTopRow}>
               <View style={[styles.avatarBadge, { backgroundColor: colors.primaryBg }]}>
-                <Text style={styles.avatarEmoji}>👤</Text>
+                <Feather name="user" size={24} color={colors.primary} />
               </View>
               <View style={styles.profileMainInfo}>
                 <Text style={[styles.profileName, { color: colors.text }]}>
@@ -282,7 +284,9 @@ export default function SettingsScreen() {
                 pressed && styles.pressed,
               ]}
             >
-              <Text style={styles.primaryPillBtnText}>{t('login_register_btn')}</Text>
+              <Text style={[styles.primaryPillBtnText, { color: '#0d0f17' }]}>
+                {t('login_register_btn')}
+              </Text>
             </Pressable>
           </View>
         ) : (
@@ -292,7 +296,7 @@ export default function SettingsScreen() {
               styles.profileCard,
               {
                 backgroundColor: colors.surface,
-                borderColor: isPremium ? '#f59e0b' : colors.surfaceBorder,
+                borderColor: isPremium ? colors.primary : colors.surfaceBorder,
               },
             ]}
           >
@@ -315,10 +319,12 @@ export default function SettingsScreen() {
               <View
                 style={[
                   styles.planBadge,
-                  { backgroundColor: isPremium ? '#f59e0b' : colors.surfaceBorder },
+                  { backgroundColor: isPremium ? colors.primary : colors.surfaceBorder },
                 ]}
               >
-                <Text style={styles.planBadgeText}>{planBadgeText}</Text>
+                <Text style={[styles.planBadgeText, { color: isPremium ? '#0d0f17' : colors.textMuted }]}>
+                  {planBadgeText}
+                </Text>
               </View>
             </View>
 
@@ -353,8 +359,9 @@ export default function SettingsScreen() {
                     pressed && styles.pressed,
                   ]}
                 >
+                  <Feather name="play-circle" size={14} color={colors.primary} />
                   <Text style={[styles.watchAdSubText, { color: colors.primary }]}>
-                    {t('watch_ad_words_btn')}
+                    {t('watch_ad_words_btn')?.replace('🎥', '')?.trim()}
                   </Text>
                 </Pressable>
               </View>
@@ -371,8 +378,9 @@ export default function SettingsScreen() {
                   pressed && styles.pressed,
                 ]}
               >
+                <Feather name="cloud" size={14} color={colors.text} style={{ marginRight: 6 }} />
                 <Text style={[styles.profilePillText, { color: colors.text }]}>
-                  {syncing ? t('syncing_btn') : t('cloud_sync_btn')}
+                  {syncing ? t('syncing_btn') : t('cloud_sync_btn')?.replace('☁️', '')?.trim()}
                 </Text>
               </Pressable>
 
@@ -380,10 +388,11 @@ export default function SettingsScreen() {
                 onPress={logout}
                 style={({ pressed }) => [
                   styles.profilePillBtn,
-                  { backgroundColor: colors.surfaceBorder },
+                  { backgroundColor: 'rgba(239, 68, 68, 0.12)' },
                   pressed && styles.pressed,
                 ]}
               >
+                <Feather name="log-out" size={14} color={colors.danger} style={{ marginRight: 6 }} />
                 <Text style={[styles.profilePillText, { color: colors.danger }]}>
                   {t('logout_btn')}
                 </Text>
@@ -396,26 +405,23 @@ export default function SettingsScreen() {
         <AdBannerContainer onUpgradePress={() => setPaywallVisible(true)} />
 
         {/* ==================================================================== */}
-        {/* GROUP 1: READING & THEME (OKUMA VE TEMA) */}
+        {/* GROUP 1: READING & THEME */}
         {/* ==================================================================== */}
         <SettingGroup title={t('section_reading_theme')}>
           <SettingRow
-            icon="🌙"
-            iconBgColor="#8b5cf6"
+            iconName="moon"
             label={t('theme_mode')}
             value={mode === 'system' ? 'Sistem' : mode === 'dark' ? 'Karanlık' : 'Açık'}
             onPress={() => setActivePicker('theme')}
           />
           <SettingRow
-            icon="🔤"
-            iconBgColor="#3b82f6"
+            iconName="type"
             label={t('font_size')}
             value={FONT_SIZE_LABELS[fontSize]}
             onPress={() => setActivePicker('fontSize')}
           />
           <SettingRow
-            icon="🖌️"
-            iconBgColor="#ec4899"
+            iconName="edit-3"
             label={t('font_family')}
             value={FONT_FAMILY_LABELS[fontFamily]}
             onPress={() => setActivePicker('fontFamily')}
@@ -424,26 +430,25 @@ export default function SettingsScreen() {
         </SettingGroup>
 
         {/* ==================================================================== */}
-        {/* GROUP 2: LANGUAGE & TRANSLATION (DİL VE ÇEVİRİ) */}
+        {/* GROUP 2: LANGUAGE & TRANSLATION */}
         {/* ==================================================================== */}
         <SettingGroup title={t('section_lang_trans')}>
           <SettingRow
-            icon="🌐"
-            iconBgColor="#10b981"
+            iconName="globe"
             label={t('target_language')}
             value={`${currentTargetLang.flag} ${currentTargetLang.nativeLabel}`}
             onPress={() => setActivePicker('targetLang')}
           />
           <SettingRow
-            icon="📱"
-            iconBgColor="#06b6d4"
+            iconName="layout"
             label={t('ui_language')}
             value={`${currentUILang.flag} ${currentUILang.nativeLabel}`}
             onPress={() => setActivePicker('uiLang')}
           />
           <SettingRow
-            icon="🗑️"
-            iconBgColor="#ef4444"
+            iconName="trash-2"
+            iconColor="#ef4444"
+            iconBgColor="rgba(239, 68, 68, 0.12)"
             label={t('clear_cache')}
             onPress={clearCache}
             danger
@@ -457,17 +462,17 @@ export default function SettingsScreen() {
         <SettingGroup title={t('section_about')}>
           {!isPremium ? (
             <SettingRow
-              icon="🌟"
-              iconBgColor="#f59e0b"
-              label={t('remove_ads_upgrade')}
+              iconName="award"
+              label={t('remove_ads_upgrade')?.replace('👑', '')?.trim()}
               onPress={() => setPaywallVisible(true)}
             />
           ) : null}
           <SettingRow
-            icon="ℹ️"
-            iconBgColor="#64748b"
+            iconName="info"
+            iconColor="#94a3b8"
+            iconBgColor="rgba(148, 163, 184, 0.12)"
             label={t('version')}
-            value="1.0.0 (Build 42)"
+            value="1.0.0"
             isLast
           />
         </SettingGroup>
@@ -524,6 +529,7 @@ export default function SettingsScreen() {
           onClose={() => setActivePicker(null)}
         />
 
+        {/* Paywall Modal */}
         <SubscriptionPaywallModal
           visible={paywallVisible}
           onClose={() => setPaywallVisible(false)}
@@ -539,24 +545,24 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.xl,
-    paddingBottom: 130,
+    paddingBottom: 120,
   },
   pageTitle: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.lg,
+    letterSpacing: 0.3,
   },
-  /* Profile Card (iOS Apple ID Style) */
   profileCard: {
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: Radius.xl,
+    borderWidth: 1.5,
     padding: Spacing.lg,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   profileTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: 14,
   },
   avatarBadge: {
     width: 52,
@@ -569,19 +575,16 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: FontWeight.bold,
   },
-  avatarEmoji: {
-    fontSize: 24,
-  },
   profileMainInfo: {
     flex: 1,
   },
   profileName: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
+    marginBottom: 2,
   },
   profileEmail: {
     fontSize: FontSize.xs,
-    marginTop: 2,
   },
   planBadge: {
     paddingHorizontal: 10,
@@ -589,16 +592,26 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   planBadgeText: {
-    color: '#ffffff',
-    fontSize: 11,
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.5,
+  },
+  primaryPillBtn: {
+    marginTop: Spacing.md,
+    height: 44,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryPillBtnText: {
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
   },
-  /* Usage Progress Bar */
   usageBarSection: {
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
     paddingTop: Spacing.md,
-    borderTopWidth: 0.5,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
   },
   usageLabelRow: {
     flexDirection: 'row',
@@ -622,53 +635,48 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   watchAdSubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginTop: 8,
-    alignSelf: 'flex-end',
+    alignSelf: 'flex-start',
   },
   watchAdSubText: {
-    fontSize: FontSize.xs,
+    fontSize: 11,
     fontWeight: FontWeight.bold,
   },
-  /* Profile Action Buttons */
   profileActionsRow: {
     flexDirection: 'row',
-    gap: Spacing.md,
-    marginTop: Spacing.lg,
+    gap: 10,
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
   },
   profilePillBtn: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: Radius.pill,
+    height: 40,
+    borderRadius: Radius.md,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   profilePillText: {
-    fontSize: FontSize.sm,
+    fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
   },
-  primaryPillBtn: {
-    paddingVertical: 12,
-    borderRadius: Radius.pill,
-    alignItems: 'center',
-    marginTop: Spacing.lg,
-  },
-  primaryPillBtnText: {
-    color: '#ffffff',
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.bold,
-  },
-  /* iOS Grouped Sections */
   groupContainer: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   groupHeaderTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: FontWeight.bold,
     letterSpacing: 0.8,
     marginBottom: Spacing.xs,
-    marginLeft: 4,
+    paddingHorizontal: Spacing.xs,
   },
   groupCard: {
-    borderRadius: 16,
+    borderRadius: Radius.xl,
     borderWidth: 1,
     overflow: 'hidden',
   },
@@ -677,26 +685,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: 13,
+    paddingVertical: 14,
   },
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: 12,
     flex: 1,
   },
   iconBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: 7,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconBadgeText: {
-    fontSize: 16,
-  },
   settingLabel: {
-    fontSize: FontSize.md,
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
   settingRight: {
@@ -707,11 +712,7 @@ const styles = StyleSheet.create({
   settingValue: {
     fontSize: FontSize.sm,
   },
-  chevron: {
-    fontSize: 18,
-    fontWeight: FontWeight.bold,
-  },
   pressed: {
-    opacity: 0.75,
+    opacity: 0.8,
   },
 });

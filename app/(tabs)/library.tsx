@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 
 import standardEbooksCatalog from '@/assets/data/standard_ebooks.json';
 import { AdBannerContainer } from '@/components/AdBannerContainer';
@@ -81,13 +82,14 @@ export default function LibraryScreen() {
         const progress = progressMap.get(bookId);
 
         const title = catalogBook?.title || local?.title || 'Kitab #' + bookId;
-        const author = catalogBook?.author || 'Klassik Ədəbiyyat';
+        const author = catalogBook?.author || t('author_unknown');
         const coverUrl = catalogBook?.coverUrl;
         const downloadCount = catalogBook?.downloadCount;
         const percent = Math.min(100, Math.max(0, progress?.percent ?? 0));
 
         const savedEntry = savedBooks.find((s) => s.bookId === bookId);
-        const status = savedEntry?.status ?? (percent > 0 ? (percent >= 100 ? 'finished' : 'reading') : 'saved');
+        const status =
+          savedEntry?.status ?? (percent > 0 ? (percent >= 100 ? 'finished' : 'reading') : 'saved');
 
         const entry: LibraryBook = {
           id: bookId,
@@ -116,7 +118,7 @@ export default function LibraryScreen() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -132,7 +134,7 @@ export default function LibraryScreen() {
   const authorGroups = useMemo(() => {
     const map = new Map<string, LibraryBook[]>();
     for (const b of allBooksList) {
-      const author = b.author || 'Naməlum Müəllif';
+      const author = b.author || t('author_unknown');
       if (!map.has(author)) {
         map.set(author, []);
       }
@@ -142,7 +144,7 @@ export default function LibraryScreen() {
       author,
       books,
     }));
-  }, [allBooksList]);
+  }, [allBooksList, t]);
 
   const openBookDetail = (b: LibraryBook) => {
     const catalogBook = (standardEbooksCatalog as ApiBook[]).find((x) => x.id === b.id);
@@ -175,13 +177,20 @@ export default function LibraryScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>{t('library_title') || 'Mənim Kitabxanam'}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>
+            {t('library_title') || 'Mənim Kitabxanam'}
+          </Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            Saxladığınız və oxuduğunuz bütün kitablar
+            {t('library_subtitle')}
           </Text>
 
           {/* Litera Top Functional Tabs */}
-          <View style={[styles.tabBarRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <View
+            style={[
+              styles.tabBarRow,
+              { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+            ]}
+          >
             <Pressable
               onPress={() => setActiveTab('all')}
               style={[
@@ -189,8 +198,13 @@ export default function LibraryScreen() {
                 activeTab === 'all' && { backgroundColor: colors.primary },
               ]}
             >
-              <Text style={[styles.tabItemText, { color: activeTab === 'all' ? '#ffffff' : colors.textMuted }]}>
-                Bütün Kitablar ({allBooksList.length})
+              <Text
+                style={[
+                  styles.tabItemText,
+                  { color: activeTab === 'all' ? '#0d0f17' : colors.textMuted },
+                ]}
+              >
+                {t('filter_all')} ({allBooksList.length})
               </Text>
             </Pressable>
             <Pressable
@@ -200,8 +214,13 @@ export default function LibraryScreen() {
                 activeTab === 'reading' && { backgroundColor: colors.primary },
               ]}
             >
-              <Text style={[styles.tabItemText, { color: activeTab === 'reading' ? '#ffffff' : colors.textMuted }]}>
-                Oxunanlar ({reading.length})
+              <Text
+                style={[
+                  styles.tabItemText,
+                  { color: activeTab === 'reading' ? '#0d0f17' : colors.textMuted },
+                ]}
+              >
+                {t('reading_status')} ({reading.length})
               </Text>
             </Pressable>
             <Pressable
@@ -211,8 +230,13 @@ export default function LibraryScreen() {
                 activeTab === 'authors' && { backgroundColor: colors.primary },
               ]}
             >
-              <Text style={[styles.tabItemText, { color: activeTab === 'authors' ? '#ffffff' : colors.textMuted }]}>
-                Müəlliflər ({authorGroups.length})
+              <Text
+                style={[
+                  styles.tabItemText,
+                  { color: activeTab === 'authors' ? '#0d0f17' : colors.textMuted },
+                ]}
+              >
+                {t('sub_authors')} ({authorGroups.length})
               </Text>
             </Pressable>
           </View>
@@ -220,11 +244,19 @@ export default function LibraryScreen() {
 
         {isEmpty ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>📚</Text>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>Kitabxananız Boşdur</Text>
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              Ana səhifədən və ya axtarışdan istədiyiniz kitabı seçib kitabxananıza əlavə edə bilərsiniz.
+            <Feather name="book-open" size={42} color={colors.primary} style={{ marginBottom: 14 }} />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              {t('empty_library_title')}
             </Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+              {t('empty_library_hint')}
+            </Text>
+            <Pressable
+              style={({ pressed }) => [styles.exploreBtn, { backgroundColor: colors.primary }, pressed && styles.pressed]}
+              onPress={() => router.push('/(tabs)')}
+            >
+              <Text style={[styles.exploreBtnText, { color: '#0d0f17' }]}>{t('explore_books_btn')}</Text>
+            </Pressable>
           </View>
         ) : null}
 
@@ -236,7 +268,7 @@ export default function LibraryScreen() {
           <>
             {reading.length > 0 ? (
               <View style={styles.sectionWrap}>
-                <SectionHeader title={`Oxumağa Davam Et (${reading.length})`} />
+                <SectionHeader title={`${t('continue_reading')} (${reading.length})`} />
                 <View style={styles.listSection}>
                   {reading.map((item) => (
                     <BookCard
@@ -258,7 +290,7 @@ export default function LibraryScreen() {
 
             {saved.length > 0 ? (
               <View style={styles.sectionWrap}>
-                <SectionHeader title={`Yadda Saxlanılanlar (${saved.length})`} />
+                <SectionHeader title={`${t('action_saved')} (${saved.length})`} />
                 <View style={styles.listSection}>
                   {saved.map((item) => (
                     <BookCard
@@ -279,7 +311,7 @@ export default function LibraryScreen() {
 
             {finished.length > 0 ? (
               <View style={styles.sectionWrap}>
-                <SectionHeader title={`Bitirilmiş Kitablar (${finished.length})`} />
+                <SectionHeader title={`${t('filter_finished')} (${finished.length})`} />
                 <View style={styles.listSection}>
                   {finished.map((item) => (
                     <BookCard
@@ -301,14 +333,19 @@ export default function LibraryScreen() {
           </>
         ) : null}
 
-        {/* TAB 2: READING ONLY */}
+        {/* TAB 2: CURRENTLY READING */}
         {activeTab === 'reading' && !isEmpty ? (
           <View style={styles.sectionWrap}>
-            {reading.length > 0 ? (
+            <SectionHeader title={`${t('reading_status')} (${reading.length})`} />
+            {reading.length === 0 ? (
+              <Text style={[styles.emptyTabText, { color: colors.textMuted }]}>
+                {t('empty_library_hint')}
+              </Text>
+            ) : (
               <View style={styles.listSection}>
                 {reading.map((item) => (
                   <BookCard
-                    key={'r-tab-' + item.id}
+                    key={'r-' + item.id}
                     id={item.id}
                     title={item.title}
                     author={item.author}
@@ -321,36 +358,37 @@ export default function LibraryScreen() {
                   />
                 ))}
               </View>
-            ) : (
-              <Text style={[styles.emptyTabText, { color: colors.textMuted }]}>
-                Hal-hazırda aktiv oxunan kitabınız yoxdur.
-              </Text>
             )}
           </View>
         ) : null}
 
-        {/* TAB 3: AUTHORS GROUPED */}
+        {/* TAB 3: GROUPED BY AUTHOR */}
         {activeTab === 'authors' && !isEmpty ? (
           <View style={styles.sectionWrap}>
             {authorGroups.map((group) => (
-              <View key={'author-' + group.author} style={styles.authorCard}>
-                <Text style={[styles.authorName, { color: colors.text }]}>{group.author}</Text>
-                <Text style={[styles.authorBookCount, { color: colors.primary }]}>
-                  {group.books.length} kitab
-                </Text>
+              <View key={'author-' + group.author} style={styles.authorBlock}>
+                <View style={styles.authorTitleRow}>
+                  <Text style={[styles.authorNameText, { color: colors.text }]}>
+                    {group.author}
+                  </Text>
+                  <Text style={[styles.authorCountBadge, { color: colors.primary }]}>
+                    {group.books.length} {t('books_count_suffix')}
+                  </Text>
+                </View>
+
                 <View style={styles.listSection}>
-                  {group.books.map((b) => (
+                  {group.books.map((item) => (
                     <BookCard
-                      key={'ag-' + b.id}
-                      id={b.id}
-                      title={b.title}
-                      author={b.author}
-                      coverUrl={b.coverUrl}
-                      downloadCount={b.downloadCount}
-                      readingPercent={b.readingPercent > 0 ? b.readingPercent : undefined}
+                      key={'a-' + group.author + '-' + item.id}
+                      id={item.id}
+                      title={item.title}
+                      author={item.author}
+                      coverUrl={item.coverUrl}
+                      downloadCount={item.downloadCount}
+                      readingPercent={item.readingPercent}
                       variant="vertical"
                       coverSize="sm"
-                      onPress={() => openBookDetail(b)}
+                      onPress={() => openBookDetail(item)}
                     />
                   ))}
                 </View>
@@ -360,12 +398,14 @@ export default function LibraryScreen() {
         ) : null}
       </ScrollView>
 
-      {/* Book Detail Sheet Modal */}
-      <BookDetailModal
-        visible={Boolean(selectedBook)}
-        book={selectedBook}
-        onClose={() => setSelectedBook(null)}
-      />
+      {/* Book Detail Modal */}
+      {selectedBook ? (
+        <BookDetailModal
+          book={selectedBook}
+          visible={!!selectedBook}
+          onClose={() => setSelectedBook(null)}
+        />
+      ) : null}
     </View>
   );
 }
@@ -380,52 +420,84 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   scrollContent: {
-    paddingBottom: Spacing.xxl + 80,
+    paddingBottom: 110,
+    paddingTop: Spacing.xl,
   },
   header: {
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xxl + 10,
-    paddingBottom: Spacing.md,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
   title: {
-    fontSize: FontSize.xxl,
+    fontSize: 26,
     fontWeight: FontWeight.bold,
-    marginBottom: Spacing.xs,
+    letterSpacing: 0.3,
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: FontSize.sm,
-    lineHeight: 20,
-    marginBottom: Spacing.lg,
+    fontSize: FontSize.xs,
+    letterSpacing: 0.2,
+    lineHeight: 18,
+    marginBottom: Spacing.md,
   },
   tabBarRow: {
     flexDirection: 'row',
-    borderRadius: Radius.pill,
+    borderRadius: Radius.lg,
     borderWidth: 1,
-    padding: 3,
+    padding: 4,
+    gap: 4,
   },
   tabItem: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: Radius.pill,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tabItemText: {
+    fontSize: 11,
+    fontWeight: FontWeight.semibold,
+  },
+  sectionWrap: {
+    paddingHorizontal: Spacing.xl,
+    marginTop: Spacing.lg,
+  },
+  listSection: {
+    gap: Spacing.md,
+    marginTop: Spacing.xs,
+  },
+  authorBlock: {
+    marginBottom: Spacing.xl,
+  },
+  authorTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    paddingBottom: Spacing.xs,
+  },
+  authorNameText: {
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+  },
+  authorCountBadge: {
     fontSize: FontSize.xs,
     fontWeight: FontWeight.semibold,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.xxl,
-    paddingVertical: Spacing.xxl + 20,
+    paddingVertical: Spacing.xxl * 1.5,
+    paddingHorizontal: Spacing.xl,
   },
   emptyIcon: {
     fontSize: 48,
     marginBottom: Spacing.md,
   },
   emptyTitle: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.xs,
   },
@@ -433,30 +505,25 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: Spacing.lg,
   },
-  sectionWrap: {
+  exploreBtn: {
     paddingHorizontal: Spacing.xl,
-    marginTop: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.lg,
   },
-  listSection: {
-    gap: Spacing.md,
-    marginTop: Spacing.xs,
-  },
-  emptyTabText: {
-    textAlign: 'center',
-    paddingVertical: Spacing.xl,
+  exploreBtnText: {
+    color: '#ffffff',
     fontSize: FontSize.sm,
-  },
-  authorCard: {
-    marginBottom: Spacing.xl,
-  },
-  authorName: {
-    fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },
-  authorBookCount: {
+  emptyTabText: {
     fontSize: FontSize.xs,
-    fontWeight: FontWeight.semibold,
-    marginBottom: Spacing.sm,
+    textAlign: 'center',
+    marginTop: Spacing.lg,
+  },
+  pressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
 });
