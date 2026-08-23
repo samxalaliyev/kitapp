@@ -8,9 +8,13 @@ import {
   View,
 } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
-
+import { Feather } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
+
+import { useAuth } from "@/lib/auth/AuthContext";
+import { FontSize, FontWeight, Radius, Spacing } from "@/lib/design";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { syncWordToCloud } from "@/lib/sync/sync-service";
 import {
   getPronunciationCached,
   type PronunciationResult,
@@ -93,21 +97,17 @@ function buildPlayerHtml(audioUrl: string, autoplay: boolean): string {
 </html>`;
 }
 
-import { useAppTheme } from "@/lib/theme";
-
 export function WordPopup({
   visible,
   word,
   sentenceContext,
   onClose,
 }: WordPopupProps) {
-  const { colors } = useAppTheme();
   const { targetLang, t } = useLanguage();
-  const [pronunciation, setPronunciation] =
-    useState<PronunciationResult | null>(null);
-  const [translation, setTranslation] = useState<TranslationResult | null>(
-    null,
-  );
+  const { user } = useAuth();
+
+  const [pronunciation, setPronunciation] = useState<PronunciationResult | null>(null);
+  const [translation, setTranslation] = useState<TranslationResult | null>(null);
   const [pronState, setPronState] = useState<LoadState>("loading");
   const [transState, setTransState] = useState<LoadState>("loading");
 
@@ -140,110 +140,94 @@ export function WordPopup({
       return;
     }
 
-    let cancelled = false;
-    setPronunciation(null);
-    setTranslation(null);
-    setPronState("loading");
-    setTransState("loading");
-    setAudioDataUrl(null);
-    setSaved(false);
-    setAudioError(false);
-    setIsSpeaking(false);
-    setAudioLoading(false);
+    let isMounted = true;
+    const cleanWord = word.trim().replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "");
 
-    let activeAudioUrl: string | null = null;
-
-    getPronunciationCached(word)
-      .then((result) => {
-        if (cancelled) return;
-        if (result) {
-          setPronunciation(result);
-          setPronState("ready");
-          // Birinci audio URL-i goturur, data-URL formatina cevir.
-          const queue: string[] = [];
-          if (result.audioUrl) queue.push(result.audioUrl);
-          if (result.ttsFallbackUrls && result.ttsFallbackUrls.length) {
-            queue.push(...result.ttsFallbackUrls);
-          }
-          activeAudioUrl = queue[0] ?? null;
-          if (activeAudioUrl) {
-            setAudioLoading(true);
-            getAudioDataUrl(activeAudioUrl)
-              .then((dataUrl) => {
-                if (cancelled) return;
-                setAudioDataUrl(dataUrl);
-                setAudioLoading(false);
-              })
-              .catch(() => {
-                if (cancelled) return;
-                setAudioError(true);
-                setAudioLoading(false);
-              });
-          }
-        } else {
-          setPronState("error");
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setPronState("error");
-      });
-
-    translateWord(word)
-      .then((result) => {
-        if (cancelled) return;
-        if (result) {
-          setTranslation(result);
-          setTransState("ready");
-        } else {
-          setTransState("error");
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setTransState("error");
-      });
-
-    isWordSaved(word)
-      .then((alreadySaved) => {
-        if (!cancelled) setSaved(alreadySaved);
+    isWordSaved(cleanWord, targetLang)
+      .then((isSavedResult) => {
+        if (isMounted) setSaved(isSavedResult);
       })
       .catch(() => {});
 
+    setPronState("loading");
+    getPronunciationCached(cleanWord)
+      .then((res) => {
+        if (!isMounted) return;
+        setPronunciation(res);
+        setPronState("ready");
+      })
+      .catch(() => {
+        if (isMounted) setPronState("error");
+      });
+
+    setTransState("loading");
+    translateWord(cleanWord, targetLang)
+      .then((res) => {
+        if (!isMounted) return;
+        setTranslation(res);
+        setTransState("ready");
+      })
+      .catch(() => {
+        if (isMounted) setTransState("error");
+      });
+
+    getAudioDataUrl(cleanWord)
+      .then((dataUrl) => {
+        if (!isMounted) return;
+        setAudioDataUrl(dataUrl);
+        setPlayerKey((k) => k + 1);
+        if (dataUrl) {
+          setAutoPlay(true);
+        } else {
+          setAudioError(true);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setAudioDataUrl(null);
+          setAudioError(true);
+        }
+      });
+
     return () => {
-      cancelled = true;
-      void activeAudioUrl;
+      isMounted = false;
     };
-  }, [visible, word, sentenceContext]);
+  }, [visible, word, targetLang]);
 
   const loadSentenceTranslation = useCallback(async () => {
-    if (!sentenceContext || loadingSentenceTrans) return;
+    if (!sentenceContext || loadingSentenceTrans || sentenceTrans) return;
     setLoadingSentenceTrans(true);
     try {
-      const res = await translateWord(sentenceContext);
-      setSentenceTrans(res?.translated || t('no_translation'));
+      const res = await translateWord(sentenceContext, targetLang);
+      setSentenceTrans(res?.translated || "Tərcümə alına bilmədi.");
     } catch {
-      setSentenceTrans(t('no_translation'));
+      setSentenceTrans("Tərcümə alına bilmədi.");
     } finally {
       setLoadingSentenceTrans(false);
     }
-  }, [sentenceContext, loadingSentenceTrans, t]);
+  }, [sentenceContext, loadingSentenceTrans, sentenceTrans, targetLang]);
 
   const onPlayPress = useCallback(() => {
-    if (audioDataUrl) {
-      setIsSpeaking(true);
+    if (audioDataUrl && !audioError) {
       setAutoPlay(true);
       setPlayerKey((k) => k + 1);
     } else if (word) {
-      Speech.speak(word, { language: "en-US" });
-    }
-  }, [audioDataUrl, word]);
-
-  const handlePlayerMessage = useCallback((event: WebViewMessageEvent) => {
-    const msg = event.nativeEvent.data;
-    if (msg === "playing") {
       setIsSpeaking(true);
-    } else if (msg === "ended") {
+      Speech.speak(word, {
+        language: 'en-US',
+        onDone: () => setIsSpeaking(false),
+        onError: () => setIsSpeaking(false),
+      });
+    }
+  }, [audioDataUrl, audioError, word]);
+
+  const onPlayerMessage = useCallback((event: WebViewMessageEvent) => {
+    const data = event.nativeEvent.data;
+    if (data === "playing") {
+      setIsSpeaking(true);
+    } else if (data === "ended") {
       setIsSpeaking(false);
-    } else if (msg === "error") {
+    } else if (data === "error") {
       setIsSpeaking(false);
       setAudioError(true);
     }
@@ -252,30 +236,27 @@ export function WordPopup({
   const handleSave = useCallback(async () => {
     if (!word) return;
     try {
-      await saveWord({
+      const input = {
         word,
         translation: translation?.translated ?? null,
         phonetic: pronunciation?.phonetic ?? null,
         language: targetLang,
-      });
+      };
+      await saveWord(input);
       setSaved(true);
+      if (user?.id) {
+        syncWordToCloud(user.id, input).catch(() => {});
+      }
     } catch {
       // ignore
     }
-  }, [word, translation, pronunciation, targetLang]);
+  }, [word, translation, pronunciation, targetLang, user?.id]);
 
   const showOnlinePlayer = audioDataUrl !== null;
   const playerHtml =
     showOnlinePlayer && autoPlay
       ? buildPlayerHtml(audioDataUrl, true)
       : SILENT_PLAYER_HTML;
-
-  const targetBadge = "EN -> " + targetLang.toUpperCase();
-  const playLabel = audioLoading
-    ? "Yuklenir..."
-    : isSpeaking
-    ? "... Dinlenilir"
-    : "Dinle";
 
   return (
     <Modal
@@ -285,59 +266,63 @@ export function WordPopup({
       onRequestClose={onClose}
     >
       <Pressable style={styles.backdrop} onPress={onClose}>
+        {/* Glowing Gold Border Luxury Charcoal Card */}
         <Pressable
-          style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.surfaceBorder }]}
+          style={styles.card}
           onPress={(e) => e.stopPropagation()}
         >
+          {/* Top Header: Word + Audio + Close */}
           <View style={styles.headerRow}>
-            <Text style={[styles.word, { color: colors.text }]} numberOfLines={2}>
-              {word ?? ""}
-            </Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.word} numberOfLines={2}>
+                {word ?? ""}
+              </Text>
+            </View>
 
+            {/* Glowing Golden Audio Speaker Button */}
             <Pressable
               onPress={onPlayPress}
-              disabled={audioLoading || (!audioDataUrl && !audioError)}
               style={({ pressed }) => [
                 styles.audioIconBtn,
-                { backgroundColor: colors.primaryBg },
                 pressed && styles.pressed,
               ]}
-              hitSlop={8}
+              hitSlop={10}
             >
-              <Text style={{ fontSize: 16 }}>🔊</Text>
+              <Feather name="volume-2" size={18} color="#d4af7a" />
             </Pressable>
 
+            {/* Close Button */}
             <Pressable
               onPress={onClose}
               style={({ pressed }) => [
                 styles.closeButton,
-                { backgroundColor: colors.surfaceBorder },
                 pressed && styles.pressed,
               ]}
-              hitSlop={8}
+              hitSlop={10}
             >
-              <Text style={[styles.closeButtonText, { color: colors.textMuted }]}>✕</Text>
+              <Feather name="x" size={18} color="#94a3b8" />
             </Pressable>
           </View>
 
+          {/* Phonetic & Meaning Section */}
           <View style={styles.section}>
             {pronState === "loading" ? (
               <View style={styles.loadingRow}>
-                <ActivityIndicator color={colors.primary} />
-                <Text style={[styles.muted, { color: colors.textMuted }]}>  {t('loading')}</Text>
+                <ActivityIndicator color="#d4af7a" size="small" />
+                <Text style={styles.mutedText}>  {t('loading')}</Text>
               </View>
             ) : pronState === "error" || !pronunciation ? (
-              <Text style={[styles.muted, { color: colors.textMuted }]}>{t('no_definition')}</Text>
+              <Text style={styles.mutedText}>{t('no_definition')}</Text>
             ) : (
               <View style={styles.pronBlock}>
                 <View style={styles.badgeRow}>
                   {pronunciation.phonetic ? (
-                    <Text style={[styles.phonetic, { color: colors.primary }]}>{pronunciation.phonetic}</Text>
+                    <Text style={styles.phonetic}>{pronunciation.phonetic}</Text>
                   ) : null}
 
                   {pronunciation.meanings[0]?.partOfSpeech ? (
-                    <View style={[styles.posBadge, { backgroundColor: colors.badgeBg }]}>
-                      <Text style={[styles.posText, { color: colors.badgeText }]}>
+                    <View style={styles.posBadge}>
+                      <Text style={styles.posText}>
                         {pronunciation.meanings[0].partOfSpeech}
                       </Text>
                     </View>
@@ -346,11 +331,11 @@ export function WordPopup({
 
                 {pronunciation.meanings.slice(0, 1).map((meaning, idx) => (
                   <View key={idx} style={styles.meaningBlock}>
-                    <Text style={[styles.definition, { color: colors.text }]}>{meaning.definition}</Text>
+                    <Text style={styles.definition}>{meaning.definition}</Text>
                     {meaning.example ? (
                       <View style={styles.exampleBox}>
-                        <Text style={[styles.exampleLabel, { color: colors.textMuted }]}>{t('example_label')}</Text>
-                        <Text style={[styles.example, { color: colors.textMuted }]}>"{meaning.example}"</Text>
+                        <Text style={styles.exampleLabel}>{t('example_label')}:</Text>
+                        <Text style={styles.example}>"{meaning.example}"</Text>
                       </View>
                     ) : null}
                   </View>
@@ -359,108 +344,98 @@ export function WordPopup({
             )}
           </View>
 
-          <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
+          {/* Golden Divider */}
+          <View style={styles.goldDivider} />
 
+          {/* Translation Box Section */}
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('translation_header')}</Text>
-              <Text style={[styles.langBadge, { backgroundColor: colors.primaryBg, color: colors.primary }]}>
-                {targetBadge}
-              </Text>
-            </View>
+            <Text style={styles.sectionTitle}>{t('translation_header')}</Text>
 
             {transState === "loading" ? (
               <View style={styles.loadingRow}>
-                <ActivityIndicator color={colors.primary} />
-                <Text style={[styles.muted, { color: colors.textMuted }]}>  {t('translating')}</Text>
+                <ActivityIndicator color="#d4af7a" size="small" />
+                <Text style={styles.mutedText}>  {t('translating')}</Text>
               </View>
             ) : transState === "error" || !translation ? (
-              <Text style={[styles.muted, { color: colors.textMuted }]}>{t('no_translation')}</Text>
+              <Text style={styles.mutedText}>{t('no_translation')}</Text>
             ) : (
-              <Text style={[styles.translation, { color: colors.text }]}>{translation.translated}</Text>
+              <View style={styles.translationContainer}>
+                <Text style={styles.translationText}>{translation.translated}</Text>
+              </View>
             )}
           </View>
 
+          {/* Sentence Context (Active Action Button & Result) */}
           {sentenceContext ? (
-            <View style={{ marginBottom: 12 }}>
+            <View style={styles.sentenceWrap}>
               <Pressable
                 onPress={loadSentenceTranslation}
+                disabled={loadingSentenceTrans}
                 style={({ pressed }) => [
-                  {
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    paddingVertical: 8,
-                    paddingHorizontal: 12,
-                    borderRadius: 8,
-                    backgroundColor: colors.surfaceBorder,
-                    gap: 6,
-                  },
+                  styles.sentenceBtn,
                   pressed && styles.pressed,
                 ]}
               >
                 {loadingSentenceTrans ? (
-                  <ActivityIndicator size="small" color={colors.primary} />
+                  <>
+                    <ActivityIndicator size="small" color="#d4af7a" />
+                    <Text style={styles.sentenceBtnText}>
+                      {t('translating_sentence')}
+                    </Text>
+                  </>
                 ) : (
-                  <Text style={{ fontSize: 13, fontWeight: "600", color: colors.text }}>
-                    📄 {t('translating_sentence')}
-                  </Text>
+                  <>
+                    <Feather name="file-text" size={14} color="#d4af7a" />
+                    <Text style={styles.sentenceBtnText}>
+                      {t('translate_sentence_btn')}
+                    </Text>
+                  </>
                 )}
               </Pressable>
               {sentenceTrans ? (
-                <Text
-                  style={{
-                    marginTop: 6,
-                    fontSize: 13,
-                    lineHeight: 18,
-                    color: colors.text,
-                    fontStyle: "italic",
-                    backgroundColor: colors.primaryBg,
-                    padding: 8,
-                    borderRadius: 8,
-                  }}
-                >
-                  "{sentenceTrans}"
-                </Text>
+                <View style={styles.sentenceResultBox}>
+                  <Text style={styles.sentenceResultText}>"{sentenceTrans}"</Text>
+                </View>
               ) : null}
             </View>
           ) : null}
 
+          {/* Bottom Save Action CTA (Golden Warm Elegance) */}
           <Pressable
             onPress={handleSave}
             disabled={saved || !word}
             style={({ pressed }) => [
               styles.saveBtn,
-              { backgroundColor: saved ? colors.surfaceBorder : colors.primary },
+              saved && styles.savedBtn,
               pressed && styles.pressed,
             ]}
           >
-            <Text
-              style={[styles.saveBtnText, { color: saved ? colors.textMuted : '#ffffff' }]}
-            >
+            <Feather
+              name={saved ? "check" : "bookmark"}
+              size={17}
+              color={saved ? "#d4af7a" : "#0d0f17"}
+            />
+            <Text style={[styles.saveBtnText, saved && styles.savedBtnText]}>
               {saved ? t('word_saved') : t('add_to_vocab')}
             </Text>
           </Pressable>
-
-          {showOnlinePlayer ? (
-            <View style={styles.hiddenPlayer}>
-              <WebView
-                key={playerKey}
-                ref={webViewRef}
-                originWhitelist={["*"]}
-                source={{ html: playerHtml, baseUrl: "data:audio" }}
-                onMessage={handlePlayerMessage}
-                mediaPlaybackRequiresUserAction={false}
-                allowsInlineMediaPlayback={true}
-                javaScriptEnabled={true}
-                domStorageEnabled={true}
-                mixedContentMode="always"
-                style={styles.hiddenWebview}
-              />
-            </View>
-          ) : null}
         </Pressable>
       </Pressable>
+
+      {/* Hidden Audio WebView */}
+      {showOnlinePlayer ? (
+        <View style={styles.hiddenPlayer}>
+          <WebView
+            key={playerKey}
+            ref={webViewRef}
+            source={{ html: playerHtml }}
+            onMessage={onPlayerMessage}
+            mediaPlaybackRequiresUserAction={false}
+            allowsInlineMediaPlayback={true}
+            javaScriptEnabled={true}
+          />
+        </View>
+      ) : null}
     </Modal>
   );
 }
@@ -468,159 +443,215 @@ export function WordPopup({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(15, 23, 42, 0.55)",
-    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
     justifyContent: "center",
-    padding: 24,
+    alignItems: "center",
+    padding: Spacing.xl,
   },
   card: {
     width: "100%",
-    maxWidth: 440,
+    maxWidth: 380,
+    backgroundColor: "#10131d",
     borderRadius: 24,
-    padding: 22,
-    gap: 14,
-    borderWidth: 1,
-    shadowColor: "#000",
+    borderWidth: 1.5,
+    borderColor: "#d4af7a",
+    padding: Spacing.xl,
+    shadowColor: "#d4af7a",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
     elevation: 12,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+    marginBottom: Spacing.md,
   },
   word: {
-    flex: 1,
+    color: "#ffffff",
     fontSize: 24,
-    fontWeight: "800",
-    letterSpacing: -0.3,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.3,
   },
   audioIconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(212, 175, 122, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 122, 0.4)",
     alignItems: "center",
     justifyContent: "center",
   },
   closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
     alignItems: "center",
     justifyContent: "center",
   },
-  closeButtonText: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
   section: {
-    gap: 8,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-  },
-  langBadge: {
-    fontSize: 11,
-    fontWeight: "700",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  badgeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 4,
-  },
-  phonetic: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  posBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  posText: {
-    fontSize: 11,
-    fontWeight: "700",
-    textTransform: "lowercase",
-  },
-  meaningBlock: {
-    gap: 4,
-  },
-  definition: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  exampleBox: {
-    marginTop: 4,
-    paddingLeft: 8,
-    borderLeftWidth: 2,
-    borderLeftColor: "rgba(99, 102, 241, 0.4)",
-    gap: 2,
-  },
-  exampleLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  example: {
-    fontSize: 13,
-    fontStyle: "italic",
+    marginBottom: Spacing.md,
   },
   loadingRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
-  muted: {
-    fontSize: 14,
-  },
-  pressed: {
-    opacity: 0.7,
+  mutedText: {
+    color: "#94a3b8",
+    fontSize: FontSize.xs,
   },
   pronBlock: {
-    gap: 10,
+    gap: 6,
   },
-  divider: {
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
+  phonetic: {
+    color: "#d4af7a",
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+  },
+  posBadge: {
+    backgroundColor: "rgba(212, 175, 122, 0.12)",
+    borderColor: "rgba(212, 175, 122, 0.3)",
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radius.pill,
+  },
+  posText: {
+    color: "#d4af7a",
+    fontSize: 11,
+    fontWeight: FontWeight.semibold,
+  },
+  meaningBlock: {
+    marginTop: 2,
+  },
+  definition: {
+    color: "#cbd5e1",
+    fontSize: FontSize.sm,
+    lineHeight: 20,
+  },
+  exampleBox: {
+    marginTop: 6,
+    padding: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.04)",
+    borderRadius: Radius.md,
+    borderLeftWidth: 2,
+    borderLeftColor: "#d4af7a",
+  },
+  exampleLabel: {
+    color: "#d4af7a",
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
+    marginBottom: 2,
+  },
+  example: {
+    color: "#94a3b8",
+    fontSize: FontSize.xs,
+    fontStyle: "italic",
+  },
+  goldDivider: {
     height: 1,
-    marginVertical: 4,
+    backgroundColor: "rgba(212, 175, 122, 0.2)",
+    marginVertical: Spacing.sm,
   },
-  translation: {
-    fontSize: 18,
-    fontWeight: "600",
-    lineHeight: 24,
+  sectionTitle: {
+    color: "#94a3b8",
+    fontSize: 11,
+    fontWeight: FontWeight.bold,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  translationContainer: {
+    backgroundColor: "rgba(212, 175, 122, 0.08)",
+    borderColor: "rgba(212, 175, 122, 0.3)",
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  translationText: {
+    color: "#f8fafc",
+    fontSize: 19,
+    fontWeight: FontWeight.bold,
+  },
+  sentenceWrap: {
+    marginBottom: Spacing.md,
+  },
+  sentenceBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "rgba(212, 175, 122, 0.1)",
+    borderColor: "rgba(212, 175, 122, 0.3)",
+    borderWidth: 1,
+    paddingVertical: 10,
+    borderRadius: Radius.md,
+  },
+  sentenceBtnText: {
+    color: "#d4af7a",
+    fontSize: 12,
+    fontWeight: FontWeight.semibold,
+  },
+  sentenceResultBox: {
+    marginTop: 6,
+    padding: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.04)",
+    borderRadius: Radius.md,
+  },
+  sentenceResultText: {
+    color: "#f8fafc",
+    fontSize: 13,
+    fontStyle: "italic",
+    lineHeight: 18,
   },
   saveBtn: {
-    paddingVertical: 12,
-    borderRadius: 14,
+    height: 48,
+    borderRadius: Radius.lg,
+    backgroundColor: "#d4af7a",
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    shadowColor: "#d4af7a",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  savedBtn: {
+    backgroundColor: "rgba(212, 175, 122, 0.15)",
+    borderWidth: 1.5,
+    borderColor: "#d4af7a",
+    shadowOpacity: 0,
+    elevation: 0,
   },
   saveBtnText: {
-    fontSize: 14,
-    fontWeight: "700",
+    color: "#0d0f17",
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+  },
+  savedBtnText: {
+    color: "#d4af7a",
   },
   hiddenPlayer: {
+    width: 0,
+    height: 0,
+    opacity: 0,
     position: "absolute",
-    width: 10,
-    height: 10,
-    opacity: 0.01,
-    overflow: "hidden",
-    bottom: 0,
-    right: 0,
   },
-  hiddenWebview: {
-    width: 10,
-    height: 10,
+  pressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
 });

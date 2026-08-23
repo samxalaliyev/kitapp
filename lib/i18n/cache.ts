@@ -1,4 +1,4 @@
-﻿import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import type { LanguageCode } from "./constants";
 
@@ -17,7 +17,7 @@ function isExpired(savedAt: number): boolean {
   return Date.now() - savedAt > TTL_MS;
 }
 
-function translationKey(word: string, lang: LanguageCode): string {
+function translationKey(word: string, lang: LanguageCode | string): string {
   return TRANSLATION_PREFIX + lang + ":" + word.trim().toLowerCase();
 }
 
@@ -27,7 +27,7 @@ function pronunciationKey(word: string): string {
 
 export async function getCachedTranslation<T>(
   word: string,
-  lang: LanguageCode,
+  lang: LanguageCode | string,
 ): Promise<T | null> {
   try {
     const raw = await AsyncStorage.getItem(translationKey(word, lang));
@@ -37,6 +37,15 @@ export async function getCachedTranslation<T>(
       await AsyncStorage.removeItem(translationKey(word, lang));
       return null;
     }
+    // Auto-heal: filter out previous bad caches where translation equals the English word itself
+    if (parsed.v && typeof parsed.v === 'object' && (parsed.v as any).translated) {
+      const trans = String((parsed.v as any).translated).trim().toLowerCase();
+      const orig = word.trim().toLowerCase();
+      if (trans === orig && orig.length > 2) {
+        await AsyncStorage.removeItem(translationKey(word, lang));
+        return null;
+      }
+    }
     return parsed.v;
   } catch {
     return null;
@@ -45,7 +54,7 @@ export async function getCachedTranslation<T>(
 
 export async function setCachedTranslation<T>(
   word: string,
-  lang: LanguageCode,
+  lang: LanguageCode | string,
   value: T,
 ): Promise<void> {
   const envelope: CacheEnvelope<T> = { v: value, savedAt: Date.now() };
