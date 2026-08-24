@@ -11,6 +11,7 @@ import type { BookPrepareProgress } from '@/types/book';
 import { BookLoader } from '@/components/BookLoader';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
+import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 
 interface BookPrepareModalProps {
   visible: boolean;
@@ -38,7 +39,7 @@ export function BookPrepareModal({
   onCancel,
 }: BookPrepareModalProps) {
   const { colors } = useAppTheme();
-  const { uiLang } = useLanguage();
+  const { uiLang, t } = useLanguage();
   const loadingText = MESSAGES[uiLang] ?? MESSAGES.en;
 
   return (
@@ -63,7 +64,7 @@ export function BookPrepareModal({
             <Text style={[styles.error, { color: '#ef4444' }]}>{error}</Text>
           ) : (
             <View style={styles.loaderWrap}>
-              <BookLoader size={72} message={progress?.message || loadingText} />
+              <BookLoader message={loadingText} />
             </View>
           )}
 
@@ -77,7 +78,7 @@ export function BookPrepareModal({
               onPress={onCancel}
             >
               <Text style={[styles.cancelText, { color: colors.textMuted }]}>
-                {uiLang === 'az' ? 'Ləğv et' : uiLang === 'ru' ? 'Отмена' : uiLang === 'tr' ? 'İptal' : 'Cancel'}
+                {t('cancel_search') || (uiLang === 'az' ? 'Ləğv et' : uiLang === 'ru' ? 'Отмена' : uiLang === 'tr' ? 'İptal' : 'Cancel')}
               </Text>
             </Pressable>
           ) : null}
@@ -90,52 +91,54 @@ export function BookPrepareModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    padding: Spacing.xl,
   },
   card: {
     width: '100%',
-    maxWidth: 360,
-    borderRadius: 24,
-    padding: 24,
+    maxWidth: 340,
+    borderRadius: Radius.lg,
+    padding: Spacing.xl,
     alignItems: 'center',
-    gap: 16,
+    gap: Spacing.md,
     borderWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 10,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
     textAlign: 'center',
     letterSpacing: -0.2,
   },
   loaderWrap: {
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 4,
   },
   error: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
     textAlign: 'center',
-    marginVertical: 12,
+    lineHeight: 20,
+    marginVertical: Spacing.sm,
   },
   cancelBtn: {
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 12,
-    marginTop: 4,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.pill,
+    marginTop: Spacing.xs,
   },
   cancelText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
   },
   pressed: {
-    opacity: 0.75,
+    opacity: 0.7,
+    transform: [{ scale: 0.98 }],
   },
 });

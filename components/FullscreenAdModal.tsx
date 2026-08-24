@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 
 import { useAuth } from '@/lib/auth/AuthContext';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
@@ -12,14 +13,34 @@ export interface FullscreenAdModalProps {
   onUpgradePremium: () => void;
 }
 
+const COUNTDOWN_LABELS: Record<string, (sec: number) => string> = {
+  az: (sec) => `Reklam ${sec} saniyə sonra bağlanacaq...`,
+  en: (sec) => `Ad will close in ${sec} seconds...`,
+  ru: (sec) => `Реклама закроется через ${sec} сек...`,
+  tr: (sec) => `Reklam ${sec} saniye sonra kapanacak...`,
+  es: (sec) => `El anuncio se cerrará en ${sec} segundos...`,
+  de: (sec) => `Anzeige schließt in ${sec} Sekunden...`,
+  fr: (sec) => `L'annonce se fermera dans ${sec} secondes...`,
+};
+
+const UNLOCKED_LABELS: Record<string, string> = {
+  az: '✓ Təşəkkür edirik! Oxumağa davam edə bilərsiniz.',
+  en: '✓ Thank you! You can continue reading.',
+  ru: '✓ Спасибо! Вы можете продолжить чтение.',
+  tr: '✓ Teşekkürler! Okumaya devam edebilirsiniz.',
+  es: '✓ ¡Gracias! Puedes continuar leyendo.',
+  de: '✓ Vielen Dank! Sie können weiterlesen.',
+  fr: '✓ Merci ! Vous pouvez continuer la lecture.',
+};
+
 export function FullscreenAdModal({
   visible,
   onClose,
   onUpgradePremium,
 }: FullscreenAdModalProps) {
   const { colors } = useAppTheme();
-  const { t } = useLanguage();
-  const [countdown, setCountdown] = useState(15);
+  const { uiLang, t } = useLanguage();
+  const [countdown, setCountdown] = useState(10);
 
   const { isPremium } = useAuth();
 
@@ -31,7 +52,7 @@ export function FullscreenAdModal({
 
   useEffect(() => {
     if (!visible) {
-      setCountdown(15);
+      setCountdown(10);
       return;
     }
 
@@ -48,41 +69,51 @@ export function FullscreenAdModal({
     return () => clearInterval(timer);
   }, [visible]);
 
+  const countdownText = COUNTDOWN_LABELS[uiLang]?.(countdown) || COUNTDOWN_LABELS.en(countdown);
+  const unlockedText = UNLOCKED_LABELS[uiLang] || UNLOCKED_LABELS.en;
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={() => {}}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={() => {}}>
       <View style={styles.container}>
-        {/* Top Header with Lock / Skip Timer */}
+        {/* Top Header */}
         <View style={styles.topBar}>
           <View style={styles.badgeAd}>
-            <Text style={styles.badgeAdText}>{t('ad_badge')}</Text>
+            <Text style={styles.badgeAdText}>SPONSOR</Text>
           </View>
 
           <View style={styles.timerBadge}>
             {countdown > 0 ? (
-              <Text style={styles.timerText}>⏱️ {countdown}s</Text>
+              <View style={styles.timerRow}>
+                <Feather name="clock" size={12} color="#d4af7a" />
+                <Text style={styles.timerText}>{countdown}s</Text>
+              </View>
             ) : (
-              <Pressable onPress={onClose} style={styles.skipBtn}>
-                <Text style={styles.skipBtnText}>✕ {t('not_now')}</Text>
+              <Pressable onPress={onClose} style={styles.skipBtn} hitSlop={8}>
+                <Feather name="x" size={14} color="#f8fafc" style={{ marginRight: 4 }} />
+                <Text style={styles.skipBtnText}>{t('not_now') || 'Bağla'}</Text>
               </Pressable>
             )}
           </View>
         </View>
 
-        {/* Video / Ad Visual Placeholder */}
+        {/* Ad Visual Box */}
         <View style={styles.adContent}>
           <View style={styles.adVisualBox}>
-            <Text style={styles.adVisualIcon}>📺</Text>
-            <Text style={styles.adVisualTitle}>Litera Premium 🌟</Text>
+            <View style={styles.iconCircle}>
+              <Feather name="award" size={36} color="#d4af7a" />
+            </View>
+            <Text style={styles.adVisualTitle}>Litera Premium</Text>
             <Text style={styles.adVisualSub}>
               {t('premium_banner_sub')}
             </Text>
+
             {countdown > 0 ? (
               <Text style={styles.lockNotice}>
-                Reklam {countdown} saniyə sonra bağlanacaq...
+                {countdownText}
               </Text>
             ) : (
               <Text style={styles.unlockedNotice}>
-                ✓ Reklama baxıldı. Oxumağa davam edə bilərsiniz!
+                {unlockedText}
               </Text>
             )}
           </View>
@@ -91,21 +122,20 @@ export function FullscreenAdModal({
         {/* Bottom CTA */}
         <View style={styles.bottomBar}>
           <Pressable
-            onPress={() => {
-              onUpgradePremium();
-            }}
+            onPress={onUpgradePremium}
             style={({ pressed }) => [
               styles.ctaBtn,
-              { backgroundColor: colors.primary },
               pressed && styles.pressed,
             ]}
           >
-            <Text style={styles.ctaBtnText}>{t('remove_ads_upgrade')}</Text>
+            <Text style={styles.ctaBtnText}>
+              {t('remove_ads_upgrade')?.replace('👑', '')?.trim() || 'Premium-a Keç'}
+            </Text>
           </Pressable>
 
           {countdown === 0 ? (
             <Pressable onPress={onClose} style={styles.continueLink}>
-              <Text style={styles.continueLinkText}>Oxumağa Davam Et →</Text>
+              <Text style={styles.continueLinkText}>{t('continue_reading') || 'Oxumağa Davam Et'} →</Text>
             </Pressable>
           ) : null}
         </View>
@@ -117,7 +147,7 @@ export function FullscreenAdModal({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: '#0d0f17',
     paddingHorizontal: Spacing.xl,
     paddingVertical: 50,
     justifyContent: 'space-between',
@@ -128,99 +158,117 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   badgeAd: {
-    backgroundColor: '#f59e0b',
-    paddingHorizontal: 8,
+    backgroundColor: 'rgba(212, 175, 122, 0.2)',
+    borderColor: 'rgba(212, 175, 122, 0.4)',
+    borderWidth: 1,
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: Radius.md,
+    borderRadius: Radius.pill,
   },
   badgeAdText: {
-    color: '#ffffff',
+    color: '#d4af7a',
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 1,
+  },
+  timerBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: Radius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  timerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  timerText: {
+    color: '#d4af7a',
     fontSize: 12,
     fontWeight: FontWeight.bold,
   },
-  timerBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: Radius.pill,
-  },
-  timerText: {
-    color: '#f8fafc',
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.bold,
-  },
   skipBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   skipBtnText: {
-    color: '#38bdf8',
-    fontSize: FontSize.md,
+    color: '#f8fafc',
+    fontSize: 12,
     fontWeight: FontWeight.bold,
   },
   adContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
     flex: 1,
-    paddingVertical: Spacing.xxl,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   adVisualBox: {
     width: '100%',
-    backgroundColor: '#1e1b4b',
-    borderRadius: 24,
+    backgroundColor: '#12151f',
+    borderColor: 'rgba(212, 175, 122, 0.25)',
+    borderWidth: 1,
+    borderRadius: Radius.xl,
     padding: Spacing.xxl,
     alignItems: 'center',
-    gap: Spacing.md,
-    borderWidth: 1.5,
-    borderColor: '#4338ca',
+    gap: 14,
   },
-  adVisualIcon: {
-    fontSize: 64,
+  iconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: 'rgba(212, 175, 122, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
   },
   adVisualTitle: {
-    color: '#ffffff',
-    fontSize: 26,
+    color: '#f8fafc',
+    fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
   },
   adVisualSub: {
-    color: '#c7d2fe',
-    fontSize: FontSize.md,
+    color: '#94a3b8',
+    fontSize: FontSize.sm,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 20,
   },
   lockNotice: {
-    color: '#94a3b8',
+    color: '#d4af7a',
     fontSize: FontSize.xs,
-    marginTop: Spacing.md,
+    fontWeight: FontWeight.medium,
+    marginTop: 8,
   },
   unlockedNotice: {
     color: '#4ade80',
-    fontSize: FontSize.sm,
+    fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
-    marginTop: Spacing.md,
+    marginTop: 8,
   },
   bottomBar: {
-    gap: Spacing.md,
+    gap: 14,
+    alignItems: 'center',
   },
   ctaBtn: {
-    paddingVertical: 18,
-    borderRadius: 27,
+    backgroundColor: '#d4af7a',
+    width: '100%',
+    paddingVertical: 16,
+    borderRadius: Radius.pill,
     alignItems: 'center',
   },
   ctaBtnText: {
-    color: '#ffffff',
-    fontSize: FontSize.lg,
+    color: '#0d0f17',
+    fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
   },
   continueLink: {
-    alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   continueLinkText: {
-    color: '#94a3b8',
-    fontSize: FontSize.md,
+    color: '#cbd5e1',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.8,
+    transform: [{ scale: 0.99 }],
   },
 });
