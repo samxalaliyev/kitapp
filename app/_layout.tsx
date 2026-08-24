@@ -1,5 +1,5 @@
 import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Redirect, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
@@ -42,7 +42,7 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const { ready, onboarded } = useLanguage();
+  const { ready } = useLanguage();
 
   useEffect(() => {
     if (ready) {
@@ -57,10 +57,10 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack
-        initialRouteName={onboarded ? '(tabs)' : 'onboarding/welcome'}
+        initialRouteName="index"
         screenOptions={{ headerShown: false }}
       >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen
           name="onboarding/welcome"
           options={{ headerShown: false, gestureEnabled: false }}
@@ -69,6 +69,7 @@ function RootLayoutNav() {
           name="onboarding/language"
           options={{ headerShown: false, gestureEnabled: false }}
         />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)/register" options={{ headerShown: false }} />
         <Stack.Screen name="book" options={{ headerShown: false }} />
@@ -76,7 +77,6 @@ function RootLayoutNav() {
         <Stack.Screen name="settings/ui-language" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
-      {!onboarded ? <Redirect href="/onboarding/welcome" /> : null}
     </ThemeProvider>
   );
 }

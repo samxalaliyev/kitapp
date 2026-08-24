@@ -56,7 +56,7 @@ export default function WelcomeScreen() {
             { backgroundColor: colors.primary },
             pressed && styles.pressed,
           ]}
-          onPress={() => router.replace('/onboarding/language')}
+          onPress={() => router.push('/onboarding/language')}
         >
           <Text style={styles.ctaButtonText}>{t('lets_start')}</Text>
         </Pressable>

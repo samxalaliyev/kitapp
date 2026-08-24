@@ -9,6 +9,8 @@ import {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Session, User } from '@supabase/supabase-js';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 
 import {
   getFeatureLimits,
@@ -22,6 +24,8 @@ import {
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { watchRewardedAd } from '@/lib/monetization/rewarded-ads';
 import { purgeUserLocalCache, syncCloudData } from '@/lib/sync/sync-service';
+
+WebBrowser.maybeCompleteAuthSession();
 
 interface AuthContextValue {
   user: User | null;
@@ -38,6 +42,8 @@ interface AuthContextValue {
   downloadedBooksCount: number;
   login: (email: string, pass: string) => Promise<{ error?: string }>;
   register: (email: string, pass: string, name?: string) => Promise<{ error?: string }>;
+  signInWithOAuth: (provider: 'google' | 'apple') => Promise<{ error?: string }>;
+  deleteAccount: () => Promise<void>;
   logout: () => Promise<void>;
   upgradeSubscription: (plan: SubscriptionPlan) => Promise<void>;
   consumeTranslation: () => boolean; // Returns true if allowed, false if limit reached
@@ -66,6 +72,8 @@ const AuthContext = createContext<AuthContextValue>({
   downloadedBooksCount: 0,
   login: async () => ({}),
   register: async () => ({}),
+  signInWithOAuth: async () => ({}),
+  deleteAccount: async () => {},
   logout: async () => {},
   upgradeSubscription: async () => {},
   consumeTranslation: () => true,
@@ -284,6 +292,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message };
   }, []);
 
+  const signInWithOAuth = useCallback(async (provider: 'google' | 'apple') => {
+    if (!isSupabaseConfigured) {
+      const demoProf: UserProfile = {
+        id: `demo-${provider}-${Date.now()}`,
+        email: `${provider}.user@litera.app`,
+        displayName: provider === 'google' ? 'Google User' : 'Apple User',
+        role: 'free',
+        subscriptionPlan: 'free',
+        subscriptionStatus: 'active',
+        createdAt: new Date().toISOString(),
+      };
+      setProfile(demoProf);
+      await AsyncStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(demoProf));
+      return {};
+    }
+
+    try {
+      const redirectUrl = Linking.createURL('auth/callback');
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error || !data.url) {
+        return { error: error?.message || 'OAuth giriş linki alına bilmədi.' };
+      }
+
+      const res = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+
+      if (res.type === 'success' && res.url) {
+        const urlParams = new URL(res.url);
+        const hashParams = new URLSearchParams(urlParams.hash.replace('#', '?'));
+        const accessToken = hashParams.get('access_token') || urlParams.searchParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token') || urlParams.searchParams.get('refresh_token');
+
+        if (accessToken && refreshToken) {
+          const { data: sessionData, error: sessionErr } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (!sessionErr && sessionData.user) {
+            setUser(sessionData.user);
+            setSession(sessionData.session);
+            await fetchProfile(sessionData.user.id, sessionData.user.email);
+            await syncCloudData(sessionData.user.id).catch(() => {});
+            return {};
+          }
+        }
+      }
+      return {};
+    } catch (err: any) {
+      return { error: err?.message || 'Sosial giriş zamanı xəta baş verdi.' };
+    }
+  }, [fetchProfile]);
+
   const logout = useCallback(async () => {
     if (isSupabaseConfigured) {
       await supabase.auth.signOut();
@@ -294,6 +360,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     await AsyncStorage.removeItem(STORAGE_KEYS.PROFILE);
   }, []);
+
+  const deleteAccount = useCallback(async () => {
+    if (isSupabaseConfigured && user) {
+      try {
+        await supabase.from('user_saved_words').delete().eq('user_id', user.id);
+        await supabase.from('user_saved_books').delete().eq('user_id', user.id);
+        await supabase.from('profiles').delete().eq('id', user.id);
+        await supabase.auth.signOut();
+      } catch {}
+    }
+    await purgeUserLocalCache();
+    setProfile(null);
+    setUser(null);
+    setSession(null);
+    await AsyncStorage.clear();
+  }, [user]);
 
   const upgradeSubscription = useCallback(async (plan: SubscriptionPlan) => {
     const nextRole: UserRole = plan === 'free' ? 'free' : 'premium';
@@ -364,6 +446,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       downloadedBooksCount,
       login,
       register,
+      signInWithOAuth,
+      deleteAccount,
       logout,
       upgradeSubscription,
       consumeTranslation,
@@ -385,6 +469,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       downloadedBooksCount,
       login,
       register,
+      signInWithOAuth,
+      deleteAccount,
       logout,
       upgradeSubscription,
       consumeTranslation,
