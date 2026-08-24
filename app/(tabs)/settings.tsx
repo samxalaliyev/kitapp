@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
+  Linking,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -10,9 +12,11 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
 
 import { AdBannerContainer } from '@/components/AdBannerContainer';
 import { IOSOptionPickerModal, type OptionItem } from '@/components/iOSOptionPickerModal';
+import { LegalModal, type LegalType } from '@/components/LegalModal';
 import { SubscriptionPaywallModal } from '@/components/SubscriptionPaywallModal';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
@@ -136,6 +140,7 @@ export default function SettingsScreen() {
     usedTranslationsToday,
     limits,
     logout,
+    deleteAccount,
     watchAdForWords,
   } = useAuth();
 
@@ -146,6 +151,7 @@ export default function SettingsScreen() {
 
   // Active Picker Modal State
   const [activePicker, setActivePicker] = useState<PickerType>(null);
+  const [activeLegal, setActiveLegal] = useState<LegalType>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -189,15 +195,58 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await clearTranslationCache();
-              Alert.alert('Hazırdır', 'Yaddaş keşi uğurla təmizləndi.');
-            } catch (err) {
-              Alert.alert('Xəta', 'Yaddaş təmizlənərkən xəta baş verdi.');
+              Alert.alert('Keş Təmizləndi', 'Bütün keşlər uğurla təmizləndi.');
+            } catch {
+              Alert.alert('Xəta', 'Keş təmizlənərkən xəta baş verdi');
             }
           },
         },
       ],
     );
   }, [t]);
+
+  const handleDeleteAccount = useCallback(() => {
+    Alert.alert(
+      t('delete_account_confirm_title'),
+      t('delete_account_confirm_msg'),
+      [
+        { text: t('cancel_search') || 'Ləğv et', style: 'cancel' },
+        {
+          text: t('delete_account_confirm_yes'),
+          style: 'destructive',
+          onPress: async () => {
+            await deleteAccount();
+          },
+        },
+      ],
+    );
+  }, [deleteAccount, t]);
+
+  const handleRateApp = useCallback(async () => {
+    const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.litera.app';
+    const canOpen = await Linking.canOpenURL('market://details?id=com.litera.app');
+    if (canOpen) {
+      Linking.openURL('market://details?id=com.litera.app');
+    } else {
+      Linking.openURL(playStoreUrl);
+    }
+  }, []);
+
+  const handleShareApp = useCallback(async () => {
+    try {
+      await Share.share({
+        message: t('share_app_msg'),
+      });
+    } catch {}
+  }, [t]);
+
+  const handleOpenPrivacy = useCallback(() => {
+    setActiveLegal('privacy');
+  }, []);
+
+  const handleOpenTerms = useCallback(() => {
+    setActiveLegal('terms');
+  }, []);
 
   const planBadgeText = isAdmin
     ? 'ADMIN'
@@ -224,8 +273,9 @@ export default function SettingsScreen() {
   const fontFamilyOptions: OptionItem<FontFamilyChoice>[] = [
     { id: 'serif', label: FONT_FAMILY_LABELS.serif },
     { id: 'sans', label: FONT_FAMILY_LABELS.sans },
-    { id: 'noah', label: FONT_FAMILY_LABELS.noah },
-    { id: 'lovelo', label: FONT_FAMILY_LABELS.lovelo },
+    { id: 'sofia', label: FONT_FAMILY_LABELS.sofia },
+    { id: 'outfit', label: FONT_FAMILY_LABELS.outfit },
+    { id: 'cabin', label: FONT_FAMILY_LABELS.cabin },
   ];
 
   const currentTargetLang = getLanguage(targetLang);
@@ -245,7 +295,7 @@ export default function SettingsScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: insets.top + Spacing.md },
+          { paddingTop: insets.top + Spacing.md, paddingBottom: insets.bottom + 85 },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -367,34 +417,20 @@ export default function SettingsScreen() {
               </View>
             ) : null}
 
-            {/* Profile Action Buttons */}
-            <View style={styles.profileActionsRow}>
+            {/* Full-width Standalone Cloud Sync Button */}
+            <View style={styles.syncRowWrap}>
               <Pressable
                 onPress={handleSync}
                 disabled={syncing}
                 style={({ pressed }) => [
-                  styles.profilePillBtn,
+                  styles.fullSyncBtn,
                   { backgroundColor: colors.surfaceBorder },
                   pressed && styles.pressed,
                 ]}
               >
-                <Feather name="cloud" size={14} color={colors.text} style={{ marginRight: 6 }} />
-                <Text style={[styles.profilePillText, { color: colors.text }]}>
+                <Feather name="cloud" size={15} color={colors.text} style={{ marginRight: 8 }} />
+                <Text style={[styles.fullSyncBtnText, { color: colors.text }]}>
                   {syncing ? t('syncing_btn') : t('cloud_sync_btn')?.replace('☁️', '')?.trim()}
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={logout}
-                style={({ pressed }) => [
-                  styles.profilePillBtn,
-                  { backgroundColor: 'rgba(239, 68, 68, 0.12)' },
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Feather name="log-out" size={14} color={colors.danger} style={{ marginRight: 6 }} />
-                <Text style={[styles.profilePillText, { color: colors.danger }]}>
-                  {t('logout_btn')}
                 </Text>
               </Pressable>
             </View>
@@ -457,9 +493,26 @@ export default function SettingsScreen() {
         </SettingGroup>
 
         {/* ==================================================================== */}
-        {/* GROUP 3: MONETIZATION & ABOUT */}
+        {/* GROUP 3: GROWTH & COMMUNITY */}
         {/* ==================================================================== */}
-        <SettingGroup title={t('section_about')}>
+        <SettingGroup title="Böyümə & Paylaşım">
+          <SettingRow
+            iconName="star"
+            label={t('rate_app')}
+            onPress={handleRateApp}
+          />
+          <SettingRow
+            iconName="share-2"
+            label={t('share_app')}
+            onPress={handleShareApp}
+            isLast
+          />
+        </SettingGroup>
+
+        {/* ==================================================================== */}
+        {/* GROUP 4: MONETIZATION & LEGAL */}
+        {/* ==================================================================== */}
+        <SettingGroup title={t('section_legal')}>
           {!isPremium ? (
             <SettingRow
               iconName="award"
@@ -468,14 +521,48 @@ export default function SettingsScreen() {
             />
           ) : null}
           <SettingRow
+            iconName="shield"
+            label={t('privacy_policy')}
+            onPress={handleOpenPrivacy}
+          />
+          <SettingRow
+            iconName="file-text"
+            label={t('terms_of_service')}
+            onPress={handleOpenTerms}
+          />
+          <SettingRow
             iconName="info"
             iconColor="#94a3b8"
             iconBgColor="rgba(148, 163, 184, 0.12)"
             label={t('version')}
             value="1.0.0"
-            isLast
+            isLast={!user}
           />
         </SettingGroup>
+
+        {/* ==================================================================== */}
+        {/* GROUP 5: ACCOUNT ACTIONS (LOGOUT & DELETE) */}
+        {/* ==================================================================== */}
+        {user ? (
+          <SettingGroup title={t('tab_settings') || 'Hesab'}>
+            <SettingRow
+              iconName="log-out"
+              iconColor="#f59e0b"
+              iconBgColor="rgba(245, 158, 11, 0.12)"
+              label={t('logout_btn')}
+              onPress={logout}
+            />
+            <SettingRow
+              iconName="trash-2"
+              iconColor="#ef4444"
+              iconBgColor="rgba(239, 68, 68, 0.12)"
+              label={t('delete_account_btn')}
+              onPress={handleDeleteAccount}
+              danger
+              isLast
+            />
+          </SettingGroup>
+        ) : null}
 
         {/* iOS Option Pickers Modals */}
         <IOSOptionPickerModal
@@ -529,10 +616,17 @@ export default function SettingsScreen() {
           onClose={() => setActivePicker(null)}
         />
 
-        {/* Paywall Modal */}
+        {/* Subscription Paywall Modal */}
         <SubscriptionPaywallModal
           visible={paywallVisible}
           onClose={() => setPaywallVisible(false)}
+        />
+
+        {/* Native In-App Legal Modal */}
+        <LegalModal
+          type={activeLegal}
+          visible={activeLegal !== null}
+          onClose={() => setActiveLegal(null)}
         />
       </ScrollView>
     </View>
@@ -545,34 +639,33 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.xl,
-    paddingBottom: 120,
   },
   pageTitle: {
-    fontSize: 26,
+    fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.lg,
-    letterSpacing: 0.3,
+    letterSpacing: -0.5,
   },
   profileCard: {
-    borderRadius: Radius.xl,
-    borderWidth: 1.5,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
     padding: Spacing.lg,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   profileTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
   },
   avatarBadge: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 48,
+    height: 48,
+    borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: Spacing.md,
   },
   avatarLetter: {
-    fontSize: 22,
+    fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },
   profileMainInfo: {
@@ -587,8 +680,8 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
   },
   planBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
     borderRadius: Radius.pill,
   },
   planBadgeText: {
@@ -597,11 +690,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   primaryPillBtn: {
-    marginTop: Spacing.md,
-    height: 44,
     borderRadius: Radius.pill,
+    paddingVertical: Spacing.md,
     alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: Spacing.md,
   },
   primaryPillBtnText: {
     fontSize: FontSize.sm,
@@ -616,7 +708,7 @@ const styles = StyleSheet.create({
   usageLabelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: Spacing.xs,
   },
   usageTitle: {
     fontSize: FontSize.xs,
@@ -627,56 +719,53 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     height: 6,
-    borderRadius: 3,
+    borderRadius: Radius.pill,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: Radius.pill,
   },
   watchAdSubRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.sm,
     gap: 6,
-    marginTop: 8,
-    alignSelf: 'flex-start',
   },
   watchAdSubText: {
-    fontSize: 11,
+    fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
   },
-  profileActionsRow: {
-    flexDirection: 'row',
-    gap: 10,
+  syncRowWrap: {
     marginTop: Spacing.md,
     paddingTop: Spacing.md,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.08)',
   },
-  profilePillBtn: {
-    flex: 1,
-    height: 40,
-    borderRadius: Radius.md,
+  fullSyncBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: Radius.pill,
   },
-  profilePillText: {
-    fontSize: FontSize.xs,
+  fullSyncBtnText: {
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
   },
   groupContainer: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   groupHeaderTitle: {
-    fontSize: 11,
+    fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
-    letterSpacing: 0.8,
+    letterSpacing: 1,
     marginBottom: Spacing.xs,
-    paddingHorizontal: Spacing.xs,
+    marginLeft: Spacing.xs,
   },
   groupCard: {
-    borderRadius: Radius.xl,
+    borderRadius: Radius.lg,
     borderWidth: 1,
     overflow: 'hidden',
   },
@@ -685,20 +774,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: 14,
+    paddingVertical: Spacing.md,
   },
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
     flex: 1,
   },
   iconBadge: {
     width: 32,
     height: 32,
-    borderRadius: 8,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: Spacing.md,
   },
   settingLabel: {
     fontSize: FontSize.sm,
@@ -707,12 +796,13 @@ const styles = StyleSheet.create({
   settingRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: Spacing.xs,
   },
   settingValue: {
-    fontSize: FontSize.sm,
+    fontSize: FontSize.xs,
+    marginRight: Spacing.xs,
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.7,
   },
 });

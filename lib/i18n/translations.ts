@@ -214,7 +214,18 @@ export type TranslationKey =
   | 'book_genre_label'
   | 'book_language_label'
   | 'book_downloads_label'
-  | 'book_size_label';
+  | 'book_size_label'
+  // Legal & Compliance & Growth
+  | 'delete_account_btn'
+  | 'delete_account_confirm_title'
+  | 'delete_account_confirm_msg'
+  | 'delete_account_confirm_yes'
+  | 'rate_app'
+  | 'share_app'
+  | 'share_app_msg'
+  | 'privacy_policy'
+  | 'terms_of_service'
+  | 'section_legal';
 
 const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>> = {
   az: {
@@ -432,6 +443,17 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     book_language_label: 'Dil',
     book_downloads_label: 'Yüklənmə',
     book_size_label: 'Format',
+    // Legal & Compliance
+    delete_account_btn: 'Hesabı Sil',
+    delete_account_confirm_title: 'Hesabı Silmək İstəyirsiniz?',
+    delete_account_confirm_msg: 'Bütün yadda saxlanılan sözləriniz, kitablarınız və oxu tarixçəniz birdəfəlik silinəcək. Bu əməliyyat geri qaytarıla bilməz.',
+    delete_account_confirm_yes: 'Bəli, Hesabı Sil',
+    rate_app: 'Tətbiqi Qiymətləndir',
+    share_app: 'Dostlarınla Paylaş',
+    share_app_msg: 'Litera ilə ingilis dilində kitabları oxuyaraq sözləri asanlıqla öyrən! Yüklə: https://play.google.com/store/apps/details?id=com.litera.app',
+    privacy_policy: 'Məxfilik Siyasəti',
+    terms_of_service: 'İstifadə Şərtləri',
+    section_legal: 'Hüquqi & Haqqında',
   },
 
   en: {
@@ -649,6 +671,17 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     book_language_label: 'Language',
     book_downloads_label: 'Downloads',
     book_size_label: 'Format',
+    // Legal & Compliance
+    delete_account_btn: 'Delete Account',
+    delete_account_confirm_title: 'Delete Account?',
+    delete_account_confirm_msg: 'All your saved words, books, and reading progress will be permanently removed. This action cannot be undone.',
+    delete_account_confirm_yes: 'Yes, Delete Account',
+    rate_app: 'Rate Litera',
+    share_app: 'Share with Friends',
+    share_app_msg: 'Read classic English books and expand your vocabulary with Litera! Download: https://play.google.com/store/apps/details?id=com.litera.app',
+    privacy_policy: 'Privacy Policy',
+    terms_of_service: 'Terms of Service',
+    section_legal: 'Legal & About',
   },
 
   ru: {
@@ -866,6 +899,17 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     book_language_label: 'Язык',
     book_downloads_label: 'Скачиваний',
     book_size_label: 'Формат',
+    // Legal & Compliance
+    delete_account_btn: 'Удалить Аккаунт',
+    delete_account_confirm_title: 'Удалить аккаунт?',
+    delete_account_confirm_msg: 'Все ваши сохраненные слова, книги и прогресс чтения будут удалены безвозвратно.',
+    delete_account_confirm_yes: 'Да, удалить аккаунт',
+    rate_app: 'Оценить приложение',
+    share_app: 'Поделиться с друзьями',
+    share_app_msg: 'Читай книги на английском и учи слова легко с Litera! Скачать: https://play.google.com/store/apps/details?id=com.litera.app',
+    privacy_policy: 'Политика Конфиденциальности',
+    terms_of_service: 'Условия Использования',
+    section_legal: 'Информация и Право',
   },
 
   tr: {
@@ -1083,6 +1127,17 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     book_language_label: 'Dil',
     book_downloads_label: 'İndirme',
     book_size_label: 'Format',
+    // Legal & Compliance
+    delete_account_btn: 'Hesabı Sil',
+    delete_account_confirm_title: 'Hesabı Silmek İstiyor musunuz?',
+    delete_account_confirm_msg: 'Kaydedilen tüm kelimeleriniz, kitaplarınız ve okuma geçmişiniz kalıcı olarak silinecektir. Bu işlem geri alınamaz.',
+    delete_account_confirm_yes: 'Evet, Hesabı Sil',
+    rate_app: 'Uygulamayı Değerlendir',
+    share_app: 'Arkadaşlarınla Paylaş',
+    share_app_msg: 'Litera ile İngilizce kitaplar oku ve kelimeleri kolayca öğren! İndir: https://play.google.com/store/apps/details?id=com.litera.app',
+    privacy_policy: 'Gizlilik Politikası',
+    terms_of_service: 'Kullanım Koşulları',
+    section_legal: 'Yasal & Hakkında',
   },
 
   es: {
@@ -1300,6 +1355,17 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     book_language_label: 'Idioma',
     book_downloads_label: 'Descargas',
     book_size_label: 'Formato',
+    // Legal & Compliance
+    delete_account_btn: 'Eliminar Cuenta',
+    delete_account_confirm_title: '¿Eliminar Cuenta?',
+    delete_account_confirm_msg: 'Todas tus palabras guardadas, libros y progreso de lectura se eliminarán permanentemente.',
+    delete_account_confirm_yes: 'Sí, Eliminar Cuenta',
+    rate_app: 'Calificar Litera',
+    share_app: 'Compartir con amigos',
+    share_app_msg: '¡Lee libros clásicos en inglés y aprende vocabulario con Litera! Descargar: https://play.google.com/store/apps/details?id=com.litera.app',
+    privacy_policy: 'Política de Privacidad',
+    terms_of_service: 'Términos de Servicio',
+    section_legal: 'Legal y Acerca de',
   },
 
   de: {
@@ -1517,6 +1583,17 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     book_language_label: 'Sprache',
     book_downloads_label: 'Downloads',
     book_size_label: 'Format',
+    // Legal & Compliance
+    delete_account_btn: 'Konto löschen',
+    delete_account_confirm_title: 'Konto wirklich löschen?',
+    delete_account_confirm_msg: 'Alle Ihre gespeicherten Wörter, Bücher und Lesefortschritte werden dauerhaft gelöscht.',
+    delete_account_confirm_yes: 'Ja, Konto löschen',
+    rate_app: 'Litera bewerten',
+    share_app: 'Mit Freunden teilen',
+    share_app_msg: 'Lesen Sie englische Klassiker und lernen Sie Vokabeln mit Litera! Download: https://play.google.com/store/apps/details?id=com.litera.app',
+    privacy_policy: 'Datenschutz-Bestimmungen',
+    terms_of_service: 'Nutzungsbedingungen',
+    section_legal: 'Rechtliches & Über uns',
   },
 
   fr: {
@@ -1734,6 +1811,17 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     book_language_label: 'Langue',
     book_downloads_label: 'Téléchargements',
     book_size_label: 'Format',
+    // Legal & Compliance
+    delete_account_btn: 'Supprimer le Compte',
+    delete_account_confirm_title: 'Supprimer votre compte ?',
+    delete_account_confirm_msg: 'Tous vos mots enregistrés, vos livres et votre progression seront définitivement supprimés.',
+    delete_account_confirm_yes: 'Oui, Supprimer',
+    rate_app: 'Évaluer l’Application',
+    share_app: 'Partager avec des amis',
+    share_app_msg: 'Lisez des classiques en anglais et enrichissez votre vocabulaire avec Litera ! Télécharger : https://play.google.com/store/apps/details?id=com.litera.app',
+    privacy_policy: 'Politique de Confidentialité',
+    terms_of_service: 'Conditions d’Utilisation',
+    section_legal: 'Mentions Légales',
   },
 };
 

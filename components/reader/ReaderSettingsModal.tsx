@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Modal,
   Pressable,
@@ -8,12 +8,12 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import {
   THEMES,
-  getReaderSettings,
   saveReaderSettings,
   type FontFamilyChoice,
   type FontSizeLevel,
@@ -24,69 +24,67 @@ import {
 
 export interface ReaderSettingsModalProps {
   visible: boolean;
+  settings: ReaderSettings;
+  isPremium?: boolean;
   onClose: () => void;
-  onLiveChange?: (settings: ReaderSettings) => void;
+  onUpdateSettings: (newSettings: ReaderSettings) => void;
+  onOpenPaywall?: () => void;
 }
 
 const SIZE_ORDER: FontSizeLevel[] = ['small', 'normal', 'large', 'xlarge'];
-const FAMILY_ORDER: { key: FontFamilyChoice; label: string }[] = [
-  { key: 'serif', label: 'Serif (Klassik)' },
-  { key: 'sans', label: 'Sans-Serif (Müasir)' },
-  { key: 'noah', label: 'Noah (Zərif Həndəsi)' },
-  { key: 'lovelo', label: 'Lovelo (Ədəbi Şrift)' },
+
+interface FontOption {
+  key: FontFamilyChoice;
+  label: string;
+  isPremium: boolean;
+}
+
+const FAMILY_OPTIONS: FontOption[] = [
+  { key: 'serif', label: 'Klassik (Serif)', isPremium: false },
+  { key: 'sans', label: 'Müasir (Sans-Serif)', isPremium: false },
+  { key: 'sofia', label: 'Zərif (Sofia)', isPremium: true },
+  { key: 'outfit', label: 'Qrotesk (Modern)', isPremium: true },
+  { key: 'cabin', label: 'Həndəsi (Geometric)', isPremium: true },
 ];
+
 const THEME_ORDER: ThemeChoice[] = ['paper', 'sepia', 'cream', 'dark', 'black'];
 
 export function ReaderSettingsModal({
   visible,
+  settings,
+  isPremium = false,
   onClose,
-  onLiveChange,
+  onUpdateSettings,
+  onOpenPaywall,
 }: ReaderSettingsModalProps) {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
-  const [settings, setSettings] = useState<ReaderSettings | null>(null);
 
-  useEffect(() => {
-    if (!visible) return;
-    let cancelled = false;
-    getReaderSettings().then((s) => {
-      if (!cancelled) setSettings(s);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [visible]);
+  if (!visible) return null;
 
-  const update = async <K extends keyof ReaderSettings>(
-    key: K,
-    value: ReaderSettings[K],
-  ) => {
-    if (!settings) return;
-    const next: ReaderSettings = { ...settings, [key]: value };
-    setSettings(next);
-    await saveReaderSettings({ [key]: value });
-    onLiveChange?.(next);
+  // Immediate in-memory update for 0ms lag + background persistence
+  const update = (partial: Partial<ReaderSettings>) => {
+    const next: ReaderSettings = { ...settings, ...partial };
+    onUpdateSettings(next);
+    saveReaderSettings(partial).catch(() => {});
   };
 
   const changeSizeStep = (delta: number) => {
-    if (!settings) return;
     const currIdx = SIZE_ORDER.indexOf(settings.fontSize);
     const nextIdx = Math.min(SIZE_ORDER.length - 1, Math.max(0, currIdx + delta));
     const next = SIZE_ORDER[nextIdx];
     if (next && next !== settings.fontSize) {
-      update('fontSize', next);
+      update({ fontSize: next });
     }
   };
 
-  if (!settings) {
-    return (
-      <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
-      </Modal>
-    );
-  }
-
-  const themeConfig = THEMES[settings.theme] ?? THEMES.paper;
+  const handleFontSelect = (opt: FontOption) => {
+    if (opt.isPremium && !isPremium) {
+      onOpenPaywall?.();
+      return;
+    }
+    update({ fontFamily: opt.key });
+  };
 
   const sizeLabelKey: Record<FontSizeLevel, any> = {
     small: 'size_small',
@@ -108,20 +106,17 @@ export function ReaderSettingsModal({
         <View
           style={[
             styles.sheet,
-            {
-              backgroundColor: themeConfig.panel,
-              paddingBottom: insets.bottom + Spacing.lg,
-            },
+            { paddingBottom: insets.bottom + Spacing.lg },
           ]}
         >
-          {/* Top Handle */}
+          {/* Top Drag Handle */}
           <View style={styles.handleContainer}>
-            <View style={[styles.handle, { backgroundColor: themeConfig.text + '33' }]} />
+            <View style={styles.handle} />
           </View>
 
           {/* Header */}
           <View style={styles.headerRow}>
-            <Text style={[styles.sheetTitle, { color: themeConfig.text }]}>
+            <Text style={styles.sheetTitle}>
               {t('reader_settings_title')}
             </Text>
             <Pressable
@@ -129,19 +124,16 @@ export function ReaderSettingsModal({
               hitSlop={12}
               style={({ pressed }) => [
                 styles.closeBtn,
-                { backgroundColor: themeConfig.bg },
                 pressed && styles.pressed,
               ]}
             >
-              <Text style={[styles.closeBtnText, { color: themeConfig.text }]}>
-                ✕
-              </Text>
+              <Feather name="x" size={18} color="#94a3b8" />
             </Pressable>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-            {/* Theme Chips */}
-            <Text style={[styles.label, { color: themeConfig.text + 'aa' }]}>
+            {/* 1. Theme Chips */}
+            <Text style={styles.sectionLabel}>
               {t('reader_label_theme')}
             </Text>
             <View style={styles.themeRow}>
@@ -151,97 +143,127 @@ export function ReaderSettingsModal({
                 return (
                   <Pressable
                     key={themeKey}
-                    onPress={() => update('theme', themeKey)}
+                    onPress={() => update({ theme: themeKey })}
                     style={({ pressed }) => [
                       styles.themeChip,
                       {
                         backgroundColor: themeItem.bg,
-                        borderColor: active ? '#6366f1' : themeConfig.text + '22',
+                        borderColor: active ? '#d4af7a' : 'rgba(255, 255, 255, 0.12)',
                         borderWidth: active ? 2.5 : 1,
-                      },
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    <Text style={[styles.themeChipText, { color: themeItem.text }]}>Aa</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            {/* Font Size & Line Alignment Row */}
-            <View style={styles.twoColumn}>
-              <View style={styles.col}>
-                <Text style={[styles.label, { color: themeConfig.text + 'aa' }]}>
-                  {t('reader_label_font_size')}
-                </Text>
-                <View style={[styles.pillControl, { backgroundColor: themeConfig.bg }]}>
-                  <Pressable
-                    onPress={() => changeSizeStep(-1)}
-                    style={({ pressed }) => [styles.pillBtn, pressed && styles.pressed]}
-                  >
-                    <Text style={[styles.pillBtnText, { color: themeConfig.text }]}>A-</Text>
-                  </Pressable>
-                  <Text style={[styles.pillValueText, { color: themeConfig.text }]} numberOfLines={1}>
-                    {t(sizeLabelKey[settings.fontSize])}
-                  </Text>
-                  <Pressable
-                    onPress={() => changeSizeStep(1)}
-                    style={({ pressed }) => [styles.pillBtn, pressed && styles.pressed]}
-                  >
-                    <Text style={[styles.pillBtnText, { color: themeConfig.text, fontSize: 16 }]}>A+</Text>
-                  </Pressable>
-                </View>
-              </View>
-
-              <View style={styles.col}>
-                <Text style={[styles.label, { color: themeConfig.text + 'aa' }]}>
-                  {t('reader_label_text_align')}
-                </Text>
-                <View style={[styles.pillControl, { backgroundColor: themeConfig.bg }]}>
-                  <Pressable
-                    onPress={() => {
-                      const next: TextAlignChoice = settings.textAlign === 'left' ? 'justify' : 'left';
-                      update('textAlign', next);
-                    }}
-                    style={({ pressed }) => [styles.pillBtnFull, pressed && styles.pressed]}
-                  >
-                    <Text style={[styles.pillValueText, { color: themeConfig.text }]} numberOfLines={1}>
-                      {settings.textAlign === 'left' ? t('align_left') : t('align_justify')}
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
-            </View>
-
-            {/* Font Family Grid */}
-            <Text style={[styles.label, { color: themeConfig.text + 'aa' }]}>
-              {t('reader_label_font_family')}
-            </Text>
-            <View style={styles.familyGrid}>
-              {FAMILY_ORDER.map((item) => {
-                const active = item.key === settings.fontFamily;
-                return (
-                  <Pressable
-                    key={item.key}
-                    onPress={() => update('fontFamily', item.key)}
-                    style={({ pressed }) => [
-                      styles.familyGridPill,
-                      {
-                        backgroundColor: active ? '#6366f1' : themeConfig.bg,
-                        borderColor: active ? '#6366f1' : themeConfig.text + '22',
                       },
                       pressed && styles.pressed,
                     ]}
                   >
                     <Text
                       style={[
-                        styles.familyGridText,
-                        { color: active ? '#ffffff' : themeConfig.text, fontWeight: active ? '700' : '500' },
+                        styles.themeChipText,
+                        { color: themeItem.text },
+                        active && { fontWeight: FontWeight.bold },
                       ]}
-                      numberOfLines={1}
                     >
-                      {item.label}
+                      Aa
                     </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* 2. Font Size & Alignment Row */}
+            <View style={styles.controlsTwoCol}>
+              {/* Font Size Step Control */}
+              <View style={styles.controlBox}>
+                <Text style={styles.sectionLabel}>
+                  {t('reader_label_font_size')}
+                </Text>
+                <View style={styles.stepperContainer}>
+                  <Pressable
+                    onPress={() => changeSizeStep(-1)}
+                    disabled={settings.fontSize === 'small'}
+                    style={({ pressed }) => [
+                      styles.stepBtn,
+                      settings.fontSize === 'small' && styles.stepBtnDisabled,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={styles.stepBtnText}>A-</Text>
+                  </Pressable>
+
+                  <Text style={styles.sizeIndicatorText}>
+                    {t(sizeLabelKey[settings.fontSize])}
+                  </Text>
+
+                  <Pressable
+                    onPress={() => changeSizeStep(1)}
+                    disabled={settings.fontSize === 'xlarge'}
+                    style={({ pressed }) => [
+                      styles.stepBtn,
+                      settings.fontSize === 'xlarge' && styles.stepBtnDisabled,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={styles.stepBtnText}>A+</Text>
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* Text Alignment */}
+              <View style={styles.controlBox}>
+                <Text style={styles.sectionLabel}>
+                  {t('reader_label_text_align')}
+                </Text>
+                <View style={styles.alignToggleRow}>
+                  {(['left', 'justify'] as TextAlignChoice[]).map((align) => {
+                    const active = settings.textAlign === align;
+                    return (
+                      <Pressable
+                        key={align}
+                        onPress={() => update({ textAlign: align })}
+                        style={({ pressed }) => [
+                          styles.alignBtn,
+                          active && styles.alignBtnActive,
+                          pressed && styles.pressed,
+                        ]}
+                      >
+                        <Feather
+                          name={align === 'left' ? 'align-left' : 'align-justify'}
+                          size={16}
+                          color={active ? '#0d0f17' : '#f8fafc'}
+                        />
+                        <Text style={[styles.alignBtnText, active && styles.alignBtnTextActive]}>
+                          {align === 'left' ? t('align_left') : t('align_justify')}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            </View>
+
+            {/* 3. Font Family Selection */}
+            <Text style={styles.sectionLabel}>
+              {t('reader_label_font_family')}
+            </Text>
+            <View style={styles.fontGrid}>
+              {FAMILY_OPTIONS.map((opt) => {
+                const active = opt.key === settings.fontFamily;
+                return (
+                  <Pressable
+                    key={opt.key}
+                    onPress={() => handleFontSelect(opt)}
+                    style={({ pressed }) => [
+                      styles.fontCard,
+                      active && styles.fontCardActive,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={[styles.fontCardText, active && styles.fontCardTextActive]}>
+                      {opt.label}
+                    </Text>
+                    {opt.isPremium && !isPremium ? (
+                      <View style={styles.crownBadge}>
+                        <Feather name="award" size={12} color="#d4af7a" />
+                      </View>
+                    ) : null}
                   </Pressable>
                 );
               })}
@@ -256,36 +278,41 @@ export function ReaderSettingsModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'flex-end',
   },
   dismissOverlay: {
     flex: 1,
   },
   sheet: {
+    backgroundColor: '#12151f',
     borderTopLeftRadius: Radius.xl,
     borderTopRightRadius: Radius.xl,
-    paddingTop: Spacing.sm,
-    paddingHorizontal: Spacing.xl,
-    maxHeight: '75%',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 122, 0.25)',
+    maxHeight: '85%',
   },
   handleContainer: {
     alignItems: 'center',
-    paddingVertical: Spacing.xs,
+    paddingVertical: 10,
   },
   handle: {
-    width: 36,
+    width: 40,
     height: 4,
     borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: Spacing.sm,
-    marginBottom: Spacing.sm,
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
   },
   sheetTitle: {
+    color: '#f8fafc',
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },
@@ -293,95 +320,143 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeBtnText: {
-    fontSize: 14,
-    fontWeight: FontWeight.bold,
-  },
   content: {
-    paddingBottom: Spacing.md,
-    gap: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
-  label: {
-    fontSize: 11,
+  sectionLabel: {
+    color: '#94a3b8',
+    fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
     letterSpacing: 0.8,
-    marginBottom: 4,
     textTransform: 'uppercase',
+    marginBottom: Spacing.sm,
   },
   themeRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
-    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: Spacing.xl,
   },
   themeChip: {
     flex: 1,
     height: 48,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   themeChipText: {
     fontSize: 16,
-    fontWeight: FontWeight.bold,
   },
-  twoColumn: {
+  controlsTwoCol: {
     flexDirection: 'row',
-    gap: Spacing.md,
+    gap: 12,
+    marginBottom: Spacing.xl,
   },
-  col: {
+  controlBox: {
     flex: 1,
   },
-  pillControl: {
+  stepperContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: 44,
-    borderRadius: Radius.lg,
-    paddingHorizontal: 4,
+    backgroundColor: '#191e2e',
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    padding: 4,
   },
-  pillBtn: {
+  stepBtn: {
     width: 38,
     height: 36,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
+    backgroundColor: '#22293e',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pillBtnFull: {
-    flex: 1,
-    height: 36,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+  stepBtnDisabled: {
+    opacity: 0.35,
   },
-  pillBtnText: {
-    fontSize: 13,
+  stepBtnText: {
+    color: '#f8fafc',
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
   },
-  pillValueText: {
-    fontSize: 12,
-    fontWeight: FontWeight.semibold,
+  sizeIndicatorText: {
+    color: '#f8fafc',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.medium,
   },
-  familyGrid: {
+  alignToggleRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  familyGridPill: {
-    width: '48%',
-    height: 44,
-    borderRadius: Radius.lg,
+    backgroundColor: '#191e2e',
+    borderRadius: Radius.md,
     borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    padding: 3,
+    gap: 4,
+  },
+  alignBtn: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.sm,
+    paddingVertical: 8,
+    borderRadius: Radius.sm,
+    gap: 4,
   },
-  familyGridText: {
-    fontSize: 13,
+  alignBtnActive: {
+    backgroundColor: '#d4af7a',
+  },
+  alignBtnText: {
+    color: '#94a3b8',
+    fontSize: 11,
+    fontWeight: FontWeight.medium,
+  },
+  alignBtnTextActive: {
+    color: '#0d0f17',
+    fontWeight: FontWeight.bold,
+  },
+  fontGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  fontCard: {
+    width: '48%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
+    borderRadius: Radius.md,
+    backgroundColor: '#191e2e',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  fontCardActive: {
+    backgroundColor: 'rgba(212, 175, 122, 0.15)',
+    borderColor: '#d4af7a',
+    borderWidth: 1.5,
+  },
+  fontCardText: {
+    color: '#f8fafc',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.medium,
+    flex: 1,
+  },
+  fontCardTextActive: {
+    color: '#d4af7a',
+    fontWeight: FontWeight.bold,
+  },
+  crownBadge: {
+    marginLeft: 4,
   },
   pressed: {
-    opacity: 0.7,
+    opacity: 0.75,
   },
 });
