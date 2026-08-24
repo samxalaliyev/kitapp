@@ -1,10 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Modal,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,42 +12,159 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as Speech from "expo-speech";
 import { Feather } from "@expo/vector-icons";
+import * as Speech from 'expo-speech';
 
-import { BookLoader } from "@/components/BookLoader";
 import { FullscreenAdModal } from "@/components/FullscreenAdModal";
 import { QuoteStoryModal } from "@/components/QuoteStoryModal";
 import { ReaderSettingsModal } from "@/components/reader/ReaderSettingsModal";
 import { SubscriptionPaywallModal } from "@/components/SubscriptionPaywallModal";
 import { WordPopup } from "@/components/WordPopup";
-import { useAuth } from "@/lib/auth/AuthContext";
 import { isBookReady, prepareBookForReading } from "@/lib/book-service";
-import { getBook, getReadingProgress, initDatabase, setReadingProgress } from "@/lib/db";
+import { getBook, initDatabase } from "@/lib/db";
 import { FontSize, FontWeight, Radius, Spacing } from "@/lib/design";
-import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { trackPageTurn } from "@/lib/monetization/interstitial-ads";
 import {
-  FONT_FAMILY_NATIVE,
-  FONT_SIZE_PX,
-  getReaderSettings,
-  type ReaderSettings,
-  saveReaderSettings,
-  THEMES,
-  type ThemeConfig,
-} from "@/lib/reader/settings";
-import {
-  type ParsedBookData,
   parseEpubFile,
+  type ParsedBookData,
   type ReaderPage,
   type ReaderParagraph,
   type ReaderWord,
 } from "@/lib/reader/epub-parser";
-import { useAppTheme } from "@/lib/theme";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import {
+  FONT_FAMILY_NATIVE,
+  FONT_SIZE_PX,
+  THEMES,
+  getReaderSettings,
+  saveReaderSettings,
+  type FontFamilyChoice,
+  type FontSizeLevel,
+  type ReaderSettings,
+  type ThemeConfig,
+} from "@/lib/reader/settings";
 import { listSavedWords } from "@/lib/vocabulary/store";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { isPremiumMember } from "@/lib/permissions/rbac";
+import { useAppTheme } from "@/lib/theme";
 import type { ApiBook } from "@/types/book";
 
-// --- MEMOIZED CLEAN NATURAL PAGE ITEM COMPONENT ---
+// 1. Fine-Grained Memoized Word Component (Zero Layout Shifts)
+interface WordItemProps {
+  word: ReaderWord;
+  isSelected: boolean;
+  isSpoken: boolean;
+  onPress: () => void;
+}
+
+const WordItem = React.memo(
+  function WordItem({ word, isSelected, isSpoken, onPress }: WordItemProps) {
+    return (
+      <Text
+        onPress={onPress}
+        style={[
+          styles.wordBase,
+          isSelected && styles.wordSelected,
+          isSpoken && styles.wordSpokenHighlight,
+        ]}
+      >
+        {word.raw}{" "}
+      </Text>
+    );
+  },
+  (prev, next) => {
+    return (
+      prev.word.id === next.word.id &&
+      prev.isSelected === next.isSelected &&
+      prev.isSpoken === next.isSpoken
+    );
+  },
+);
+
+// 2. Fine-Grained Memoized Paragraph Component (Skips Untouched Paragraphs 100%)
+interface ParagraphItemProps {
+  para: ReaderParagraph;
+  theme: ThemeConfig;
+  fontFamily: string;
+  fontSize: number;
+  computedLineHeight: number;
+  paragraphSpacing: number;
+  textAlign: "left" | "justify";
+  selectedWordIdsSet: Set<string>;
+  activeSpokenWordId: string | null;
+  onWordClick: (word: ReaderWord, paraWords: ReaderWord[], paragraphText: string) => void;
+}
+
+const ParagraphItem = React.memo(
+  function ParagraphItem({
+    para,
+    theme,
+    fontFamily,
+    fontSize,
+    computedLineHeight,
+    paragraphSpacing,
+    textAlign,
+    selectedWordIdsSet,
+    activeSpokenWordId,
+    onWordClick,
+  }: ParagraphItemProps) {
+    return (
+      <View style={[styles.paragraphBlock, { marginBottom: paragraphSpacing }]}>
+        <Text
+          style={[
+            styles.paragraphText,
+            {
+              color: theme.text,
+              fontSize,
+              fontFamily,
+              lineHeight: computedLineHeight,
+              textAlign,
+            },
+          ]}
+        >
+          {para.words.map((word) => (
+            <WordItem
+              key={word.id}
+              word={word}
+              isSelected={selectedWordIdsSet.has(word.id)}
+              isSpoken={activeSpokenWordId === word.id}
+              onPress={() => onWordClick(word, para.words, para.text)}
+            />
+          ))}
+        </Text>
+      </View>
+    );
+  },
+  (prev, next) => {
+    if (
+      prev.para.id !== next.para.id ||
+      prev.theme.text !== next.theme.text ||
+      prev.fontSize !== next.fontSize ||
+      prev.fontFamily !== next.fontFamily ||
+      prev.computedLineHeight !== next.computedLineHeight ||
+      prev.paragraphSpacing !== next.paragraphSpacing ||
+      prev.textAlign !== next.textAlign
+    ) {
+      return false;
+    }
+
+    // Fast check: Did any word in this paragraph change selection or speech?
+    const words = prev.para.words;
+    for (let i = 0; i < words.length; i++) {
+      const wId = words[i].id;
+      const prevSel = prev.selectedWordIdsSet.has(wId);
+      const nextSel = next.selectedWordIdsSet.has(wId);
+      if (prevSel !== nextSel) return false;
+
+      const prevSpk = prev.activeSpokenWordId === wId;
+      const nextSpk = next.activeSpokenWordId === wId;
+      if (prevSpk !== nextSpk) return false;
+    }
+
+    return true;
+  },
+);
+
+// 3. Memoized Page Item
 interface PageItemProps {
   page: ReaderPage;
   pageWidth: number;
@@ -59,9 +174,9 @@ interface PageItemProps {
   lineHeight: number;
   paragraphSpacing: number;
   textAlign: "left" | "justify";
-  selectedWordIds: string[];
+  selectedWordIdsSet: Set<string>;
   activeSpokenWordId: string | null;
-  onWordClick: (word: ReaderWord, paragraphText: string) => void;
+  onWordClick: (word: ReaderWord, paraWords: ReaderWord[], paragraphText: string) => void;
 }
 
 const PageItem = React.memo(
@@ -74,7 +189,7 @@ const PageItem = React.memo(
     lineHeight,
     paragraphSpacing,
     textAlign,
-    selectedWordIds,
+    selectedWordIdsSet,
     activeSpokenWordId,
     onWordClick,
   }: PageItemProps) {
@@ -96,42 +211,22 @@ const PageItem = React.memo(
             </Text>
           ) : null}
 
-          {/* Natural Flowing Paragraphs (Clean Classical Print Layout - No Globe Icons) */}
+          {/* Flowing Paragraphs */}
           <View style={styles.paragraphsFlow}>
             {page.paragraphs.map((para) => (
-              <View key={para.id} style={[styles.paragraphBlock, { marginBottom: paragraphSpacing }]}>
-                <Text
-                  style={[
-                    styles.paragraphText,
-                    {
-                      color: theme.text,
-                      fontSize,
-                      fontFamily,
-                      lineHeight: computedLineHeight,
-                      textAlign,
-                    },
-                  ]}
-                >
-                  {para.words.map((word) => {
-                    const isSelected = selectedWordIds.includes(word.id);
-                    const isSpoken = activeSpokenWordId === word.id;
-
-                    return (
-                      <Text
-                        key={word.id}
-                        onPress={() => onWordClick(word, para.text)}
-                        style={[
-                          styles.wordUnderline,
-                          isSelected && styles.wordSelected,
-                          isSpoken && styles.wordSpokenHighlight,
-                        ]}
-                      >
-                        {word.raw}{" "}
-                      </Text>
-                    );
-                  })}
-                </Text>
-              </View>
+              <ParagraphItem
+                key={para.id}
+                para={para}
+                theme={theme}
+                fontFamily={fontFamily}
+                fontSize={fontSize}
+                computedLineHeight={computedLineHeight}
+                paragraphSpacing={paragraphSpacing}
+                textAlign={textAlign}
+                selectedWordIdsSet={selectedWordIdsSet}
+                activeSpokenWordId={activeSpokenWordId}
+                onWordClick={onWordClick}
+              />
             ))}
           </View>
         </ScrollView>
@@ -149,7 +244,7 @@ const PageItem = React.memo(
       prev.lineHeight === next.lineHeight &&
       prev.paragraphSpacing === next.paragraphSpacing &&
       prev.textAlign === next.textAlign &&
-      prev.selectedWordIds === next.selectedWordIds &&
+      prev.selectedWordIdsSet === next.selectedWordIdsSet &&
       prev.activeSpokenWordId === next.activeSpokenWordId
     );
   },
@@ -163,13 +258,14 @@ export default function BookReaderScreen() {
   const { colors } = useAppTheme();
   const { t, targetLang } = useLanguage();
   const { role, subscriptionPlan } = useAuth();
+  const isPremium = isPremiumMember(role, subscriptionPlan);
 
   const [loading, setLoading] = useState(true);
   const [bookTitle, setBookTitle] = useState("Kitab");
   const [bookData, setBookData] = useState<ParsedBookData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Settings & Theme
+  // Settings & Theme (Synchronized directly in state)
   const [settings, setSettings] = useState<ReaderSettings>({
     fontSize: "normal",
     fontFamily: "serif",
@@ -184,32 +280,40 @@ export default function BookReaderScreen() {
   // Reader State
   const [currentPage, setCurrentPage] = useState(0);
   const flatListRef = useRef<FlatList<ReaderPage>>(null);
-  const isInitialScrollDone = useRef(false);
 
   // Vocabulary Popup
   const [popupWord, setPopupWord] = useState<string | null>(null);
   const [popupSentenceContext, setPopupSentenceContext] = useState<string | null>(null);
   const [savedWordsCount, setSavedWordsCount] = useState(0);
 
-  // Speech (Smooth Audio Highlighter)
+  // Speech (Audio Highlighter)
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [activeSpokenWordId, setActiveSpokenWordId] = useState<string | null>(null);
   const speechIntervalRef = useRef<any>(null);
 
-  // Selection mode for Quotes / Instagram Story (Unique Word IDs)
+  // Story Selection Mode & State
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectModeType, setSelectModeType] = useState<'sentence' | 'word'>('sentence');
   const isSelectionModeRef = useRef(isSelectionMode);
+  const selectModeTypeRef = useRef(selectModeType);
+
   useEffect(() => {
     isSelectionModeRef.current = isSelectionMode;
   }, [isSelectionMode]);
+
+  useEffect(() => {
+    selectModeTypeRef.current = selectModeType;
+  }, [selectModeType]);
+
   const [selectedWordIds, setSelectedWordIds] = useState<string[]>([]);
+  const selectedWordIdsSet = useMemo(() => new Set(selectedWordIds), [selectedWordIds]);
   const [storyVisible, setStoryVisible] = useState(false);
 
   // Monetization
   const [fullscreenAdVisible, setFullscreenAdVisible] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
 
-  // Load Settings & Saved words
+  // Load Settings & Saved words on mount
   useEffect(() => {
     getReaderSettings().then((s) => {
       let themeChoice = s.theme;
@@ -252,106 +356,57 @@ export default function BookReaderScreen() {
         }
 
         if (!filePath) {
-          throw new Error("Kitab faylı tapılmadı");
+          throw new Error("EPUB faylı yüklənə bilmədi");
         }
 
         const parsed = await parseEpubFile(filePath);
         if (cancelled) return;
 
         setBookData(parsed);
-        if (parsed.title) setBookTitle(parsed.title);
-
-        // Restore reading progress
-        const savedProgress = await getReadingProgress(id);
-        let startPage = 0;
-        if (savedProgress?.lastLocation) {
-          const parsedIdx = parseInt(savedProgress.lastLocation, 10);
-          if (!isNaN(parsedIdx) && parsedIdx >= 0 && parsedIdx < parsed.pages.length) {
-            startPage = parsedIdx;
-          }
-        }
-        setCurrentPage(startPage);
-      } catch (err) {
+      } catch (err: any) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Kitab oxunmadı");
+          setError(err?.message || "Kitab oxunarkən xəta baş verdi");
         }
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
 
     loadBook();
-
     return () => {
       cancelled = true;
-      Speech.stop();
       if (speechIntervalRef.current) clearInterval(speechIntervalRef.current);
+      Speech.stop().catch(() => {});
     };
   }, [id]);
 
-  // Scroll to saved page upon load
-  useEffect(() => {
-    if (!loading && bookData && !isInitialScrollDone.current && currentPage > 0) {
-      isInitialScrollDone.current = true;
-      setTimeout(() => {
-        flatListRef.current?.scrollToIndex({
-          index: currentPage,
-          animated: false,
-        });
-      }, 50);
-    }
-  }, [loading, bookData, currentPage]);
+  // Active theme & typography
+  const activeTheme = THEMES[settings.theme] ?? THEMES.black;
+  const activeFontFamily = FONT_FAMILY_NATIVE[settings.fontFamily] || FONT_FAMILY_NATIVE.serif;
+  const activeFontSize = FONT_SIZE_PX[settings.fontSize] || FONT_SIZE_PX.normal;
 
-  // Active Theme Config
-  const activeTheme: ThemeConfig = useMemo(() => {
-    return THEMES[settings.theme] ?? (colors.isDark ? THEMES.black : THEMES.paper);
-  }, [settings.theme, colors.isDark]);
-
-  const activeFontFamily = useMemo(() => {
-    return FONT_FAMILY_NATIVE[settings.fontFamily] ?? "serif";
-  }, [settings.fontFamily]);
-
-  const activeFontSize = useMemo(() => {
-    return FONT_SIZE_PX[settings.fontSize] ?? 19;
-  }, [settings.fontSize]);
-
-  // Stop speech cleanly
-  const stopSpeech = useCallback(() => {
-    Speech.stop();
-    setIsSpeaking(false);
-    setActiveSpokenWordId(null);
-    if (speechIntervalRef.current) {
-      clearInterval(speechIntervalRef.current);
-      speechIntervalRef.current = null;
-    }
-  }, []);
-
-  // Page Scroll Listener with dynamic windowWidth
+  // Horizontal Paging scroll handler
   const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const offsetX = event.nativeEvent.contentOffset.x;
-      const pageIdx = Math.round(offsetX / windowWidth);
-      if (pageIdx !== currentPage && bookData && pageIdx >= 0 && pageIdx < bookData.pages.length) {
-        stopSpeech();
-        setCurrentPage(pageIdx);
-        trackPageTurn(role, subscriptionPlan, () => setFullscreenAdVisible(true));
-
-        if (id) {
-          const percent = Math.round(((pageIdx + 1) / bookData.pages.length) * 100);
-          setReadingProgress({
-            bookId: id,
-            lastLocation: String(pageIdx),
-            percent: Math.min(100, Math.max(1, percent)),
-          }).catch(() => {});
+    (e: any) => {
+      const offsetX = e.nativeEvent.contentOffset.x;
+      const pageIndex = Math.round(offsetX / windowWidth);
+      if (pageIndex !== currentPage && pageIndex >= 0) {
+        setCurrentPage(pageIndex);
+        if (isSpeaking) {
+          stopSpeech();
         }
       }
     },
-    [currentPage, bookData, id, role, subscriptionPlan, stopSpeech, windowWidth],
+    [windowWidth, currentPage, isSpeaking],
   );
 
-  // Synchronized Audio Reading (Calibrated pleasant pace ~0.80 rate, soft non-shifting highlighter)
+  const stopSpeech = useCallback(() => {
+    if (speechIntervalRef.current) clearInterval(speechIntervalRef.current);
+    Speech.stop().catch(() => {});
+    setIsSpeaking(false);
+    setActiveSpokenWordId(null);
+  }, []);
+
   const toggleSpeech = useCallback(() => {
     if (isSpeaking) {
       stopSpeech();
@@ -366,7 +421,6 @@ export default function BookReaderScreen() {
     const fullPageText = curPage.paragraphs.map((p) => p.text).join(". ");
     setIsSpeaking(true);
 
-    // Calibrated comfortable reading duration (~440ms per word at 0.80 rate)
     let curWordIndex = 0;
     setActiveSpokenWordId(pageWords[0]?.id || null);
 
@@ -386,7 +440,6 @@ export default function BookReaderScreen() {
       rate: 0.80,
       onDone: () => {
         stopSpeech();
-        // Smoothly auto-advance to next page if available
         if (currentPage + 1 < bookData.pages.length) {
           flatListRef.current?.scrollToIndex({
             index: currentPage + 1,
@@ -410,23 +463,91 @@ export default function BookReaderScreen() {
     }
   }, [loading, bookData, autoAudio, toggleSpeech]);
 
-  // Word Click
-  const handleWordClick = useCallback((word: ReaderWord, paragraphText: string) => {
-    if (isSelectionModeRef.current) {
-      setSelectedWordIds((prev) => {
-        if (prev.includes(word.id)) {
-          return prev.filter((id) => id !== word.id);
-        }
-        return [...prev, word.id];
-      });
-      return;
-    }
+  // Word Click / Selection
+  const handleWordClick = useCallback(
+    (word: ReaderWord, paraWords: ReaderWord[], paragraphText: string) => {
+      if (isSelectionModeRef.current) {
+        if (selectModeTypeRef.current === 'sentence') {
+          // Find the exact sentence boundaries containing the clicked word
+          const clickedIndex = paraWords.findIndex((w) => w.id === word.id);
+          if (clickedIndex === -1) return;
 
-    if (word.clean) {
-      setPopupWord(word.clean);
-      setPopupSentenceContext(paragraphText);
-    }
-  }, []);
+          // Find start of sentence (search backward for sentence-ending punctuation)
+          let startIdx = clickedIndex;
+          while (startIdx > 0) {
+            const prevWord = paraWords[startIdx - 1];
+            if (/[.!?]["'”’)]?$/.test(prevWord.raw)) {
+              break;
+            }
+            startIdx--;
+          }
+
+          // Find end of sentence (search forward for sentence-ending punctuation)
+          let endIdx = clickedIndex;
+          while (endIdx < paraWords.length - 1) {
+            const curWord = paraWords[endIdx];
+            if (/[.!?]["'”’)]?$/.test(curWord.raw)) {
+              break;
+            }
+            endIdx++;
+          }
+
+          const sentenceWords = paraWords.slice(startIdx, endIdx + 1);
+          const sentenceWordIds = sentenceWords.map((w) => w.id);
+
+          setSelectedWordIds((prev) => {
+            const allSelected = sentenceWordIds.every((id) => prev.includes(id));
+            if (allSelected) {
+              return prev.filter((id) => !sentenceWordIds.includes(id));
+            } else {
+              return Array.from(new Set([...prev, ...sentenceWordIds]));
+            }
+          });
+        } else {
+          // Individual word selection
+          setSelectedWordIds((prev) => {
+            if (prev.includes(word.id)) {
+              return prev.filter((i) => i !== word.id);
+            }
+            return [...prev, word.id];
+          });
+        }
+        return;
+      }
+
+      if (word.clean) {
+        // Extract exact sentence containing the clicked word
+        const clickedIndex = paraWords.findIndex((w) => w.id === word.id);
+        let sentenceText = paragraphText;
+
+        if (clickedIndex !== -1) {
+          let startIdx = clickedIndex;
+          while (startIdx > 0) {
+            const prevWord = paraWords[startIdx - 1];
+            if (/[.!?]["'”’)]?$/.test(prevWord.raw)) {
+              break;
+            }
+            startIdx--;
+          }
+
+          let endIdx = clickedIndex;
+          while (endIdx < paraWords.length - 1) {
+            const curWord = paraWords[endIdx];
+            if (/[.!?]["'”’)]?$/.test(curWord.raw)) {
+              break;
+            }
+            endIdx++;
+          }
+
+          sentenceText = paraWords.slice(startIdx, endIdx + 1).map((w) => w.raw).join(" ");
+        }
+
+        setPopupWord(word.clean);
+        setPopupSentenceContext(sentenceText);
+      }
+    },
+    [],
+  );
 
   // Ordered Quote Text for Instagram Story
   const selectedQuoteText = useMemo(() => {
@@ -457,7 +578,7 @@ export default function BookReaderScreen() {
         lineHeight={settings.lineHeight}
         paragraphSpacing={settings.paragraphSpacing}
         textAlign={settings.textAlign}
-        selectedWordIds={selectedWordIds}
+        selectedWordIdsSet={selectedWordIdsSet}
         activeSpokenWordId={activeSpokenWordId}
         onWordClick={handleWordClick}
       />
@@ -470,7 +591,7 @@ export default function BookReaderScreen() {
       settings.lineHeight,
       settings.paragraphSpacing,
       settings.textAlign,
-      selectedWordIds,
+      selectedWordIdsSet,
       activeSpokenWordId,
       handleWordClick,
     ],
@@ -485,28 +606,31 @@ export default function BookReaderScreen() {
     [windowWidth],
   );
 
-  const keyExtractor = useCallback((page: ReaderPage) => page.id, []);
+  const keyExtractor = useCallback((item: ReaderPage) => item.id, []);
 
   if (loading) {
     return (
-      <View style={[styles.centered, { backgroundColor: activeTheme.bg }]}>
-        <BookLoader size={130} message={t('reading_loading')} />
+      <View style={[styles.centerContainer, { backgroundColor: activeTheme.bg }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: activeTheme.text }]}>
+          {t('reading_loading')}
+        </Text>
       </View>
     );
   }
 
   if (error || !bookData || bookData.pages.length === 0) {
     return (
-      <View style={[styles.centered, { backgroundColor: activeTheme.bg }]}>
-        <Text style={styles.errorIcon}>⚠️</Text>
-        <Text style={[styles.errorText, { color: activeTheme.text }]}>
-          {error || t('no_results_found')}
+      <View style={[styles.centerContainer, { backgroundColor: activeTheme.bg }]}>
+        <Text style={[styles.errorTitle, { color: colors.danger }]}>Xəta</Text>
+        <Text style={[styles.errorSub, { color: activeTheme.text }]}>
+          {error || "Kitab məzmunu boşdur"}
         </Text>
         <Pressable
-          style={[styles.backBtnAction, { backgroundColor: colors.primary }]}
+          style={[styles.backErrorBtn, { backgroundColor: colors.primary }]}
           onPress={() => router.back()}
         >
-          <Text style={styles.backBtnActionText}>{t('cancel_search')}</Text>
+          <Text style={styles.backErrorBtnText}>{t('cancel_search') || 'Geri'}</Text>
         </Pressable>
       </View>
     );
@@ -540,7 +664,6 @@ export default function BookReaderScreen() {
                 { width: `${progressPercent}%`, backgroundColor: colors.primary },
               ]}
             />
-            {/* Small circular thumb */}
             <View
               style={[
                 styles.progressThumb,
@@ -550,9 +673,9 @@ export default function BookReaderScreen() {
           </View>
         </View>
 
-        {/* Actions Row with Feather Icons */}
+        {/* Actions Row */}
         <View style={styles.headerActions}>
-          {/* Audio TTS Button with glowing active state */}
+          {/* Audio TTS Button */}
           <Pressable
             style={({ pressed }) => [
               styles.iconBtn,
@@ -578,7 +701,7 @@ export default function BookReaderScreen() {
             <Text style={[styles.aaIconText, { color: activeTheme.text }]}>Aa</Text>
           </Pressable>
 
-          {/* Vocabulary Badge Counter with Feather Bookmark */}
+          {/* Vocabulary Badge Counter */}
           <Pressable
             style={({ pressed }) => [
               styles.vocabBadge,
@@ -597,48 +720,102 @@ export default function BookReaderScreen() {
             </Text>
           </Pressable>
 
-          {/* Selection mode toggle (+) */}
+          {/* Story Selection Toggle Button */}
           <Pressable
             style={({ pressed }) => [
-              styles.iconBtn,
-              isSelectionMode && { backgroundColor: colors.primary },
+              styles.storyHeaderBtn,
+              isSelectionMode ? { backgroundColor: '#f59e0b' } : { backgroundColor: colors.primary },
               pressed && styles.pressed,
             ]}
             onPress={() => {
+              stopSpeech();
               setIsSelectionMode((prev) => !prev);
-              setSelectedWordIds([]);
+              if (isSelectionMode) {
+                setSelectedWordIds([]);
+              }
             }}
-            hitSlop={10}
+            hitSlop={8}
           >
-            <Feather
-              name={isSelectionMode ? "check" : "plus"}
-              size={18}
-              color={isSelectionMode ? "#ffffff" : activeTheme.text}
-            />
+            <Feather name={isSelectionMode ? "check" : "camera"} size={13} color="#0d0f17" />
+            <Text style={styles.storyHeaderBtnText}>
+              {isSelectionMode ? "Bitir" : "Story"}
+            </Text>
           </Pressable>
         </View>
       </View>
 
-      {/* Floating Selection Banner */}
+      {/* Floating Story Selection Banner */}
       {isSelectionMode ? (
         <View style={styles.selectionBanner}>
-          <Text style={styles.selectionBannerText}>
-            {selectedWordIds.length > 0
-              ? `${selectedWordIds.length} ${t('words_selected_count')}`
-              : t('selection_mode_hint')}
-          </Text>
-          {selectedWordIds.length > 0 ? (
+          {/* Mode Switcher Pill (Cümlə Seç vs Söz Seç) */}
+          <View style={styles.modeToggleRow}>
             <Pressable
-              style={styles.storyShareBtn}
-              onPress={() => setStoryVisible(true)}
+              onPress={() => setSelectModeType('sentence')}
+              style={[
+                styles.modePillBtn,
+                selectModeType === 'sentence' && styles.modePillBtnActive,
+              ]}
             >
-              <Text style={styles.storyShareBtnText}>{t('share_story_btn')}</Text>
+              <Text
+                style={[
+                  styles.modePillText,
+                  selectModeType === 'sentence' && styles.modePillTextActive,
+                ]}
+              >
+                Cümlə Seç
+              </Text>
             </Pressable>
-          ) : null}
+
+            <Pressable
+              onPress={() => setSelectModeType('word')}
+              style={[
+                styles.modePillBtn,
+                selectModeType === 'word' && styles.modePillBtnActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.modePillText,
+                  selectModeType === 'word' && styles.modePillTextActive,
+                ]}
+              >
+                Söz Seç
+              </Text>
+            </Pressable>
+          </View>
+
+          {/* Selection Actions */}
+          <View style={styles.selectionRightActions}>
+            {selectedWordIds.length > 0 ? (
+              <>
+                <Pressable
+                  style={styles.clearSelectionBtn}
+                  onPress={() => setSelectedWordIds([])}
+                  hitSlop={8}
+                >
+                  <Text style={styles.clearSelectionText}>✕</Text>
+                </Pressable>
+
+                <Pressable
+                  style={styles.storyConfirmBtn}
+                  onPress={() => setStoryVisible(true)}
+                >
+                  <Feather name="camera" size={13} color="#0d0f17" style={{ marginRight: 4 }} />
+                  <Text style={styles.storyConfirmBtnText}>
+                    Story Yarat ({selectedWordIds.length})
+                  </Text>
+                </Pressable>
+              </>
+            ) : (
+              <Text style={styles.selectionHintText}>
+                {selectModeType === 'sentence' ? 'Cümləyə toxunun' : 'Sözlərə toxunun'}
+              </Text>
+            )}
+          </View>
         </View>
       ) : null}
 
-      {/* Pure 100% Horizontal Paging Reader (Optimized with zero-gap preloading) */}
+      {/* Horizontal Paging Reader */}
       <FlatList
         ref={flatListRef}
         data={bookData.pages}
@@ -648,9 +825,9 @@ export default function BookReaderScreen() {
         showsHorizontalScrollIndicator={false}
         decelerationRate="fast"
         onMomentumScrollEnd={handleScroll}
-        initialNumToRender={5}
-        maxToRenderPerBatch={5}
-        windowSize={9}
+        initialNumToRender={3}
+        maxToRenderPerBatch={3}
+        windowSize={5}
         removeClippedSubviews={false}
         getItemLayout={getItemLayout}
         renderItem={renderItem}
@@ -675,17 +852,20 @@ export default function BookReaderScreen() {
         }}
       />
 
-      {/* Reader Settings Modal (Aa) */}
+      {/* Reader Settings Modal (Aa) with Instant In-Memory 0ms Sync */}
       <ReaderSettingsModal
         visible={settingsVisible}
+        settings={settings}
+        isPremium={isPremium}
         onClose={() => setSettingsVisible(false)}
-        onLiveChange={(next) => {
-          setSettings(next);
-          saveReaderSettings(next);
+        onUpdateSettings={(next) => setSettings(next)}
+        onOpenPaywall={() => {
+          setSettingsVisible(false);
+          setPaywallVisible(true);
         }}
       />
 
-      {/* Quote Story Modal */}
+      {/* Full 9:16 Instagram Story Modal (Pixel-Perfect Safe Areas) */}
       <QuoteStoryModal
         visible={storyVisible}
         quote={selectedQuoteText}
@@ -709,6 +889,7 @@ export default function BookReaderScreen() {
         }}
       />
 
+      {/* Subscription Paywall Modal */}
       <SubscriptionPaywallModal
         visible={paywallVisible}
         onClose={() => setPaywallVisible(false)}
@@ -721,75 +902,78 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
-  centered: {
+  centerContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: Spacing.xl,
+    padding: Spacing.xl,
   },
   loadingText: {
-    marginTop: Spacing.md,
+    marginTop: Spacing.lg,
     fontSize: FontSize.md,
     fontWeight: FontWeight.medium,
   },
-  errorIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.md,
+  errorTitle: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    marginBottom: Spacing.xs,
   },
-  errorText: {
-    fontSize: FontSize.md,
+  errorSub: {
+    fontSize: FontSize.sm,
     textAlign: "center",
     marginBottom: Spacing.lg,
+    opacity: 0.8,
   },
-  backBtnAction: {
+  backErrorBtn: {
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
     borderRadius: Radius.pill,
   },
-  backBtnActionText: {
-    color: "#ffffff",
+  backErrorBtnText: {
+    color: "#0d0f17",
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
-    fontSize: FontSize.md,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.sm,
-    gap: Spacing.sm,
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.md,
+    paddingBottom: 8,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "rgba(255, 255, 255, 0.08)",
   },
   headerBtn: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
+    padding: 4,
   },
   progressContainer: {
     flex: 1,
-    paddingHorizontal: Spacing.xs,
+    marginHorizontal: Spacing.md,
     justifyContent: "center",
   },
   progressBarTrack: {
     height: 4,
     borderRadius: 2,
+    overflow: "visible",
     position: "relative",
-    justifyContent: "center",
   },
   progressBarFill: {
-    height: 4,
+    height: "100%",
     borderRadius: 2,
   },
   progressThumb: {
     position: "absolute",
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginTop: -3,
+    top: -4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: "#ffffff",
   },
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
   },
   iconBtn: {
     width: 34,
@@ -815,29 +999,92 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: FontWeight.bold,
   },
+  storyHeaderBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: Radius.pill,
+    gap: 4,
+    shadowColor: "#d4af7a",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  storyHeaderBtnText: {
+    color: "#0d0f17",
+    fontSize: 12,
+    fontWeight: FontWeight.bold,
+  },
   selectionBanner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#fef3c7",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-  },
-  selectionBannerText: {
-    color: "#92400e",
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.semibold,
-    flex: 1,
-  },
-  storyShareBtn: {
-    backgroundColor: "#d97706",
+    backgroundColor: "#191e2e",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(212, 175, 122, 0.25)",
     paddingHorizontal: Spacing.md,
+    paddingVertical: 6,
+  },
+  modeToggleRow: {
+    flexDirection: "row",
+    backgroundColor: "#0d0f17",
+    borderRadius: Radius.pill,
+    padding: 2,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  modePillBtn: {
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: Radius.pill,
   },
-  storyShareBtnText: {
-    color: "#ffffff",
-    fontSize: FontSize.xs,
+  modePillBtnActive: {
+    backgroundColor: "#d4af7a",
+  },
+  modePillText: {
+    color: "#94a3b8",
+    fontSize: 11,
+    fontWeight: FontWeight.bold,
+  },
+  modePillTextActive: {
+    color: "#0d0f17",
+  },
+  selectionRightActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  selectionHintText: {
+    color: "#d4af7a",
+    fontSize: 11,
+    fontWeight: FontWeight.medium,
+  },
+  clearSelectionBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  clearSelectionText: {
+    color: "#ef4444",
+    fontSize: 11,
+    fontWeight: FontWeight.bold,
+  },
+  storyConfirmBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#d4af7a",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: Radius.pill,
+  },
+  storyConfirmBtnText: {
+    color: "#0d0f17",
+    fontSize: 11,
     fontWeight: FontWeight.bold,
   },
   pageWrapper: {
@@ -870,20 +1117,17 @@ const styles = StyleSheet.create({
   paragraphText: {
     letterSpacing: 0.2,
   },
-  wordUnderline: {
-    textDecorationLine: "underline",
-    textDecorationStyle: "dotted",
-    textDecorationColor: "rgba(150, 150, 150, 0.4)",
+  wordBase: {
+    // Clean zero-shift base style
   },
   wordSelected: {
-    backgroundColor: "#fde047",
-    color: "#000000",
+    backgroundColor: "rgba(212, 175, 122, 0.45)",
+    borderRadius: 2,
   },
-  // Soft non-shifting highlighter (zero margin, zero padding, identical font weight to prevent shifting neighbours)
   wordSpokenHighlight: {
     backgroundColor: "#fef08a",
     color: "#854d0e",
-    borderRadius: 3,
+    borderRadius: 2,
   },
   footer: {
     alignItems: "center",

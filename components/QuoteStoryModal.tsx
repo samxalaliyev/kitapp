@@ -1,8 +1,6 @@
-import { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
-  Linking,
   Modal,
   Platform,
   Pressable,
@@ -15,9 +13,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
+import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { SOCIAL_CONFIG } from '@/lib/social';
 
-// react-native-share yalniz development build-de isleyir, Expo Go-da yox.
 let RNShare: any = null;
 let RNSocial: any = null;
 try {
@@ -25,7 +27,7 @@ try {
   RNShare = shareModule.default;
   RNSocial = shareModule.Social;
 } catch (e) {
-  // Platforma desteklemir, fallback istifade olunacaq.
+  // Platform does not support react-native-share in Expo Go, fallback used.
 }
 
 export interface QuoteStoryModalProps {
@@ -41,54 +43,77 @@ interface Theme {
   id: string;
   name: string;
   colors: [string, string, string];
+  cardBg: string;
+  cardBorder: string;
   textColor: string;
   subTextColor: string;
   accent: string;
+  quoteMarkColor: string;
 }
 
 const THEMES: Theme[] = [
   {
-    id: 'sunset',
-    name: 'Gun eshi',
-    colors: ['#fb7185', '#f97316', '#facc15'],
-    textColor: '#ffffff',
-    subTextColor: 'rgba(255,255,255,0.85)',
-    accent: '#ffffff',
+    id: 'obsidian_gold',
+    name: 'Obsidian Gold',
+    colors: ['#090d16', '#111827', '#030712'],
+    cardBg: 'rgba(255, 255, 255, 0.05)',
+    cardBorder: 'rgba(212, 175, 122, 0.35)',
+    textColor: '#f8fafc',
+    subTextColor: '#d4af7a',
+    accent: '#d4af7a',
+    quoteMarkColor: '#d4af7a',
   },
   {
-    id: 'ocean',
-    name: 'Okean',
-    colors: ['#0ea5e9', '#6366f1', '#8b5cf6'],
+    id: 'sunset_glow',
+    name: 'Qürub',
+    colors: ['#4c0519', '#881337', '#be123c'],
+    cardBg: 'rgba(0, 0, 0, 0.2)',
+    cardBorder: 'rgba(255, 255, 255, 0.25)',
     textColor: '#ffffff',
-    subTextColor: 'rgba(255,255,255,0.85)',
-    accent: '#ffffff',
+    subTextColor: '#fecdd3',
+    accent: '#fb7185',
+    quoteMarkColor: '#fecdd3',
   },
   {
-    id: 'forest',
-    name: 'Mese',
-    colors: ['#064e3b', '#065f46', '#10b981'],
+    id: 'royal_velvet',
+    name: 'Bənövşəyi',
+    colors: ['#1e1b4b', '#312e81', '#4338ca'],
+    cardBg: 'rgba(0, 0, 0, 0.25)',
+    cardBorder: 'rgba(255, 255, 255, 0.25)',
+    textColor: '#ffffff',
+    subTextColor: '#c7d2fe',
+    accent: '#818cf8',
+    quoteMarkColor: '#c7d2fe',
+  },
+  {
+    id: 'emerald_forest',
+    name: 'Zümrüd',
+    colors: ['#022c22', '#064e3b', '#065f46'],
+    cardBg: 'rgba(0, 0, 0, 0.22)',
+    cardBorder: 'rgba(255, 255, 255, 0.22)',
     textColor: '#f0fdf4',
-    subTextColor: 'rgba(240,253,244,0.8)',
-    accent: '#bbf7d0',
+    subTextColor: '#a7f3d0',
+    accent: '#34d399',
+    quoteMarkColor: '#a7f3d0',
   },
   {
-    id: 'paper',
-    name: 'Kagiz',
-    colors: ['#fef9c3', '#fde68a', '#fcd34d'],
-    textColor: '#1a1a1a',
-    subTextColor: 'rgba(26,26,26,0.7)',
-    accent: '#92400e',
+    id: 'warm_parchment',
+    name: 'Kağız',
+    colors: ['#fef3c7', '#fde68a', '#f59e0b'],
+    cardBg: 'rgba(255, 255, 255, 0.45)',
+    cardBorder: 'rgba(180, 83, 9, 0.25)',
+    textColor: '#451a03',
+    subTextColor: '#78350f',
+    accent: '#b45309',
+    quoteMarkColor: '#b45309',
   },
 ];
 
-const STORY_ASPECT = 9 / 16;
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const PREVIEW_WIDTH = Math.min(SCREEN_WIDTH * 0.78, 320);
-const PREVIEW_HEIGHT = PREVIEW_WIDTH / STORY_ASPECT;
-
-// Instagram Facebook Developer app-id sahesidir. Production build-de
-// real app-id ile deyisilmelidir.
-const INSTAGRAM_APP_ID = '123456789';
+// Exact 9:16 Instagram Story Canvas Dimensions
+const STORY_CANVAS_WIDTH = 360;
+const STORY_CANVAS_HEIGHT = 640;
+const PREVIEW_SCALE = 0.52; // fits nicely on screen
+const MAX_STORY_CHARS = 240;
 
 export function QuoteStoryModal({
   visible,
@@ -98,25 +123,54 @@ export function QuoteStoryModal({
   bookId,
   onClose,
 }: QuoteStoryModalProps) {
+  const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
   const viewShotRef = useRef<any>(null);
-  const [theme, setTheme] = useState<Theme>(THEMES[0]);
+
+  const [selectedTheme, setSelectedTheme] = useState<Theme>(THEMES[0]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const deepLink = 'https://litera.app/book/' + bookId;
+  // Dynamic Typography & Clamping Calculation for 100% Stability
+  const formattedQuote = useMemo(() => {
+    let raw = (quote || 'Kitab oxumaq başqa bir dünyada yaşamaqdır.').trim();
+    if (raw.length > MAX_STORY_CHARS) {
+      raw = raw.slice(0, MAX_STORY_CHARS - 3).trim() + '...';
+    }
+
+    const len = raw.length;
+    let fontSize = 16;
+    let lineHeight = 24;
+
+    if (len <= 75) {
+      fontSize = 20;
+      lineHeight = 29;
+    } else if (len <= 140) {
+      fontSize = 16.5;
+      lineHeight = 24.5;
+    } else if (len <= 195) {
+      fontSize = 14;
+      lineHeight = 21;
+    } else {
+      fontSize = 12.5;
+      lineHeight = 18;
+    }
+
+    return { text: raw, fontSize, lineHeight };
+  }, [quote]);
+
+  const deepLink = 'https://litera.app/book/' + (bookId || 'classic');
 
   async function capture(): Promise<string | null> {
     if (!viewShotRef.current?.capture) return null;
     try {
       return await viewShotRef.current.capture();
     } catch (e) {
-      console.log('Capture xetasi:', e);
+      console.log('Capture error:', e);
       return null;
     }
   }
 
-  // Instagram Stories-in paylashilmasi üçün
-  // react-native-share və ya deep link fallback mexanizmindən istifadə olunur.
   async function onInstagram() {
     if (busy) return;
     setBusy(true);
@@ -124,35 +178,28 @@ export function QuoteStoryModal({
     try {
       const uri = await capture();
       if (!uri) {
-        setError('Story hazirlana bilmedi');
+        setError('Story şəkli hazırlana bilmədi');
         return;
       }
 
-      let fileUri = uri;
-      if (!fileUri.startsWith('file://')) {
-        fileUri = 'file://' + fileUri;
-      }
-
+      let fileUri = uri.startsWith('file://') ? uri : 'file://' + uri;
       let base64Image = '';
       try {
         base64Image = await FileSystem.readAsStringAsync(uri, {
           encoding: FileSystem.EncodingType.Base64,
         });
-      } catch (e) {
-        console.log('Base64 read error:', e);
-      }
+      } catch {}
 
       const base64Uri = base64Image ? `data:image/png;base64,${base64Image}` : fileUri;
 
       if (RNShare && RNSocial && RNSocial.InstagramStories) {
         try {
-          const shareOptions: any = {
+          await RNShare.shareSingle({
             social: RNSocial.InstagramStories,
             appId: SOCIAL_CONFIG.FACEBOOK_APP_ID,
             backgroundImage: Platform.OS === 'android' ? fileUri : base64Uri,
             attributionURL: deepLink,
-          };
-          await RNShare.shareSingle(shareOptions);
+          });
           return;
         } catch (igErr: any) {
           if (igErr?.message === 'User did not share' || igErr?.message?.includes('cancel')) return;
@@ -171,17 +218,16 @@ export function QuoteStoryModal({
         } catch {}
       }
 
-      // System share sheet (opens Instagram, WhatsApp, Stories etc.)
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(fileUri, {
           mimeType: 'image/png',
           UTI: 'public.png',
-          dialogTitle: 'Instagram Stories-də paylaş',
+          dialogTitle: 'Instagram Story-də Paylaş',
         });
       }
     } catch (err: any) {
       if (err?.message !== 'User did not share') {
-        console.log('IG share overall error:', err);
+        setError('Paylaşım xətası baş verdi');
       }
     } finally {
       setBusy(false);
@@ -195,189 +241,220 @@ export function QuoteStoryModal({
     try {
       const uri = await capture();
       if (!uri) {
-        setError('Story hazirlana bilmedi');
+        setError('Story şəkli hazırlana bilmədi');
         return;
       }
-      if (RNShare) {
-        await RNShare.open({
-          url: uri,
-          type: 'image/png',
-          filename: 'litera-story.png',
-          title: 'Litera-dan sitat',
-          message: `${quote}\n\n— ${bookTitle}${bookAuthor ? ` (${bookAuthor})` : ''}\n${deepLink}`,
-          failOnCancel: false,
-        });
-      } else {
+
+      if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, {
           mimeType: 'image/png',
           UTI: 'public.png',
-          dialogTitle: 'Sitata paylash',
+          dialogTitle: 'Sitatı Paylaş',
         });
       }
     } catch (err: any) {
       if (err?.message !== 'User did not share') {
-        console.log('Share xetasi:', err);
+        setError('Paylaşım xətası baş verdi');
       }
     } finally {
       setBusy(false);
     }
   }
 
+  if (!visible) return null;
+
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="slide"
       onRequestClose={onClose}
     >
       <View style={styles.backdrop}>
-        <View style={styles.sheet}>
-          <View style={styles.headerRow}>
-            <Text style={styles.sheetTitle}>Story hazirla</Text>
-            <Pressable
-              onPress={onClose}
-              hitSlop={10}
-              style={({ pressed }) => [styles.closeBtn, pressed && styles.pressed]}
-            >
-              <Text style={styles.closeBtnText}>x</Text>
+        <Pressable style={styles.dismissOverlay} onPress={onClose} />
+
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + Spacing.sm }]}>
+          {/* Top Drag Handle */}
+          <View style={styles.handleContainer}>
+            <View style={styles.handle} />
+          </View>
+
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.headerTitleWrap}>
+              <Text style={styles.brandBadge}>INSTAGRAM 9:16 STORY</Text>
+              <Text style={styles.title}>Story Hazırla</Text>
+            </View>
+
+            <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={12}>
+              <Feather name="x" size={18} color="#94a3b8" />
             </Pressable>
           </View>
 
-          <View style={styles.previewWrap}>
-            <ViewShot
-              ref={viewShotRef}
-              options={{ format: 'png', quality: 1.0, result: 'tmpfile' }}
-              style={[styles.shot, { width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT }]}
-            >
-              <LinearGradient
-                colors={theme.colors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.card}
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+            {/* Live 9:16 Story Canvas Preview */}
+            <View style={styles.previewContainer}>
+              <View
+                style={[
+                  styles.previewScaleWrap,
+                  {
+                    width: STORY_CANVAS_WIDTH * PREVIEW_SCALE,
+                    height: STORY_CANVAS_HEIGHT * PREVIEW_SCALE,
+                  },
+                ]}
               >
-                <View style={styles.brandTopRow}>
-                  <Text style={[styles.brandText, { color: theme.subTextColor }]}>
-                    Litera ilə oxundu
-                  </Text>
-                </View>
-
-                <View style={styles.quoteWrap}>
-                  <Text
-                    style={[styles.quoteMark, { color: theme.accent, opacity: 0.5 }]}
-                  >
-                    "
-                  </Text>
-                  <Text
-                    style={[styles.quoteText, { color: theme.textColor }]}
-                  >
-                    {quote}
-                  </Text>
-                </View>
-
-                <View style={styles.bottomRow}>
-                  <View style={styles.metaCol}>
-                    <Text
-                      numberOfLines={1}
-                      style={[styles.bookTitle, { color: theme.textColor }]}
-                    >
-                      {bookTitle}
-                    </Text>
-                    {bookAuthor ? (
-                      <Text
-                        numberOfLines={1}
-                        style={[styles.authorText, { color: theme.subTextColor }]}
-                      >
-                        {bookAuthor}
-                      </Text>
-                    ) : null}
-                    <Text
-                      numberOfLines={1}
-                      style={[styles.linkText, { color: theme.subTextColor }]}
-                    >
-                      {deepLink}
-                    </Text>
-                  </View>
-                  <View
-                    style={[styles.appBadge, { borderColor: theme.accent }]}
-                  >
-                    <Text style={[styles.appBadgeText, { color: theme.accent }]}>
-                      L
-                    </Text>
-                  </View>
-                </View>
-              </LinearGradient>
-            </ViewShot>
-          </View>
-
-          <Text style={styles.sectionLabel}>Tema</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.themesRow}
-          >
-            {THEMES.map((item) => {
-              const active = item.id === theme.id;
-              return (
-                <Pressable
-                  key={item.id}
-                  onPress={() => setTheme(item)}
-                  style={({ pressed }) => [
-                    styles.themeChip,
-                    active && styles.themeChipActive,
-                    pressed && styles.pressed,
+                <ViewShot
+                  ref={viewShotRef}
+                  options={{ format: 'png', quality: 1.0, result: 'tmpfile' }}
+                  style={[
+                    styles.fullStoryCanvas,
+                    {
+                      transform: [
+                        { scale: PREVIEW_SCALE },
+                        { translateX: -STORY_CANVAS_WIDTH * (1 - PREVIEW_SCALE) },
+                        { translateY: -STORY_CANVAS_HEIGHT * (1 - PREVIEW_SCALE) },
+                      ],
+                    },
                   ]}
                 >
                   <LinearGradient
-                    colors={item.colors}
+                    colors={selectedTheme.colors}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={styles.themeSwatch}
-                  />
-                  <Text
-                    style={[styles.themeName, active && styles.themeNameActive]}
+                    style={styles.canvasGradient}
                   >
-                    {item.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
+                    {/* Centered Safe-Zone Quote Card (Never Cropped by Instagram) */}
+                    <View
+                      style={[
+                        styles.innerQuoteCard,
+                        {
+                          backgroundColor: selectedTheme.cardBg,
+                          borderColor: selectedTheme.cardBorder,
+                        },
+                      ]}
+                    >
+                      {/* Brand Header */}
+                      <View style={styles.cardHeader}>
+                        <Feather name="book-open" size={12} color={selectedTheme.accent} />
+                        <Text style={[styles.cardBrandText, { color: selectedTheme.subTextColor }]}>
+                          LITERA
+                        </Text>
+                      </View>
+
+                      {/* Quote Body */}
+                      <View style={styles.quoteBody}>
+                        <Text style={[styles.quoteMark, { color: selectedTheme.quoteMarkColor }]}>
+                          “
+                        </Text>
+                        <Text
+                          style={[
+                            styles.quoteText,
+                            {
+                              color: selectedTheme.textColor,
+                              fontSize: formattedQuote.fontSize,
+                              lineHeight: formattedQuote.lineHeight,
+                            },
+                          ]}
+                        >
+                          {formattedQuote.text}
+                        </Text>
+                      </View>
+
+                      {/* Card Footer */}
+                      <View style={styles.cardFooter}>
+                        <View style={styles.cardMeta}>
+                          <Text
+                            numberOfLines={1}
+                            style={[styles.bookTitleText, { color: selectedTheme.textColor }]}
+                          >
+                            {bookTitle || 'Kitab'}
+                          </Text>
+                          {bookAuthor ? (
+                            <Text
+                              numberOfLines={1}
+                              style={[styles.authorText, { color: selectedTheme.subTextColor }]}
+                            >
+                              {bookAuthor}
+                            </Text>
+                          ) : null}
+                        </View>
+
+                        <View style={[styles.sealBadge, { borderColor: selectedTheme.accent }]}>
+                          <Text style={[styles.sealText, { color: selectedTheme.accent }]}>L</Text>
+                        </View>
+                      </View>
+                    </View>
+                  </LinearGradient>
+                </ViewShot>
+              </View>
+            </View>
+
+            {/* Theme Selector */}
+            <Text style={styles.sectionLabel}>Rəng Teması</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.themeScroll}
+            >
+              {THEMES.map((th) => {
+                const active = th.id === selectedTheme.id;
+                return (
+                  <Pressable
+                    key={th.id}
+                    onPress={() => setSelectedTheme(th)}
+                    style={({ pressed }) => [
+                      styles.themeCard,
+                      active && styles.themeCardActive,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <LinearGradient
+                      colors={th.colors}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.themeSwatch}
+                    />
+                    <Text style={[styles.themeLabel, active && styles.themeLabelActive]}>
+                      {th.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
           </ScrollView>
 
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-          <View style={styles.shareButtonsRow}>
+          {/* Action Buttons */}
+          <View style={styles.bottomActionRow}>
             <Pressable
               onPress={onInstagram}
-              disabled={busy || !quote.trim()}
+              disabled={busy}
               style={({ pressed }) => [
-                styles.shareBtn,
-                styles.shareBtnIg,
-                (busy || !quote.trim()) && styles.shareBtnDisabled,
+                styles.igBtn,
                 pressed && styles.pressed,
               ]}
             >
               {busy ? (
-                <ActivityIndicator color="#ffffff" size="small" />
+                <ActivityIndicator size="small" color="#0d0f17" />
               ) : (
-                <Text style={styles.shareBtnTextIg}>IG Story</Text>
+                <>
+                  <Feather name="camera" size={16} color="#0d0f17" style={{ marginRight: 6 }} />
+                  <Text style={styles.igBtnText}>Instagram Story</Text>
+                </>
               )}
             </Pressable>
 
             <Pressable
               onPress={onOtherShare}
-              disabled={busy || !quote.trim()}
+              disabled={busy}
               style={({ pressed }) => [
-                styles.shareBtn,
-                styles.shareBtnOther,
-                (busy || !quote.trim()) && styles.shareBtnDisabled,
+                styles.otherBtn,
                 pressed && styles.pressed,
               ]}
             >
-              {busy ? (
-                <ActivityIndicator color="#0f172a" size="small" />
-              ) : (
-                <Text style={styles.shareBtnTextOther}>Diger</Text>
-              )}
+              <Feather name="share-2" size={16} color="#f8fafc" style={{ marginRight: 6 }} />
+              <Text style={styles.otherBtnText}>Paylaş / Saxla</Text>
             </Pressable>
           </View>
         </View>
@@ -386,202 +463,248 @@ export function QuoteStoryModal({
   );
 }
 
-function quoteText(
-  quote: string,
-  title: string,
-  author: string,
-  link: string,
-): string {
-  const parts = [
-    '"' + quote + '"',
-    title && ' - ' + title,
-    author && ' / ' + author,
-    link,
-    '\nKitapApp ile oxundu',
-  ].filter(Boolean);
-  return parts.join('\n');
-}
-
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'flex-end',
+  },
+  dismissOverlay: {
+    flex: 1,
   },
   sheet: {
-    width: '100%',
-    maxWidth: 420,
-    backgroundColor: '#ffffff',
-    borderRadius: 22,
-    padding: 18,
-    gap: 14,
+    backgroundColor: '#0d0f17',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 122, 0.25)',
+    maxHeight: '90%',
+    paddingTop: Spacing.xs,
   },
-  headerRow: {
-    flexDirection: 'row',
+  handleContainer: {
     alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingVertical: 6,
   },
-  sheetTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0f172a',
+  handle: {
+    width: 38,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.xs,
+  },
+  headerTitleWrap: {
+    gap: 2,
+  },
+  brandBadge: {
+    color: '#d4af7a',
+    fontSize: 9.5,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 1.2,
+  },
+  title: {
+    color: '#f8fafc',
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
   },
   closeBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeBtnText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#475569',
+  scrollContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.md,
   },
-  pressed: {
-    opacity: 0.7,
-  },
-  previewWrap: {
+  previewContainer: {
     alignItems: 'center',
-    paddingVertical: 4,
+    justifyContent: 'center',
+    marginVertical: Spacing.sm,
   },
-  shot: {
-    borderRadius: 18,
+  previewScaleWrap: {
+    borderRadius: Radius.lg,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 12,
   },
-  card: {
+  fullStoryCanvas: {
+    width: STORY_CANVAS_WIDTH,
+    height: STORY_CANVAS_HEIGHT,
+  },
+  canvasGradient: {
     flex: 1,
+    paddingHorizontal: 25,
+    paddingVertical: 70, // generous safe margins for Instagram UI
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  innerQuoteCard: {
+    width: '100%',
+    minHeight: 280,
+    maxHeight: 460,
+    borderRadius: 24,
+    borderWidth: 1.5,
     padding: 22,
     justifyContent: 'space-between',
   },
-  brandTopRow: {
+  cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
+    alignItems: 'center',
+    gap: 6,
   },
-  brandText: {
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
+  cardBrandText: {
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 1.5,
   },
-  quoteWrap: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 6,
+  quoteBody: {
+    paddingVertical: 14,
   },
   quoteMark: {
-    fontSize: 56,
-    lineHeight: 56,
-    fontWeight: '700',
+    fontSize: 36,
+    lineHeight: 36,
+    fontFamily: 'serif',
+    marginBottom: -8,
   },
   quoteText: {
-    fontSize: 22,
-    lineHeight: 30,
-    fontWeight: '600',
-    fontFamily: 'Georgia, serif',
+    fontFamily: 'serif',
+    fontStyle: 'italic',
+    letterSpacing: 0.2,
   },
-  bottomRow: {
+  cardFooter: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    paddingTop: 12,
+    borderTopWidth: 0.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.15)',
   },
-  metaCol: {
+  cardMeta: {
     flex: 1,
-    gap: 2,
+    marginRight: 8,
   },
-  bookTitle: {
-    fontSize: 13,
-    fontWeight: '700',
+  bookTitleText: {
+    fontSize: 12,
+    fontWeight: FontWeight.bold,
   },
   authorText: {
+    fontSize: 10.5,
+    marginTop: 2,
+  },
+  sealBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sealText: {
+    fontSize: 12,
+    fontWeight: FontWeight.bold,
+  },
+  sectionLabel: {
+    color: '#94a3b8',
     fontSize: 11,
-    fontStyle: 'italic',
+    fontWeight: FontWeight.bold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
-  linkText: {
-    fontSize: 9,
-    marginTop: 4,
-    opacity: 0.8,
+  themeScroll: {
+    gap: 10,
+    paddingVertical: Spacing.xs,
   },
-  appBadge: {
+  themeCard: {
+    alignItems: 'center',
+    backgroundColor: '#12151f',
+    borderRadius: Radius.md,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    width: 80,
+  },
+  themeCardActive: {
+    borderColor: '#d4af7a',
+    borderWidth: 1.5,
+    backgroundColor: 'rgba(212, 175, 122, 0.12)',
+  },
+  themeSwatch: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 6,
   },
-  appBadgeText: {
-    fontWeight: '800',
-    fontSize: 16,
+  themeLabel: {
+    color: '#94a3b8',
+    fontSize: 10,
+    fontWeight: FontWeight.medium,
+    textAlign: 'center',
   },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748b',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  themeLabelActive: {
+    color: '#d4af7a',
+    fontWeight: FontWeight.bold,
   },
-  themesRow: {
-    gap: 10,
-    paddingVertical: 4,
+  errorBanner: {
+    color: '#ef4444',
+    fontSize: FontSize.xs,
+    textAlign: 'center',
+    marginTop: Spacing.xs,
   },
-  themeChip: {
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 4,
-  },
-  themeChipActive: {
-    transform: [{ scale: 1.05 }],
-  },
-  themeSwatch: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-  themeName: {
-    fontSize: 11,
-    color: '#64748b',
-  },
-  themeNameActive: {
-    color: '#0f172a',
-    fontWeight: '600',
-  },
-  errorText: {
-    color: '#dc2626',
-    fontSize: 13,
-  },
-  shareButtonsRow: {
+  bottomActionRow: {
     flexDirection: 'row',
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#0d0f17',
     gap: 10,
   },
-  shareBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
+  igBtn: {
+    flex: 1.2,
+    backgroundColor: '#d4af7a',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: Radius.pill,
   },
-  shareBtnIg: {
-    backgroundColor: '#0f172a',
+  igBtnText: {
+    color: '#0d0f17',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
   },
-  shareBtnOther: {
-    backgroundColor: '#e2e8f0',
+  otherBtn: {
+    flex: 1,
+    backgroundColor: '#191e2e',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: Radius.pill,
   },
-  shareBtnDisabled: {
-    opacity: 0.5,
+  otherBtnText: {
+    color: '#f8fafc',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
   },
-  shareBtnTextIg: {
-    color: '#ffffff',
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  shareBtnTextOther: {
-    color: '#0f172a',
-    fontWeight: '700',
-    fontSize: 15,
+  pressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.99 }],
   },
 });

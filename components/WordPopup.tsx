@@ -28,6 +28,7 @@ export interface WordPopupProps {
   word: string | null;
   sentenceContext?: string | null;
   onClose: () => void;
+  onMakeStory?: (text: string) => void;
 }
 
 type LoadState = "loading" | "ready" | "error";
