@@ -32,6 +32,12 @@ module.exports = function withAndroidQueries(config) {
       });
     }
 
+    // Android Auto Backup söndürülür (Tətbiq silinib yenidən yüklənəndə köhnə dataların bərpa olunmaması üçün)
+    if (manifest.application && manifest.application[0] && manifest.application[0].$) {
+      manifest.application[0].$['android:allowBackup'] = 'false';
+      manifest.application[0].$['android:fullBackupContent'] = 'false';
+    }
+
     return config;
   });
 };
