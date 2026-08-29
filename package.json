@@ -37,6 +37,7 @@
     "react-native-worklets": "0.8.3"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.1119.0",
     "@types/react": "~19.2.2",
     "dotenv": "^17.4.2",
     "patch-package": "^8.0.0",

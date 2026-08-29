@@ -1,8 +1,24 @@
 import { getCachedTranslation, setCachedTranslation } from './i18n/cache';
 import { getTargetLanguage } from './i18n/settings';
 import type { LanguageCode } from './i18n/constants';
+import {
+  getOfflineTranslation,
+  setOfflineTranslation,
+  getWordCandidateLemmas,
+} from '@/lib/dictionary/offline-dict';
+import {
+  getCachedSentence,
+  setCachedSentence,
+} from '@/lib/translation/sentence-cache';
 
-export type TranslationSource = 'google_chrome' | 'google_gtx' | 'mymemory' | 'lingva' | 'libretranslate';
+export type TranslationSource =
+  | 'offline_dict'
+  | 'google_chrome'
+  | 'cloudflare_ai'
+  | 'mymemory'
+  | 'google_gtx'
+  | 'lingva'
+  | 'libretranslate';
 
 export interface TranslationResult {
   source: string;
@@ -24,6 +40,9 @@ const LIBRETRANSLATE_INSTANCES = [
   'https://translate.terraprint.co',
   'https://libretranslate.de',
 ];
+
+// Cloudflare AI Worker Gateway (Free Tier: 10,000 Neural Translations/day)
+const CLOUDFLARE_AI_GATEWAY = 'https://api.cloudflare.com/client/v4/accounts';
 
 interface MyMemoryResponse {
   responseData?: { translatedText?: string };
@@ -60,7 +79,7 @@ function looksLikeError(text: string): boolean {
   );
 }
 
-// 1. Google Chrome Dictionary Client (Ən sürətli, limitsiz və rəsmi Google endpoint-i)
+// 1. Google Chrome Dictionary Client (Limitsiz, yüksək sürət)
 async function tryGoogleChromeDict(
   text: string,
   sourceLang: string,
@@ -74,7 +93,8 @@ async function tryGoogleChromeDict(
     const response = await withTimeout(
       fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
           Accept: 'application/json, text/plain, */*',
         },
       }),
@@ -100,39 +120,7 @@ async function tryGoogleChromeDict(
   return null;
 }
 
-// 2. MyMemory Pro Client (Gündəlik 50,000 söz kvotası ilə)
-async function tryMyMemory(
-  text: string,
-  sourceLang: string,
-  targetLang: string,
-): Promise<TranslationResult | null> {
-  try {
-    const params = new URLSearchParams({
-      q: text,
-      langpair: `${sourceLang}|${targetLang}`,
-      de: 'admin@litera.app', // Registered developer email for 50,000 words/day
-    });
-
-    const response = await withTimeout(
-      fetch(`${MYMEMORY_ENDPOINT}?${params.toString()}`),
-      FAST_TIMEOUT_MS,
-    );
-
-    if (!response || !response.ok) return null;
-    const data = (await response.json()) as MyMemoryResponse;
-    const translated = data.responseData?.translatedText?.trim();
-
-    if (!translated || data.responseStatus === 403 || looksLikeError(translated)) {
-      return null;
-    }
-
-    return { source: text, translated, provider: 'mymemory' };
-  } catch {
-    return null;
-  }
-}
-
-// 3. Google Translate GTX Free API
+// 2. Google GTX Free API (Xüsusilə cümlələr üçün güclü)
 async function tryGoogleGTX(
   text: string,
   sourceLang: string,
@@ -146,7 +134,8 @@ async function tryGoogleGTX(
     const response = await withTimeout(
       fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
         },
       }),
       FAST_TIMEOUT_MS,
@@ -167,6 +156,38 @@ async function tryGoogleGTX(
     }
   } catch {}
   return null;
+}
+
+// 3. MyMemory Pro Client (Gündəlik 50,000 söz kvotası)
+async function tryMyMemory(
+  text: string,
+  sourceLang: string,
+  targetLang: string,
+): Promise<TranslationResult | null> {
+  try {
+    const params = new URLSearchParams({
+      q: text,
+      langpair: `${sourceLang}|${targetLang}`,
+      de: 'admin@litera.app',
+    });
+
+    const response = await withTimeout(
+      fetch(`${MYMEMORY_ENDPOINT}?${params.toString()}`),
+      FAST_TIMEOUT_MS,
+    );
+
+    if (!response || !response.ok) return null;
+    const data = (await response.json()) as MyMemoryResponse;
+    const translated = data.responseData?.translatedText?.trim();
+
+    if (!translated || data.responseStatus === 403 || looksLikeError(translated)) {
+      return null;
+    }
+
+    return { source: text, translated, provider: 'mymemory' };
+  } catch {
+    return null;
+  }
 }
 
 // 4. Lingva Open Translate
@@ -234,39 +255,6 @@ async function tryLibreTranslate(
   return null;
 }
 
-// İngilis dili üçün morfoloji lemmatizator (cəm və şəkilçiləri təmizləyir)
-function lemmatizeEnglishWord(rawWord: string): string[] {
-  const w = rawWord.toLowerCase().trim();
-  const candidates: string[] = [];
-
-  if (w.endsWith('ies') && w.length > 4) {
-    candidates.push(w.slice(0, -3) + 'y'); // stories -> story
-  }
-  if (w.endsWith('ves') && w.length > 4) {
-    candidates.push(w.slice(0, -3) + 'f'); // leaves -> leaf
-    candidates.push(w.slice(0, -3) + 'fe'); // knives -> knife
-  }
-  if (w.endsWith('es') && w.length > 3) {
-    candidates.push(w.slice(0, -2)); // boxes -> box
-  }
-  if (w.endsWith('s') && !w.endsWith('ss') && w.length > 2) {
-    candidates.push(w.slice(0, -1)); // rills -> rill
-  }
-  if (w.endsWith('ing') && w.length > 4) {
-    candidates.push(w.slice(0, -3)); // running -> run / reading -> read
-    candidates.push(w.slice(0, -3) + 'e'); // making -> make
-  }
-  if (w.endsWith('ed') && w.length > 3) {
-    candidates.push(w.slice(0, -2)); // looked -> look
-    candidates.push(w.slice(0, -1)); // lived -> live
-  }
-  if (w.endsWith('ly') && w.length > 3) {
-    candidates.push(w.slice(0, -2)); // quickly -> quick
-  }
-
-  return candidates;
-}
-
 async function tryTranslatePipeline(
   text: string,
   sourceLang: string,
@@ -274,22 +262,24 @@ async function tryTranslatePipeline(
 ): Promise<TranslationResult | null> {
   const isWord = !text.includes(' ');
 
-  // 1. Google Chrome Dictionary Client (Ən sürətli və keyfiyyətli)
-  const chromeRes = await tryGoogleChromeDict(text, sourceLang, targetLang);
-  if (chromeRes && (!isWord || chromeRes.translated.toLowerCase() !== text.toLowerCase())) {
-    return chromeRes;
+  // 1. Google Chrome Dictionary Client (Tək sözlər üçün ən sürətli)
+  if (isWord) {
+    const chromeRes = await tryGoogleChromeDict(text, sourceLang, targetLang);
+    if (chromeRes && chromeRes.translated.toLowerCase() !== text.toLowerCase()) {
+      return chromeRes;
+    }
   }
 
-  // 2. MyMemory Pro (50,000 words/day)
-  const myMemory = await tryMyMemory(text, sourceLang, targetLang);
-  if (myMemory && (!isWord || myMemory.translated.toLowerCase() !== text.toLowerCase())) {
-    return myMemory;
-  }
-
-  // 3. Google GTX Single
+  // 2. Google GTX Single (Cümlələr və ifadələr üçün ən güclü)
   const gtxRes = await tryGoogleGTX(text, sourceLang, targetLang);
   if (gtxRes && (!isWord || gtxRes.translated.toLowerCase() !== text.toLowerCase())) {
     return gtxRes;
+  }
+
+  // 3. MyMemory Pro (50,000 words/day)
+  const myMemory = await tryMyMemory(text, sourceLang, targetLang);
+  if (myMemory && (!isWord || myMemory.translated.toLowerCase() !== text.toLowerCase())) {
+    return myMemory;
   }
 
   // 4. Lingva Open
@@ -304,9 +294,9 @@ async function tryTranslatePipeline(
     return libre;
   }
 
-  // Əgər tək sözdürsə və birbaşa tərcümə tapılmadısa, lemmatizasiya edirik (kök sözü tərcümə edirik)
+  // Əgər tək sözdürsə və birbaşa tərcümə tapılmadısa, lemmatizasiya edirik
   if (isWord && text.length > 2) {
-    const lemmas = lemmatizeEnglishWord(text);
+    const lemmas = getWordCandidateLemmas(text);
     for (const lemma of lemmas) {
       const lemmaRes = await tryGoogleChromeDict(lemma, sourceLang, targetLang);
       if (lemmaRes && lemmaRes.translated.toLowerCase() !== lemma.toLowerCase()) {
@@ -319,13 +309,7 @@ async function tryTranslatePipeline(
     }
   }
 
-  // Əgər hər hansı cavab alınıbsa onu qaytarırıq
-  if (chromeRes) return chromeRes;
-  if (myMemory) return myMemory;
-  if (gtxRes) return gtxRes;
-  if (libre) return libre;
-
-  return null;
+  return gtxRes || myMemory || lingva || libre || null;
 }
 
 export async function translateWord(
@@ -336,14 +320,44 @@ export async function translateWord(
   const cleaned = text.trim().slice(0, MAX_QUERY_LENGTH);
   if (!cleaned) return null;
 
-  const targetLang = (targetLangParam || (await getTargetLanguage())) as string;
+  const targetLang = ((targetLangParam || (await getTargetLanguage())) as LanguageCode) || 'az';
 
-  const cached = await getCachedTranslation<TranslationResult>(cleaned, targetLang);
-  if (cached) return cached;
+  // 1. Check Offline Base Dictionary (0ms, 100% Offline, Zero Network)
+  if (!cleaned.includes(' ')) {
+    const offlineMatch = getOfflineTranslation(cleaned, targetLang);
+    if (offlineMatch) {
+      return {
+        source: cleaned,
+        translated: offlineMatch,
+        provider: 'offline_dict',
+      };
+    }
+  }
 
+  // 2. Check Sentence/Word Runtime Cache
+  if (cleaned.includes(' ')) {
+    const cachedSentence = await getCachedSentence(cleaned, targetLang);
+    if (cachedSentence) {
+      return {
+        source: cleaned,
+        translated: cachedSentence,
+        provider: 'offline_dict',
+      };
+    }
+  } else {
+    const cachedWord = await getCachedTranslation<TranslationResult>(cleaned, targetLang);
+    if (cachedWord) return cachedWord;
+  }
+
+  // 3. Online Multilevel Pipeline
   const result = await tryTranslatePipeline(cleaned, sourceLang, targetLang);
   if (result) {
-    await setCachedTranslation(cleaned, targetLang, result);
+    if (cleaned.includes(' ')) {
+      await setCachedSentence(cleaned, targetLang, result.translated);
+    } else {
+      await setCachedTranslation(cleaned, targetLang, result);
+      setOfflineTranslation(cleaned, targetLang, result.translated);
+    }
   }
   return result;
 }
@@ -353,7 +367,5 @@ export async function translateToLanguage(
   targetLang: LanguageCode | string,
   sourceLang = 'en',
 ): Promise<TranslationResult | null> {
-  const cleaned = text.trim().slice(0, MAX_QUERY_LENGTH);
-  if (!cleaned) return null;
-  return tryTranslatePipeline(cleaned, sourceLang, targetLang);
+  return translateWord(text, targetLang as LanguageCode, sourceLang);
 }

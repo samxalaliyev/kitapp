@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   ScrollView,
@@ -74,113 +73,174 @@ function getGreetingPrefix(lang: string): string {
   return 'Axşamınız xeyir';
 }
 
-// Precompute categories once to save RAM & CPU cycles
 const catalog = (standardEbooksCatalog as ApiBook[]) ?? [];
 
-const POPULAR_BOOKS = [...catalog]
-  .sort((a, b) => (b.downloadCount ?? 0) - (a.downloadCount ?? 0))
-  .slice(0, 12);
+// 1. 🌟 World Masterpieces (Hand-curated top 18 absolute world classics)
+const MASTERPIECE_IDS = [
+  'jane-austen_pride-and-prejudice',
+  'fyodor-dostoevsky_crime-and-punishment',
+  'f-scott-fitzgerald_the-great-gatsby',
+  'oscar-wilde_the-picture-of-dorian-gray',
+  'arthur-conan-doyle_the-adventures-of-sherlock-holmes',
+  'leo-tolstoy_anna-karenina',
+  'alexandre-dumas_the-count-of-monte-cristo',
+  'bram-stoker_dracula',
+  'mary-shelley_frankenstein',
+  'charlotte-bronte_jane-eyre',
+  'emily-bronte_wuthering-heights',
+  'h-g-wells_the-time-machine',
+  'marcus-aurelius_meditations',
+  'sun-tzu_the-art-of-war',
+  'mark-twain_the-adventures-of-tom-sawyer',
+  'herman-melville_moby-dick',
+  'charles-dickens_great-expectations',
+  'louisa-may-alcott_little-women',
+];
+const MASTERPIECE_BOOKS = MASTERPIECE_IDS.map((id) =>
+  catalog.find((b) => b.id.includes(id) || b.id === id),
+).filter(Boolean) as ApiBook[];
 
-const ADVENTURE_AUTHORS = [
+// 2. 🇷🇺 Russian Literature Classics
+const RUSSIAN_AUTHORS = [
+  'leo-tolstoy',
+  'fyodor-dostoevsky',
+  'anton-chekhov',
+  'ivan-turgenev',
+  'nikolai-gogol',
+  'alexander-pushkin',
+  'maxim-gorky',
+];
+const RUSSIAN_BOOKS = catalog.filter((b) =>
+  RUSSIAN_AUTHORS.some((a) => b.id.includes(a)),
+);
+
+// 3. 🇬🇧 English Literature Classics
+const ENGLISH_AUTHORS = [
+  'jane-austen',
+  'charles-dickens',
+  'arthur-conan-doyle',
+  'oscar-wilde',
+  'william-shakespeare',
+  'h-g-wells',
+  'mary-shelley',
+  'bram-stoker',
+  'charlotte-bronte',
+  'emily-bronte',
+  'george-orwell',
+  'virginia-woolf',
+  'rudyard-kipling',
+  'lewis-carroll',
+  'robert-louis-stevenson',
+  'jonathan-swift',
+  'daniel-defoe',
+  'george-eliot',
+  'thomas-hardy',
+];
+const ENGLISH_BOOKS = catalog.filter((b) =>
+  ENGLISH_AUTHORS.some((a) => b.id.includes(a)),
+);
+
+// 4. 🇫🇷 French Literature Classics
+const FRENCH_AUTHORS = [
+  'victor-hugo',
+  'alexandre-dumas',
+  'gustave-flaubert',
+  'jules-verne',
+  'marcel-proust',
+  'emile-zola',
+  'guy-de-maupassant',
+  'honore-de-balzac',
+  'voltaire',
+  'stendhal',
+];
+const FRENCH_BOOKS = catalog.filter((b) =>
+  FRENCH_AUTHORS.some((a) => b.id.includes(a)),
+);
+
+// 5. 🇺🇸 American Literature Classics
+const AMERICAN_AUTHORS = [
+  'mark-twain',
+  'edgar-allan-poe',
+  'f-scott-fitzgerald',
+  'herman-melville',
+  'jack-london',
+  'nathaniel-hawthorne',
+  'louisa-may-alcott',
+  'henry-james',
+  'walt-whitman',
+  'edith-wharton',
+  'stephen-crane',
+  'ambrose-bierce',
+  'w-e-b-du-bois',
+];
+const AMERICAN_BOOKS = catalog.filter((b) =>
+  AMERICAN_AUTHORS.some((a) => b.id.includes(a)),
+);
+
+// 6. 🏛️ Philosophy & Wisdom
+const PHILO_AUTHORS = [
+  'marcus-aurelius',
+  'friedrich-nietzsche',
+  'plato',
+  'aristotle',
+  'seneca',
+  'sun-tzu',
+  'niccolo-machiavelli',
+  'arthur-schopenhauer',
+  'rene-descartes',
+  'david-hume',
+  'john-stuart-mill',
+  'baruch-spinoza',
+  'confucius',
+  'laozi',
+  'epictetus',
+];
+const PHILOSOPHY_BOOKS = catalog.filter(
+  (b) =>
+    PHILO_AUTHORS.some((a) => b.id.includes(a)) ||
+    b.title.toLowerCase().includes('philosophy') ||
+    b.title.toLowerCase().includes('meditations') ||
+    b.title.toLowerCase().includes('ethics'),
+);
+
+// 7. 🔍 Mystery & Detective
+const MYSTERY_AUTHORS = [
   'arthur-conan-doyle',
   'anna-katharine-green',
-  'john-meade-falkner',
-  'robert-louis-stevenson',
-  'alexandre-dumas',
-  'jules-verne',
-  'h-g-wells',
-  'bram-stoker',
-  'edgar-allan-poe',
   'wilkie-collins',
-  'jack-london',
-  'joseph-conrad',
-  'herman-melville',
-  'ridder-haggard',
+  'edgar-allan-poe',
+  'gaston-leroux',
+  'maurice-leblanc',
+  'chesterton',
+  'bram-stoker',
+  'mary-shelley',
 ];
-const ADVENTURE_BOOKS = catalog
-  .filter(
-    (b) =>
-      ADVENTURE_AUTHORS.some((a) => b.id.includes(a)) ||
-      b.title.toLowerCase().includes('mystery') ||
-      b.title.toLowerCase().includes('adventure') ||
-      b.title.toLowerCase().includes('detective'),
-  )
-  .slice(0, 12);
+const MYSTERY_BOOKS = catalog.filter(
+  (b) =>
+    MYSTERY_AUTHORS.some((a) => b.id.includes(a)) ||
+    b.title.toLowerCase().includes('mystery') ||
+    b.title.toLowerCase().includes('detective') ||
+    b.title.toLowerCase().includes('hound'),
+);
 
-const FICTION_AUTHORS = [
+// 8. ❤️ Romance & Drama
+const ROMANCE_AUTHORS = [
   'jane-austen',
   'charlotte-bronte',
   'emily-bronte',
-  'leo-tolstoy',
-  'charles-dickens',
-  'thomas-hardy',
-  'george-eliot',
-  'gustave-flaubert',
-  'louisa-may-alcott',
-  'lucy-maud-montgomery',
   'edith-wharton',
-  'virginia-woolf',
   'e-m-forster',
+  'gustave-flaubert',
+  'leo-tolstoy',
+  'thomas-hardy',
 ];
-const FICTION_BOOKS = catalog
-  .filter(
-    (b) =>
-      FICTION_AUTHORS.some((a) => b.id.includes(a)) ||
-      b.title.toLowerCase().includes('pride') ||
-      b.title.toLowerCase().includes('love') ||
-      b.title.toLowerCase().includes('heart'),
-  )
-  .slice(0, 12);
-
-const PHILOSOPHY_AUTHORS = [
-  'david-hume',
-  'plato',
-  'aristotle',
-  'marcus-aurelius',
-  'friedrich-nietzsche',
-  'baruch-spinoza',
-  'john-stuart-mill',
-  'rene-descartes',
-  'arthur-schopenhauer',
-  'confucius',
-  'sun-tzu',
-  'laozi',
-  'epictetus',
-  'seneca',
-];
-const PHILOSOPHY_BOOKS = catalog
-  .filter(
-    (b) =>
-      PHILOSOPHY_AUTHORS.some((a) => b.id.includes(a)) ||
-      b.title.toLowerCase().includes('treatise') ||
-      b.title.toLowerCase().includes('philosophy') ||
-      b.title.toLowerCase().includes('ethics') ||
-      b.title.toLowerCase().includes('meditations'),
-  )
-  .slice(0, 12);
-
-const DRAMA_AUTHORS = [
-  'anton-chekhov',
-  'william-shakespeare',
-  'oscar-wilde',
-  'franz-kafka',
-  'guy-de-maupassant',
-  'o-henry',
-  'henrik-ibsen',
-  'moliere',
-  'edgar-saltus',
-  'karel-capek',
-];
-const DRAMA_BOOKS = catalog
-  .filter(
-    (b) =>
-      DRAMA_AUTHORS.some((a) => b.id.includes(a)) ||
-      b.title.toLowerCase().includes('short') ||
-      b.title.toLowerCase().includes('stories') ||
-      b.title.toLowerCase().includes('tragedy') ||
-      b.title.toLowerCase().includes('play'),
-  )
-  .slice(0, 12);
+const ROMANCE_BOOKS = catalog.filter(
+  (b) =>
+    ROMANCE_AUTHORS.some((a) => b.id.includes(a)) ||
+    b.title.toLowerCase().includes('pride') ||
+    b.title.toLowerCase().includes('love') ||
+    b.title.toLowerCase().includes('passion'),
+);
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -205,7 +265,7 @@ export default function HomeScreen() {
     setSearchResults([]);
   }, []);
 
-  // Home bottom tab navigation listener: instantly resets search & scrolls to top
+  // Home bottom tab navigation listener
   useEffect(() => {
     const unsubscribe = (navigation as any)?.addListener('tabPress', () => {
       clearSearch();
@@ -224,20 +284,24 @@ export default function HomeScreen() {
       (user?.email ? user.email.split('@')[0] : '');
 
     if (displayName && displayName.trim()) {
-      const capName = displayName.trim().charAt(0).toUpperCase() + displayName.trim().slice(1);
+      const capName =
+        displayName.trim().charAt(0).toUpperCase() + displayName.trim().slice(1);
       return `${prefix}, ${capName}!`;
     }
     return `${prefix}!`;
   }, [profile?.displayName, user, uiLang]);
 
-  // Fast Category Sections with localized titles
-  const categorizedSections = useMemo(() => {
+  // Category Sections with localized titles and famous books
+  const categoryList = useMemo(() => {
     return [
-      { id: 'popular', title: t('category_popular'), data: POPULAR_BOOKS },
-      { id: 'fiction', title: t('category_fiction'), data: FICTION_BOOKS },
-      { id: 'adventure', title: t('category_adventure'), data: ADVENTURE_BOOKS },
-      { id: 'philosophy', title: t('category_philosophy'), data: PHILOSOPHY_BOOKS },
-      { id: 'drama', title: t('category_drama'), data: DRAMA_BOOKS },
+      { id: 'masterpieces', title: t('category_masterpieces'), data: MASTERPIECE_BOOKS },
+      { id: 'russian', title: t('category_russian_lit'), data: RUSSIAN_BOOKS },
+      { id: 'english', title: t('category_english_lit'), data: ENGLISH_BOOKS },
+      { id: 'french', title: t('category_french_lit'), data: FRENCH_BOOKS },
+      { id: 'american', title: t('category_american_lit'), data: AMERICAN_BOOKS },
+      { id: 'philosophy', title: t('category_philosophy_wisdom'), data: PHILOSOPHY_BOOKS },
+      { id: 'mystery', title: t('category_mystery_detective'), data: MYSTERY_BOOKS },
+      { id: 'romance', title: t('category_romance_drama'), data: ROMANCE_BOOKS },
     ];
   }, [t]);
 
@@ -402,6 +466,7 @@ export default function HomeScreen() {
             </View>
           )
         ) : (
+          /* Netflix / Apple Books Style Shelves */
           <>
             {/* Continue Reading Hero Card (if available) */}
             {currentlyReading ? (
@@ -462,13 +527,13 @@ export default function HomeScreen() {
             <AdBannerContainer />
 
             {/* Netflix-style Horizontal Category Rows */}
-            {categorizedSections.map((section) => (
+            {categoryList.map((section) => (
               <View key={section.id} style={styles.categorySection}>
                 <View style={styles.sectionHeaderWrap}>
                   <SectionHeader title={section.title} />
                 </View>
                 <FlatList
-                  data={section.data}
+                  data={section.data.slice(0, 15)}
                   keyExtractor={(item) => section.id + '-' + item.id}
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -560,10 +625,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: Spacing.md,
   },
-  searchIcon: {
-    fontSize: 16,
-    marginRight: Spacing.sm,
-  },
   searchInput: {
     flex: 1,
     height: '100%',
@@ -571,10 +632,6 @@ const styles = StyleSheet.create({
   },
   clearBtn: {
     padding: Spacing.xs,
-  },
-  clearBtnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
   },
   cancelBtn: {
     paddingVertical: Spacing.sm,
@@ -604,10 +661,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: Spacing.xxl * 1.5,
     paddingHorizontal: Spacing.xl,
-  },
-  noResultsIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.md,
   },
   noResultsTitle: {
     fontSize: FontSize.md,

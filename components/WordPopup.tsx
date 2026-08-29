@@ -22,6 +22,8 @@ import {
 import { translateWord, type TranslationResult } from "@/lib/translation";
 import { isWordSaved, saveWord } from "@/lib/vocabulary/store";
 import { getAudioDataUrl } from "@/lib/audio";
+import { FullscreenAdModal } from "@/components/FullscreenAdModal";
+import { SubscriptionPaywallModal } from "@/components/SubscriptionPaywallModal";
 
 export interface WordPopupProps {
   visible: boolean;
@@ -91,7 +93,7 @@ function buildPlayerHtml(audioUrl: string, autoplay: boolean): string {
           if (autoplayFlag && p.paused && p.currentTime === 0) {
             send("error");
           }
-        }, 6000);
+        }, 5000);
       })();
     </script>
   </body>
@@ -105,7 +107,7 @@ export function WordPopup({
   onClose,
 }: WordPopupProps) {
   const { targetLang, t } = useLanguage();
-  const { user } = useAuth();
+  const { user, isPremium } = useAuth();
 
   const [pronunciation, setPronunciation] = useState<PronunciationResult | null>(null);
   const [translation, setTranslation] = useState<TranslationResult | null>(null);
@@ -123,6 +125,8 @@ export function WordPopup({
 
   const [sentenceTrans, setSentenceTrans] = useState<string | null>(null);
   const [loadingSentenceTrans, setLoadingSentenceTrans] = useState(false);
+  const [adModalVisible, setAdModalVisible] = useState(false);
+  const [paywallModalVisible, setPaywallModalVisible] = useState(false);
 
   useEffect(() => {
     setSentenceTrans(null);
@@ -151,43 +155,41 @@ export function WordPopup({
       .catch(() => {});
 
     setPronState("loading");
-    getPronunciationCached(cleanWord)
-      .then((res) => {
-        if (!isMounted) return;
-        setPronunciation(res);
-        setPronState("ready");
-      })
-      .catch(() => {
-        if (isMounted) setPronState("error");
-      });
-
     setTransState("loading");
-    translateWord(cleanWord, targetLang)
-      .then((res) => {
-        if (!isMounted) return;
-        setTranslation(res);
-        setTransState("ready");
-      })
-      .catch(() => {
-        if (isMounted) setTransState("error");
-      });
+    setAudioLoading(false);
 
-    getAudioDataUrl(cleanWord)
-      .then((dataUrl) => {
+    getPronunciationCached(cleanWord)
+      .then((pronRes) => {
         if (!isMounted) return;
-        setAudioDataUrl(dataUrl);
-        setPlayerKey((k) => k + 1);
-        if (dataUrl) {
-          setAutoPlay(true);
-        } else {
-          setAudioError(true);
+        setPronunciation(pronRes);
+        setPronState("ready");
+
+        if (pronRes?.audioUrl) {
+          getAudioDataUrl(pronRes.audioUrl)
+            .then((dataUrl) => {
+              if (isMounted && dataUrl) {
+                setAudioDataUrl(dataUrl);
+                setAutoPlay(false);
+              }
+            })
+            .catch(() => {});
         }
       })
       .catch(() => {
         if (isMounted) {
-          setAudioDataUrl(null);
-          setAudioError(true);
+          setPronState("ready");
         }
+      });
+
+    translateWord(cleanWord, targetLang)
+      .then((transRes) => {
+        if (isMounted) {
+          setTranslation(transRes);
+          setTransState("ready");
+        }
+      })
+      .catch(() => {
+        if (isMounted) setTransState("error");
       });
 
     return () => {
@@ -195,7 +197,7 @@ export function WordPopup({
     };
   }, [visible, word, targetLang]);
 
-  const loadSentenceTranslation = useCallback(async () => {
+  const executeSentenceTranslation = useCallback(async () => {
     if (!sentenceContext || loadingSentenceTrans || sentenceTrans) return;
     setLoadingSentenceTrans(true);
     try {
@@ -207,6 +209,14 @@ export function WordPopup({
       setLoadingSentenceTrans(false);
     }
   }, [sentenceContext, loadingSentenceTrans, sentenceTrans, targetLang]);
+
+  const handleSentenceTranslateClick = useCallback(() => {
+    if (isPremium) {
+      executeSentenceTranslation();
+    } else {
+      setAdModalVisible(true);
+    }
+  }, [isPremium, executeSentenceTranslation]);
 
   const onPlayPress = useCallback(() => {
     if (audioDataUrl && !audioError) {
@@ -248,16 +258,15 @@ export function WordPopup({
       if (user?.id) {
         syncWordToCloud(user.id, input).catch(() => {});
       }
-    } catch {
-      // ignore
-    }
-  }, [word, translation, pronunciation, targetLang, user?.id]);
+    } catch {}
+  }, [word, translation, pronunciation, targetLang, user]);
 
-  const showOnlinePlayer = audioDataUrl !== null;
-  const playerHtml =
-    showOnlinePlayer && autoPlay
-      ? buildPlayerHtml(audioDataUrl, true)
-      : SILENT_PLAYER_HTML;
+  if (!visible || !word) return null;
+
+  const showOnlinePlayer = !audioError && audioDataUrl;
+  const playerHtml = showOnlinePlayer
+    ? buildPlayerHtml(audioDataUrl, autoPlay)
+    : SILENT_PLAYER_HTML;
 
   return (
     <Modal
@@ -267,59 +276,69 @@ export function WordPopup({
       onRequestClose={onClose}
     >
       <Pressable style={styles.backdrop} onPress={onClose}>
-        {/* Glowing Gold Border Luxury Charcoal Card */}
         <Pressable
           style={styles.card}
           onPress={(e) => e.stopPropagation()}
         >
-          {/* Top Header: Word + Audio + Close */}
+          {/* Header Row: Word Title + Speaker Action + Close */}
           <View style={styles.headerRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.word} numberOfLines={2}>
-                {word ?? ""}
+            <View style={styles.wordTitleBox}>
+              <Text style={styles.wordText} numberOfLines={1}>
+                {word}
               </Text>
             </View>
 
-            {/* Glowing Golden Audio Speaker Button */}
-            <Pressable
-              onPress={onPlayPress}
-              style={({ pressed }) => [
-                styles.audioIconBtn,
-                pressed && styles.pressed,
-              ]}
-              hitSlop={10}
-            >
-              <Feather name="volume-2" size={18} color="#d4af7a" />
-            </Pressable>
+            <View style={styles.actionsRight}>
+              {/* Speaker Audio Trigger */}
+              <Pressable
+                onPress={onPlayPress}
+                disabled={audioLoading}
+                style={({ pressed }) => [
+                  styles.speakerButton,
+                  isSpeaking && styles.speakerButtonActive,
+                  pressed && styles.pressed,
+                ]}
+              >
+                {audioLoading ? (
+                  <ActivityIndicator size="small" color="#d4af7a" />
+                ) : (
+                  <Feather
+                    name={isSpeaking ? "volume-2" : "volume-1"}
+                    size={19}
+                    color={isSpeaking ? "#0d0f17" : "#d4af7a"}
+                  />
+                )}
+              </Pressable>
 
-            {/* Close Button */}
-            <Pressable
-              onPress={onClose}
-              style={({ pressed }) => [
-                styles.closeButton,
-                pressed && styles.pressed,
-              ]}
-              hitSlop={10}
-            >
-              <Feather name="x" size={18} color="#94a3b8" />
-            </Pressable>
+              {/* Close Button */}
+              <Pressable
+                onPress={onClose}
+                hitSlop={12}
+                style={({ pressed }) => [
+                  styles.closeButton,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Feather name="x" size={18} color="#94a3b8" />
+              </Pressable>
+            </View>
           </View>
 
-          {/* Phonetic & Meaning Section */}
-          <View style={styles.section}>
+          {/* Definition / Phonetic Body */}
+          <View style={styles.body}>
             {pronState === "loading" ? (
               <View style={styles.loadingRow}>
                 <ActivityIndicator color="#d4af7a" size="small" />
                 <Text style={styles.mutedText}>  {t('loading')}</Text>
               </View>
-            ) : pronState === "error" || !pronunciation ? (
-              <Text style={styles.mutedText}>{t('no_definition')}</Text>
-            ) : (
-              <View style={styles.pronBlock}>
-                <View style={styles.badgeRow}>
+            ) : pronunciation ? (
+              <View>
+                <View style={styles.metaRow}>
                   {pronunciation.phonetic ? (
                     <Text style={styles.phonetic}>{pronunciation.phonetic}</Text>
-                  ) : null}
+                  ) : (
+                    <Text style={styles.phonetic}>/{word.toLowerCase()}/</Text>
+                  )}
 
                   {pronunciation.meanings[0]?.partOfSpeech ? (
                     <View style={styles.posBadge}>
@@ -330,17 +349,23 @@ export function WordPopup({
                   ) : null}
                 </View>
 
-                {pronunciation.meanings.slice(0, 1).map((meaning, idx) => (
-                  <View key={idx} style={styles.meaningBlock}>
-                    <Text style={styles.definition}>{meaning.definition}</Text>
-                    {meaning.example ? (
-                      <View style={styles.exampleBox}>
-                        <Text style={styles.exampleLabel}>{t('example_label')}:</Text>
-                        <Text style={styles.example}>"{meaning.example}"</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                ))}
+                {pronunciation.meanings && pronunciation.meanings.length > 0 ? (
+                  pronunciation.meanings.slice(0, 1).map((meaning, idx) => (
+                    <View key={idx} style={styles.meaningBlock}>
+                      <Text style={styles.definition}>{meaning.definition}</Text>
+                      {meaning.example ? (
+                        <View style={styles.exampleBox}>
+                          <Text style={styles.exampleLabel}>{t('example_label')}:</Text>
+                          <Text style={styles.example}>"{meaning.example}"</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  ))
+                ) : null}
+              </View>
+            ) : (
+              <View style={styles.metaRow}>
+                <Text style={styles.phonetic}>/{word.toLowerCase()}/</Text>
               </View>
             )}
           </View>
@@ -366,11 +391,11 @@ export function WordPopup({
             )}
           </View>
 
-          {/* Sentence Context (Active Action Button & Result) */}
+          {/* Sentence Context (Gated Sentence Translation) */}
           {sentenceContext ? (
             <View style={styles.sentenceWrap}>
               <Pressable
-                onPress={loadSentenceTranslation}
+                onPress={handleSentenceTranslateClick}
                 disabled={loadingSentenceTrans}
                 style={({ pressed }) => [
                   styles.sentenceBtn,
@@ -386,9 +411,9 @@ export function WordPopup({
                   </>
                 ) : (
                   <>
-                    <Feather name="file-text" size={14} color="#d4af7a" />
+                    <Feather name={isPremium ? "file-text" : "lock"} size={14} color="#d4af7a" />
                     <Text style={styles.sentenceBtnText}>
-                      {t('translate_sentence_btn')}
+                      {isPremium ? t('translate_sentence_btn') : `${t('translate_sentence_btn')} (🎬 Reklam / 👑 Premium)`}
                     </Text>
                   </>
                 )}
@@ -437,6 +462,25 @@ export function WordPopup({
           />
         </View>
       ) : null}
+
+      {/* Gated Rewarded Ad for Free Sentence Translation */}
+      <FullscreenAdModal
+        visible={adModalVisible}
+        onClose={() => {
+          setAdModalVisible(false);
+          executeSentenceTranslation();
+        }}
+        onUpgradePremium={() => {
+          setAdModalVisible(false);
+          setPaywallModalVisible(true);
+        }}
+      />
+
+      {/* Premium Paywall Modal */}
+      <SubscriptionPaywallModal
+        visible={paywallModalVisible}
+        onClose={() => setPaywallModalVisible(false)}
+      />
     </Modal>
   );
 }
@@ -452,85 +496,93 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     maxWidth: 380,
-    backgroundColor: "#10131d",
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: "#d4af7a",
-    padding: Spacing.xl,
-    shadowColor: "#d4af7a",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 18,
-    elevation: 12,
+    backgroundColor: "#161922",
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
+    borderColor: "rgba(212, 175, 122, 0.25)",
+    borderWidth: 1.2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    marginBottom: Spacing.md,
+    justifyContent: "space-between",
+    marginBottom: Spacing.xs,
   },
-  word: {
-    color: "#ffffff",
-    fontSize: 24,
+  wordTitleBox: {
+    flex: 1,
+    marginRight: Spacing.sm,
+  },
+  wordText: {
+    color: "#f8fafc",
+    fontSize: 22,
     fontWeight: FontWeight.bold,
     letterSpacing: 0.3,
   },
-  audioIconBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(212, 175, 122, 0.15)",
-    borderWidth: 1,
-    borderColor: "rgba(212, 175, 122, 0.4)",
+  actionsRight: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 8,
+  },
+  speakerButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(212, 175, 122, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 122, 0.3)",
     justifyContent: "center",
+    alignItems: "center",
+  },
+  speakerButtonActive: {
+    backgroundColor: "#d4af7a",
   },
   closeButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    alignItems: "center",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
     justifyContent: "center",
+    alignItems: "center",
   },
-  section: {
-    marginBottom: Spacing.md,
+  body: {
+    marginTop: Spacing.xs,
   },
   loadingRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 4,
+    paddingVertical: Spacing.xs,
   },
   mutedText: {
     color: "#94a3b8",
-    fontSize: FontSize.xs,
+    fontSize: FontSize.sm,
   },
-  pronBlock: {
-    gap: 6,
-  },
-  badgeRow: {
+  metaRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   phonetic: {
     color: "#d4af7a",
     fontSize: FontSize.sm,
-    fontWeight: FontWeight.medium,
+    fontFamily: "monospace",
   },
   posBadge: {
-    backgroundColor: "rgba(212, 175, 122, 0.12)",
-    borderColor: "rgba(212, 175, 122, 0.3)",
-    borderWidth: 1,
-    paddingHorizontal: 8,
+    backgroundColor: "rgba(212, 175, 122, 0.15)",
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: Radius.pill,
+    borderRadius: Radius.sm,
   },
   posText: {
     color: "#d4af7a",
-    fontSize: 11,
-    fontWeight: FontWeight.semibold,
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
+    textTransform: "uppercase",
   },
   meaningBlock: {
     marginTop: 2,
@@ -541,12 +593,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   exampleBox: {
-    marginTop: 6,
-    padding: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.04)",
-    borderRadius: Radius.md,
+    marginTop: 4,
+    paddingLeft: 8,
     borderLeftWidth: 2,
-    borderLeftColor: "#d4af7a",
+    borderLeftColor: "rgba(212, 175, 122, 0.4)",
   },
   exampleLabel: {
     color: "#d4af7a",
@@ -563,6 +613,9 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "rgba(212, 175, 122, 0.2)",
     marginVertical: Spacing.sm,
+  },
+  section: {
+    marginBottom: Spacing.sm,
   },
   sectionTitle: {
     color: "#94a3b8",

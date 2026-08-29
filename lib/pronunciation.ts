@@ -1,4 +1,6 @@
-﻿export interface PronunciationMeaning {
+import { getOfflineDictEntry } from '@/lib/dictionary/offline-dict';
+
+export interface PronunciationMeaning {
   partOfSpeech: string;
   definition: string;
   example?: string;
@@ -11,9 +13,8 @@ export interface PronunciationResult {
   meanings: PronunciationMeaning[];
 }
 
-// Google CDN üçün səs URL-i hazırlayan funksiya
+// Google CDN səs URL-i
 function buildGoogleAudioUrl(word: string): string {
-  // Sözü təmizləyirik (boşluqları tire ilə əvəzləyirik və kiçik hərflər edirik)
   const cleanWord = encodeURIComponent(word.trim().toLowerCase());
   return `https://ssl.gstatic.com/dictionary/static/sounds/20200429/${cleanWord}--_gb_1.mp3`;
 }
@@ -37,14 +38,40 @@ export async function getPronunciationCached(
     return cache.get(cleanWord)!;
   }
 
-  // 1. DƏRHAL Google CDN Səs Linkini Əsas Audio kimi hazırlayırıq
   const googleAudio = buildGoogleAudioUrl(cleanWord);
+
+  // 1. DƏRHAL LOKAL LÜĞƏTİ YOXLAYIRIQ (0ms, 100% Offline)
+  const offlineEntry = getOfflineDictEntry(cleanWord);
+  if (offlineEntry && (offlineEntry.phonetic || offlineEntry.def)) {
+    const offlineResult: PronunciationResult = {
+      phonetic: offlineEntry.phonetic || `/${cleanWord}/`,
+      audioUrl: googleAudio,
+      ttsFallbackUrls: [],
+      meanings: offlineEntry.def
+        ? [
+            {
+              partOfSpeech: offlineEntry.pos || 'word',
+              definition: offlineEntry.def,
+              example: offlineEntry.ex,
+            },
+          ]
+        : [],
+    };
+    cache.set(cleanWord, offlineResult);
+    return offlineResult;
+  }
+
+  // 2. Online Dictionary API (Max 1.8 saniyə Timeout ilə - UI heç vaxt donmur)
   const fallbackUrls: string[] = [];
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 1800);
 
   try {
     const res = await fetch(
       `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`,
+      { signal: controller.signal }
     );
+    clearTimeout(timeoutId);
 
     let phoneticText: string | undefined;
     const meanings: PronunciationMeaning[] = [];
@@ -56,11 +83,9 @@ export async function getPronunciationCached(
         phoneticText =
           entry.phonetic || entry.phonetics?.find((p: any) => p.text)?.text;
 
-        // API-də olan audio keçidlərini ehtiyat (fallback) kimi yığırıq
         if (entry.phonetics && Array.isArray(entry.phonetics)) {
           for (const p of entry.phonetics) {
             const formatted = formatAudioUrl(p.audio);
-            // Əgər API linki eynilə Google linkidirsə təkrar əlavə etmirik
             if (formatted && formatted !== googleAudio) {
               fallbackUrls.push(formatted);
             }
@@ -69,11 +94,12 @@ export async function getPronunciationCached(
 
         if (Array.isArray(entry.meanings)) {
           for (const m of entry.meanings) {
-            if (m.definitions && m.definitions.length > 0) {
+            const defObj = m.definitions?.[0];
+            if (defObj?.definition) {
               meanings.push({
-                partOfSpeech: m.partOfSpeech || "",
-                definition: m.definitions[0].definition || "",
-                example: m.definitions[0].example,
+                partOfSpeech: m.partOfSpeech || "word",
+                definition: defObj.definition,
+                example: defObj.example,
               });
             }
           }
@@ -82,23 +108,23 @@ export async function getPronunciationCached(
     }
 
     const result: PronunciationResult = {
-      phonetic: phoneticText,
-      audioUrl: googleAudio, // Google-un işlək linki 1-ci dərəcəli əsas linkdir
+      phonetic: phoneticText || `/${cleanWord}/`,
+      audioUrl: googleAudio,
       ttsFallbackUrls: fallbackUrls,
       meanings,
     };
 
     cache.set(cleanWord, result);
     return result;
-  } catch (error) {
-    console.error("Pronunciation fetch error:", error);
-
-    // API çökərsə belə, oxunuş və səs göstərməyə davam etmək üçün:
+  } catch {
+    clearTimeout(timeoutId);
     const fallbackResult: PronunciationResult = {
+      phonetic: `/${cleanWord}/`,
       audioUrl: googleAudio,
       ttsFallbackUrls: [],
       meanings: [],
     };
+    cache.set(cleanWord, fallbackResult);
     return fallbackResult;
   }
 }

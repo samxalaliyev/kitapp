@@ -3,6 +3,7 @@ import React from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,6 +15,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Speech from 'expo-speech';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const MASCOT_READING = require('@/assets/images/mascot/mascot_reading.jpg');
+const MASCOT_STORY = require('@/assets/images/mascot/mascot_story.jpg');
 
 import { FullscreenAdModal } from "@/components/FullscreenAdModal";
 import { QuoteStoryModal } from "@/components/QuoteStoryModal";
@@ -313,6 +318,22 @@ export default function BookReaderScreen() {
   const [fullscreenAdVisible, setFullscreenAdVisible] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
 
+  // In-Reader Interactive Tutorial (Step 1 = Tap Word, Step 2 = Instagram Story)
+  const [readerTutorialStep, setReaderTutorialStep] = useState<1 | 2 | null>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem('has_seen_reader_tut_v1').then((val) => {
+      if (!val) {
+        setReaderTutorialStep(1);
+      }
+    });
+  }, []);
+
+  const dismissTutorial = useCallback(async () => {
+    setReaderTutorialStep(null);
+    await AsyncStorage.setItem('has_seen_reader_tut_v1', 'true');
+  }, []);
+
   // Load Settings & Saved words on mount
   useEffect(() => {
     getReaderSettings().then((s) => {
@@ -544,9 +565,12 @@ export default function BookReaderScreen() {
 
         setPopupWord(word.clean);
         setPopupSentenceContext(sentenceText);
+        if (readerTutorialStep === 1) {
+          setReaderTutorialStep(2);
+        }
       }
     },
-    [],
+    [readerTutorialStep],
   );
 
   // Ordered Quote Text for Instagram Story
@@ -725,10 +749,14 @@ export default function BookReaderScreen() {
             style={({ pressed }) => [
               styles.storyHeaderBtn,
               isSelectionMode ? { backgroundColor: '#f59e0b' } : { backgroundColor: colors.primary },
+              readerTutorialStep === 2 && styles.storyHeaderBtnHighlight,
               pressed && styles.pressed,
             ]}
             onPress={() => {
               stopSpeech();
+              if (readerTutorialStep === 2) {
+                dismissTutorial();
+              }
               setIsSelectionMode((prev) => !prev);
               if (isSelectionMode) {
                 setSelectedWordIds([]);
@@ -832,6 +860,37 @@ export default function BookReaderScreen() {
         getItemLayout={getItemLayout}
         renderItem={renderItem}
       />
+
+      {/* Interactive In-Reader Mascot Tutorial Coachmarks */}
+      {readerTutorialStep === 1 ? (
+        <View style={[styles.tutorialBanner, { backgroundColor: '#0f172a', borderColor: '#f59e0b' }]}>
+          <Image source={MASCOT_READING} style={styles.tutorialMascotAvatar} />
+          <View style={styles.tutorialTextWrap}>
+            <View style={styles.mascotSpeechRow}>
+              <Text style={styles.mascotNameBadge}>Lumi (Bələdçi)</Text>
+            </View>
+            <Text style={styles.tutorialTitle}>{t('reader_tut_tap_word_title')}</Text>
+            <Text style={styles.tutorialDesc}>{t('reader_tut_tap_word_desc')}</Text>
+          </View>
+          <Pressable onPress={() => setReaderTutorialStep(2)} style={[styles.tutorialNextBtn, { backgroundColor: '#f59e0b' }]}>
+            <Text style={styles.tutorialNextBtnText}>{(t('tutorial_next') || 'Növbəti') + ' ➡️'}</Text>
+          </Pressable>
+        </View>
+      ) : readerTutorialStep === 2 ? (
+        <View style={[styles.tutorialBanner, { backgroundColor: '#1e1b4b', borderColor: '#d4af7a' }]}>
+          <Image source={MASCOT_STORY} style={styles.tutorialMascotAvatar} />
+          <View style={styles.tutorialTextWrap}>
+            <View style={styles.mascotSpeechRow}>
+              <Text style={[styles.mascotNameBadge, { backgroundColor: '#e1306c', color: '#fff' }]}>Story Bələdçisi</Text>
+            </View>
+            <Text style={styles.tutorialTitle}>{t('reader_tut_story_title')}</Text>
+            <Text style={styles.tutorialDesc}>{t('reader_tut_story_desc')}</Text>
+          </View>
+          <Pressable onPress={dismissTutorial} style={[styles.tutorialNextBtn, { backgroundColor: '#d4af7a' }]}>
+            <Text style={[styles.tutorialNextBtnText, { color: '#0d0f17' }]}>{t('reader_tut_got_it') || 'Anladım 👍'}</Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       {/* Footer: Page Indicator */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 8, backgroundColor: activeTheme.bg }]}>
@@ -1138,6 +1197,81 @@ const styles = StyleSheet.create({
     fontSize: 12,
     opacity: 0.45,
     letterSpacing: 0.5,
+  },
+  storyHeaderBtnHighlight: {
+    borderWidth: 2,
+    borderColor: '#f59e0b',
+    shadowColor: '#f59e0b',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.85,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  tutorialBanner: {
+    position: 'absolute',
+    bottom: 40,
+    left: Spacing.md,
+    right: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 10,
+    gap: 10,
+    zIndex: 99,
+  },
+  tutorialMascotAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: '#fbbf24',
+  },
+  mascotSpeechRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  mascotNameBadge: {
+    backgroundColor: '#f59e0b',
+    color: '#0d0f17',
+    fontSize: 9,
+    fontWeight: FontWeight.bold,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: Radius.pill,
+  },
+  tutorialTextWrap: {
+    flex: 1,
+  },
+  tutorialTitle: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: FontWeight.bold,
+    marginBottom: 2,
+  },
+  tutorialDesc: {
+    color: '#cbd5e1',
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  tutorialNextBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tutorialNextBtnText: {
+    color: '#0d0f17',
+    fontSize: 11,
+    fontWeight: FontWeight.bold,
   },
   pressed: {
     opacity: 0.7,

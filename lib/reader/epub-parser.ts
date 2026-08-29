@@ -49,6 +49,59 @@ function cleanHtmlText(html: string): string {
     .trim();
 }
 
+/**
+ * Universal content extraction engine for novels, theatrical drama/plays, poetry, and verse.
+ * Handles standard <p> paragraphs, <tr> theatrical speaker dialogues, <dd>/<dt> character lists,
+ * blockquotes, and custom speech containers without affecting standard prose.
+ */
+function extractBlocksFromHtml(content: string): string[] {
+  const normalized = content
+    // 1. Convert Theatrical/Play Table Rows (Speaker + Dialogue) into readable paragraphs
+    .replace(/<tr[^>]*>([\s\S]*?)<\/tr>/gi, (_, inner) => {
+      const tds: string[] = [];
+      const tdRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+      let tm: RegExpExecArray | null;
+      while ((tm = tdRegex.exec(inner)) !== null) {
+        const text = cleanHtmlText(tm[1]);
+        if (text) tds.push(text);
+      }
+      if (tds.length === 2) {
+        return '<p><b>' + tds[0] + ':</b> ' + tds[1] + '</p>';
+      } else if (tds.length > 0) {
+        return '<p>' + tds.join(' — ') + '</p>';
+      }
+      return '';
+    })
+    // 2. Convert definition lists, list items, and verses
+    .replace(/<dd[^>]*>([\s\S]*?)<\/dd>/gi, (_, inner) => '<p>' + inner + '</p>')
+    .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, (_, inner) => '<p>' + inner + '</p>')
+    .replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (_, inner) => {
+      return inner.includes('<p') ? inner : '<p>' + inner + '</p>';
+    });
+
+  const pRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
+  const blocks: string[] = [];
+  let pMatch: RegExpExecArray | null;
+  while ((pMatch = pRegex.exec(normalized)) !== null) {
+    const text = cleanHtmlText(pMatch[1]);
+    if (text && text.length > 1) {
+      blocks.push(text);
+    }
+  }
+
+  // 3. Fallback: If no standard paragraphs found (e.g. pure <div> or text stream), extract body content
+  if (blocks.length === 0) {
+    const bodyMatch = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    const rawBody = bodyMatch ? bodyMatch[1] : content;
+    const cleaned = cleanHtmlText(rawBody);
+    if (cleaned.length > 20) {
+      blocks.push(cleaned);
+    }
+  }
+
+  return blocks;
+}
+
 export function tokenizeParagraphWords(paragraphText: string, pId: string): ReaderWord[] {
   const parts = paragraphText.split(/\s+/);
   return parts.filter(Boolean).map((word, wIdx) => {
@@ -111,7 +164,7 @@ export async function parseEpubFile(filePath: string): Promise<ParsedBookData> {
     spineIds.push(m[1]);
   }
 
-  // 4. Extract Natural Paragraphs
+  // 4. Extract Natural Paragraphs & Dialogue Blocks
   const rawChapters: Array<{ title: string; paragraphs: string[] }> = [];
 
   for (const id of spineIds) {
@@ -137,16 +190,7 @@ export async function parseEpubFile(filePath: string): Promise<ParsedBookData> {
       if (tMatch) title = cleanHtmlText(tMatch[1]);
     }
 
-    // Extract Paragraphs
-    const pRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
-    const chapterParagraphs: string[] = [];
-    let pMatch: RegExpExecArray | null;
-    while ((pMatch = pRegex.exec(content)) !== null) {
-      const pText = cleanHtmlText(pMatch[1]);
-      if (pText && pText.length > 1) {
-        chapterParagraphs.push(pText);
-      }
-    }
+    const chapterParagraphs = extractBlocksFromHtml(content);
 
     if (chapterParagraphs.length > 0) {
       rawChapters.push({
