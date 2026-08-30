@@ -35,16 +35,16 @@ const SIZE_ORDER: FontSizeLevel[] = ['small', 'normal', 'large', 'xlarge'];
 
 interface FontOption {
   key: FontFamilyChoice;
-  label: string;
+  labelKey: 'font_serif' | 'font_sans' | 'font_sofia' | 'font_outfit' | 'font_cabin';
   isPremium: boolean;
 }
 
 const FAMILY_OPTIONS: FontOption[] = [
-  { key: 'serif', label: 'Klassik (Serif)', isPremium: false },
-  { key: 'sans', label: 'Müasir (Sans-Serif)', isPremium: false },
-  { key: 'sofia', label: 'Zərif (Sofia)', isPremium: true },
-  { key: 'outfit', label: 'Qrotesk (Modern)', isPremium: true },
-  { key: 'cabin', label: 'Həndəsi (Geometric)', isPremium: true },
+  { key: 'serif', labelKey: 'font_serif', isPremium: false },
+  { key: 'sans', labelKey: 'font_sans', isPremium: false },
+  { key: 'sofia', labelKey: 'font_sofia', isPremium: true },
+  { key: 'outfit', labelKey: 'font_outfit', isPremium: true },
+  { key: 'cabin', labelKey: 'font_cabin', isPremium: true },
 ];
 
 const THEME_ORDER: ThemeChoice[] = ['paper', 'sepia', 'cream', 'dark', 'black'];
@@ -188,7 +188,7 @@ export function ReaderSettingsModal({
                     <Text style={styles.stepBtnText}>A-</Text>
                   </Pressable>
 
-                  <Text style={styles.sizeIndicatorText}>
+                  <Text style={styles.sizeIndicatorText} numberOfLines={1} adjustsFontSizeToFit>
                     {t(sizeLabelKey[settings.fontSize])}
                   </Text>
 
@@ -208,7 +208,7 @@ export function ReaderSettingsModal({
 
               {/* Text Alignment */}
               <View style={styles.controlBox}>
-                <Text style={styles.sectionLabel}>
+                <Text style={styles.sectionLabel} numberOfLines={1} adjustsFontSizeToFit>
                   {t('reader_label_text_align')}
                 </Text>
                 <View style={styles.alignToggleRow}>
@@ -226,10 +226,14 @@ export function ReaderSettingsModal({
                       >
                         <Feather
                           name={align === 'left' ? 'align-left' : 'align-justify'}
-                          size={16}
+                          size={15}
                           color={active ? '#0d0f17' : '#f8fafc'}
                         />
-                        <Text style={[styles.alignBtnText, active && styles.alignBtnTextActive]}>
+                        <Text
+                          style={[styles.alignBtnText, active && styles.alignBtnTextActive]}
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                        >
                           {align === 'left' ? t('align_left') : t('align_justify')}
                         </Text>
                       </Pressable>
@@ -257,7 +261,7 @@ export function ReaderSettingsModal({
                     ]}
                   >
                     <Text style={[styles.fontCardText, active && styles.fontCardTextActive]}>
-                      {opt.label}
+                      {t(opt.labelKey)}
                     </Text>
                     {opt.isPremium && !isPremium ? (
                       <View style={styles.crownBadge}>
@@ -354,11 +358,12 @@ const styles = StyleSheet.create({
   },
   controlsTwoCol: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
     marginBottom: Spacing.xl,
   },
   controlBox: {
     flex: 1,
+    minWidth: 0,
   },
   stepperContainer: {
     flexDirection: 'row',
@@ -368,11 +373,11 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
-    padding: 4,
+    padding: 3,
   },
   stepBtn: {
-    width: 38,
-    height: 36,
+    width: 34,
+    height: 34,
     borderRadius: Radius.sm,
     backgroundColor: '#22293e',
     alignItems: 'center',
@@ -388,8 +393,11 @@ const styles = StyleSheet.create({
   },
   sizeIndicatorText: {
     color: '#f8fafc',
-    fontSize: FontSize.xs,
+    fontSize: 11,
     fontWeight: FontWeight.medium,
+    textAlign: 'center',
+    flexShrink: 1,
+    paddingHorizontal: 2,
   },
   alignToggleRow: {
     flexDirection: 'row',
@@ -398,7 +406,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
     padding: 3,
-    gap: 4,
+    gap: 3,
   },
   alignBtn: {
     flex: 1,
@@ -406,15 +414,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
+    paddingHorizontal: 2,
     borderRadius: Radius.sm,
-    gap: 4,
+    gap: 3,
   },
   alignBtnActive: {
     backgroundColor: '#d4af7a',
   },
   alignBtnText: {
     color: '#94a3b8',
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: FontWeight.medium,
   },
   alignBtnTextActive: {

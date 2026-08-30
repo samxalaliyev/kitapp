@@ -78,7 +78,13 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
       const ready = await isBookReady(book.id);
       if (!ready) {
         await prepareBookForReading(book, (p: BookPrepareProgress) => {
-          setProgressMsg(p.message || t('loading'));
+          if (p.stage === 'saving') {
+            setProgressMsg(t('book_saving_to_device') || t('saving_label'));
+          } else if (p.stage === 'downloading') {
+            setProgressMsg(t('book_preparing_download') || t('reading_loading'));
+          } else {
+            setProgressMsg(t('reading_loading'));
+          }
         });
       }
       onClose();
@@ -87,7 +93,7 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
         params: { id: book.id },
       });
     } catch (err) {
-      setDownloadError(err instanceof Error ? err.message : 'Xəta baş verdi');
+      setDownloadError(err instanceof Error ? err.message : t('no_definition'));
       setDownloading(false);
     }
   };

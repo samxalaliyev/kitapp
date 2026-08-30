@@ -16,6 +16,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Speech from 'expo-speech';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 const MASCOT_READING = require('@/assets/images/mascot/mascot_reading.jpg');
 const MASCOT_STORY = require('@/assets/images/mascot/mascot_story.jpg');
@@ -48,6 +57,7 @@ import {
   type ThemeConfig,
 } from "@/lib/reader/settings";
 import { listSavedWords } from "@/lib/vocabulary/store";
+import { getOfflineDictEntry } from "@/lib/dictionary/offline-dict";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { isPremiumMember } from "@/lib/permissions/rbac";
 import { useAppTheme } from "@/lib/theme";
@@ -56,31 +66,142 @@ import type { ApiBook } from "@/types/book";
 // 1. Fine-Grained Memoized Word Component (Zero Layout Shifts)
 interface WordItemProps {
   word: ReaderWord;
+  theme: ThemeConfig;
+  fontSize: number;
+  fontFamily: string;
+  computedLineHeight: number;
   isSelected: boolean;
   isSpoken: boolean;
+  isActiveTapped?: boolean;
+  isTutorialTarget?: boolean;
   onPress: () => void;
 }
 
 const WordItem = React.memo(
-  function WordItem({ word, isSelected, isSpoken, onPress }: WordItemProps) {
+  function WordItem({
+    word,
+    theme,
+    fontSize,
+    fontFamily,
+    computedLineHeight,
+    isSelected,
+    isSpoken,
+    isActiveTapped,
+    isTutorialTarget,
+    onPress,
+  }: WordItemProps) {
+    const isSingleGlow = isActiveTapped || isTutorialTarget;
+    const isHighlighted = isSingleGlow || isSelected || isSpoken;
+    const pulseAnim = useSharedValue(1);
+
+    useEffect(() => {
+      if (isSingleGlow) {
+        pulseAnim.value = withRepeat(
+          withSequence(
+            withTiming(1, { duration: 650, easing: Easing.inOut(Easing.ease) }),
+            withTiming(0.35, { duration: 650, easing: Easing.inOut(Easing.ease) }),
+          ),
+          -1,
+          true,
+        );
+      } else {
+        pulseAnim.value = 1;
+      }
+    }, [isSingleGlow]);
+
+    const animatedGlowStyle = useAnimatedStyle(() => {
+      if (!isSingleGlow) return {};
+      return {
+        opacity: pulseAnim.value,
+      };
+    });
+
+    const spaceGap = Math.max(3, Math.round(fontSize * 0.25));
+
+    let haloBg = 'transparent';
+    let haloBorder = 'transparent';
+    let haloShadow = 'transparent';
+    let hasBorder = false;
+    let haloLeft = -2;
+    let haloRight = -2;
+    let haloRadius = 4;
+
+    if (isSingleGlow) {
+      haloBg = 'rgba(245, 158, 11, 0.28)';
+      haloBorder = '#f59e0b';
+      haloShadow = '#f59e0b';
+      hasBorder = true;
+      haloLeft = -4;
+      haloRight = -4;
+      haloRadius = 6;
+    } else if (isSelected) {
+      // Golden Amber/Gold theme matching reader highlights (NO purple!)
+      haloBg = 'rgba(212, 175, 122, 0.42)';
+      haloBorder = 'transparent';
+      haloShadow = 'transparent';
+      hasBorder = false;
+      // Connect adjacent words in the sentence seamlessly
+      haloLeft = -2;
+      haloRight = -spaceGap;
+      haloRadius = 2;
+    } else if (isSpoken) {
+      haloBg = 'rgba(250, 204, 21, 0.38)';
+      haloBorder = 'transparent';
+      haloShadow = 'transparent';
+      hasBorder = false;
+      haloLeft = -2;
+      haloRight = -2;
+      haloRadius = 4;
+    }
+
     return (
-      <Text
-        onPress={onPress}
-        style={[
-          styles.wordBase,
-          isSelected && styles.wordSelected,
-          isSpoken && styles.wordSpokenHighlight,
-        ]}
-      >
-        {word.raw}{" "}
-      </Text>
+      <Pressable onPress={onPress} style={[styles.wordPressableWrap, { marginRight: spaceGap }]}>
+        {isHighlighted ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.wordHighlightHalo,
+              {
+                backgroundColor: haloBg,
+                borderColor: haloBorder,
+                borderWidth: hasBorder ? 1.5 : 0,
+                shadowColor: haloShadow,
+                shadowOpacity: hasBorder ? 0.9 : 0,
+                left: haloLeft,
+                right: haloRight,
+                borderRadius: haloRadius,
+              },
+              isSingleGlow ? animatedGlowStyle : undefined,
+            ]}
+          />
+        ) : null}
+        <Text
+          style={[
+            styles.wordText,
+            {
+              fontSize,
+              fontFamily,
+              color: theme.text,
+              lineHeight: computedLineHeight,
+            },
+          ]}
+        >
+          {word.raw}
+        </Text>
+      </Pressable>
     );
   },
   (prev, next) => {
     return (
       prev.word.id === next.word.id &&
+      prev.theme.text === next.theme.text &&
+      prev.fontSize === next.fontSize &&
+      prev.fontFamily === next.fontFamily &&
+      prev.computedLineHeight === next.computedLineHeight &&
       prev.isSelected === next.isSelected &&
-      prev.isSpoken === next.isSpoken
+      prev.isSpoken === next.isSpoken &&
+      prev.isActiveTapped === next.isActiveTapped &&
+      prev.isTutorialTarget === next.isTutorialTarget
     );
   },
 );
@@ -96,6 +217,8 @@ interface ParagraphItemProps {
   textAlign: "left" | "justify";
   selectedWordIdsSet: Set<string>;
   activeSpokenWordId: string | null;
+  activeTappedWordId: string | null;
+  tutorialTargetWordId: string | null;
   onWordClick: (word: ReaderWord, paraWords: ReaderWord[], paragraphText: string) => void;
 }
 
@@ -110,32 +233,35 @@ const ParagraphItem = React.memo(
     textAlign,
     selectedWordIdsSet,
     activeSpokenWordId,
+    activeTappedWordId,
+    tutorialTargetWordId,
     onWordClick,
   }: ParagraphItemProps) {
     return (
-      <View style={[styles.paragraphBlock, { marginBottom: paragraphSpacing }]}>
-        <Text
-          style={[
-            styles.paragraphText,
-            {
-              color: theme.text,
-              fontSize,
-              fontFamily,
-              lineHeight: computedLineHeight,
-              textAlign,
-            },
-          ]}
-        >
-          {para.words.map((word) => (
-            <WordItem
-              key={word.id}
-              word={word}
-              isSelected={selectedWordIdsSet.has(word.id)}
-              isSpoken={activeSpokenWordId === word.id}
-              onPress={() => onWordClick(word, para.words, para.text)}
-            />
-          ))}
-        </Text>
+      <View
+        style={[
+          styles.paragraphBlock,
+          {
+            marginBottom: paragraphSpacing,
+            justifyContent: textAlign === 'justify' ? 'space-between' : 'flex-start',
+          },
+        ]}
+      >
+        {para.words.map((word) => (
+          <WordItem
+            key={word.id}
+            word={word}
+            theme={theme}
+            fontSize={fontSize}
+            fontFamily={fontFamily}
+            computedLineHeight={computedLineHeight}
+            isSelected={selectedWordIdsSet.has(word.id)}
+            isActiveTapped={activeTappedWordId === word.id}
+            isSpoken={activeSpokenWordId === word.id}
+            isTutorialTarget={tutorialTargetWordId === word.id}
+            onPress={() => onWordClick(word, para.words, para.text)}
+          />
+        ))}
       </View>
     );
   },
@@ -147,12 +273,13 @@ const ParagraphItem = React.memo(
       prev.fontFamily !== next.fontFamily ||
       prev.computedLineHeight !== next.computedLineHeight ||
       prev.paragraphSpacing !== next.paragraphSpacing ||
-      prev.textAlign !== next.textAlign
+      prev.textAlign !== next.textAlign ||
+      prev.tutorialTargetWordId !== next.tutorialTargetWordId
     ) {
       return false;
     }
 
-    // Fast check: Did any word in this paragraph change selection or speech?
+    // Fast check: Did any word in this paragraph change selection, speech, or tap state?
     const words = prev.para.words;
     for (let i = 0; i < words.length; i++) {
       const wId = words[i].id;
@@ -163,6 +290,10 @@ const ParagraphItem = React.memo(
       const prevSpk = prev.activeSpokenWordId === wId;
       const nextSpk = next.activeSpokenWordId === wId;
       if (prevSpk !== nextSpk) return false;
+
+      const prevTap = prev.activeTappedWordId === wId;
+      const nextTap = next.activeTappedWordId === wId;
+      if (prevTap !== nextTap) return false;
     }
 
     return true;
@@ -181,6 +312,8 @@ interface PageItemProps {
   textAlign: "left" | "justify";
   selectedWordIdsSet: Set<string>;
   activeSpokenWordId: string | null;
+  activeTappedWordId: string | null;
+  tutorialTargetWordId: string | null;
   onWordClick: (word: ReaderWord, paraWords: ReaderWord[], paragraphText: string) => void;
 }
 
@@ -196,6 +329,8 @@ const PageItem = React.memo(
     textAlign,
     selectedWordIdsSet,
     activeSpokenWordId,
+    activeTappedWordId,
+    tutorialTargetWordId,
     onWordClick,
   }: PageItemProps) {
     const computedLineHeight = Math.round(fontSize * lineHeight);
@@ -230,6 +365,8 @@ const PageItem = React.memo(
                 textAlign={textAlign}
                 selectedWordIdsSet={selectedWordIdsSet}
                 activeSpokenWordId={activeSpokenWordId}
+                activeTappedWordId={activeTappedWordId}
+                tutorialTargetWordId={tutorialTargetWordId}
                 onWordClick={onWordClick}
               />
             ))}
@@ -250,7 +387,9 @@ const PageItem = React.memo(
       prev.paragraphSpacing === next.paragraphSpacing &&
       prev.textAlign === next.textAlign &&
       prev.selectedWordIdsSet === next.selectedWordIdsSet &&
-      prev.activeSpokenWordId === next.activeSpokenWordId
+      prev.activeSpokenWordId === next.activeSpokenWordId &&
+      prev.activeTappedWordId === next.activeTappedWordId &&
+      prev.tutorialTargetWordId === next.tutorialTargetWordId
     );
   },
 );
@@ -289,6 +428,7 @@ export default function BookReaderScreen() {
   // Vocabulary Popup
   const [popupWord, setPopupWord] = useState<string | null>(null);
   const [popupSentenceContext, setPopupSentenceContext] = useState<string | null>(null);
+  const [activeTappedWordId, setActiveTappedWordId] = useState<string | null>(null);
   const [savedWordsCount, setSavedWordsCount] = useState(0);
 
   // Speech (Audio Highlighter)
@@ -320,6 +460,63 @@ export default function BookReaderScreen() {
 
   // In-Reader Interactive Tutorial (Step 1 = Tap Word, Step 2 = Instagram Story)
   const [readerTutorialStep, setReaderTutorialStep] = useState<1 | 2 | null>(null);
+
+  // Target real in-text word for Step 1 Interactive Tutorial (from local offline dictionary for 0ms speed!)
+  const tutorialTargetWordId = useMemo(() => {
+    if (readerTutorialStep !== 1 || !bookData || !bookData.pages.length) return null;
+    const curPage = bookData.pages[currentPage] || bookData.pages[0];
+    if (!curPage) return null;
+
+    // 1. First choice: A clean word in the first paragraphs that has a bundled offline dictionary entry
+    for (const para of curPage.paragraphs) {
+      for (const w of para.words) {
+        if (w.clean.length >= 3 && getOfflineDictEntry(w.clean)) {
+          return w.id;
+        }
+      }
+    }
+    // 2. Second choice: A word with length >= 4
+    for (const para of curPage.paragraphs) {
+      for (const w of para.words) {
+        if (w.clean.length >= 4) {
+          return w.id;
+        }
+      }
+    }
+    // 3. Fallback to first available word
+    return curPage.paragraphs[0]?.words[0]?.id || null;
+  }, [readerTutorialStep, bookData, currentPage]);
+
+  // Tutorial Animations
+  const tutorialPulse = useSharedValue(1);
+  const storyBorderGlow = useSharedValue(1);
+
+  useEffect(() => {
+    if (readerTutorialStep === 1) {
+      tutorialPulse.value = withRepeat(
+        withSequence(
+          withTiming(1.15, { duration: 750, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 750, easing: Easing.inOut(Easing.ease) }),
+        ),
+        -1,
+        true,
+      );
+    } else if (readerTutorialStep === 2) {
+      storyBorderGlow.value = withRepeat(
+        withSequence(
+          withTiming(1.12, { duration: 700, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 700, easing: Easing.inOut(Easing.ease) }),
+        ),
+        -1,
+        true,
+      );
+    }
+  }, [readerTutorialStep]);
+
+  const storyGlowAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: storyBorderGlow.value }],
+    opacity: storyBorderGlow.value > 1.04 ? 0.95 : 0.65,
+  }));
 
   useEffect(() => {
     AsyncStorage.getItem('has_seen_reader_tut_v1').then((val) => {
@@ -565,6 +762,7 @@ export default function BookReaderScreen() {
 
         setPopupWord(word.clean);
         setPopupSentenceContext(sentenceText);
+        setActiveTappedWordId(word.id);
         if (readerTutorialStep === 1) {
           setReaderTutorialStep(2);
         }
@@ -604,6 +802,8 @@ export default function BookReaderScreen() {
         textAlign={settings.textAlign}
         selectedWordIdsSet={selectedWordIdsSet}
         activeSpokenWordId={activeSpokenWordId}
+        activeTappedWordId={activeTappedWordId}
+        tutorialTargetWordId={tutorialTargetWordId}
         onWordClick={handleWordClick}
       />
     ),
@@ -617,6 +817,8 @@ export default function BookReaderScreen() {
       settings.textAlign,
       selectedWordIdsSet,
       activeSpokenWordId,
+      activeTappedWordId,
+      tutorialTargetWordId,
       handleWordClick,
     ],
   );
@@ -710,16 +912,19 @@ export default function BookReaderScreen() {
             hitSlop={10}
           >
             <Feather
-              name="headphones"
+              name={isSpeaking ? "volume-x" : "volume-2"}
               size={18}
-              color={isSpeaking ? '#b45309' : activeTheme.text}
+              color={isSpeaking ? '#854d0e' : activeTheme.text}
             />
           </Pressable>
 
-          {/* Aa Font/Theme Button */}
+          {/* Reader Settings Modal Trigger (Aa) */}
           <Pressable
             style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
-            onPress={() => setSettingsVisible(true)}
+            onPress={() => {
+              stopSpeech();
+              setSettingsVisible(true);
+            }}
             hitSlop={10}
           >
             <Text style={[styles.aaIconText, { color: activeTheme.text }]}>Aa</Text>
@@ -744,38 +949,43 @@ export default function BookReaderScreen() {
             </Text>
           </Pressable>
 
-          {/* Story Selection Toggle Button */}
-          <Pressable
-            style={({ pressed }) => [
-              styles.storyHeaderBtn,
-              isSelectionMode ? { backgroundColor: '#f59e0b' } : { backgroundColor: colors.primary },
-              readerTutorialStep === 2 && styles.storyHeaderBtnHighlight,
-              pressed && styles.pressed,
-            ]}
-            onPress={() => {
-              stopSpeech();
-              if (readerTutorialStep === 2) {
-                dismissTutorial();
-              }
-              setIsSelectionMode((prev) => !prev);
-              if (isSelectionMode) {
-                setSelectedWordIds([]);
-              }
-            }}
-            hitSlop={8}
-          >
-            <Feather name={isSelectionMode ? "check" : "camera"} size={13} color="#0d0f17" />
-            <Text style={styles.storyHeaderBtnText}>
-              {isSelectionMode ? "Bitir" : "Story"}
-            </Text>
-          </Pressable>
+          {/* Story Selection Toggle Button with Shimmer Border Glow in Tutorial */}
+          <View style={styles.storyBtnContainer}>
+            {readerTutorialStep === 2 ? (
+              <Animated.View style={[styles.storyBorderGlowHalo, storyGlowAnimatedStyle]} pointerEvents="none" />
+            ) : null}
+            <Pressable
+              style={({ pressed }) => [
+                styles.storyHeaderBtn,
+                isSelectionMode ? { backgroundColor: '#f59e0b' } : { backgroundColor: colors.primary },
+                readerTutorialStep === 2 && styles.storyHeaderBtnHighlight,
+                pressed && styles.pressed,
+              ]}
+              onPress={() => {
+                stopSpeech();
+                if (readerTutorialStep === 2) {
+                  dismissTutorial();
+                }
+                setIsSelectionMode((prev) => !prev);
+                if (isSelectionMode) {
+                  setSelectedWordIds([]);
+                }
+              }}
+              hitSlop={8}
+            >
+              <Feather name={isSelectionMode ? "check" : "camera"} size={13} color="#0d0f17" />
+              <Text style={styles.storyHeaderBtnText}>
+                {isSelectionMode ? (t('story_mode_finish_btn') || 'Bitir') : 'Story'}
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
 
       {/* Floating Story Selection Banner */}
       {isSelectionMode ? (
         <View style={styles.selectionBanner}>
-          {/* Mode Switcher Pill (Cümlə Seç vs Söz Seç) */}
+          {/* Mode Switcher Pill (Cümlə vs Sözlər) */}
           <View style={styles.modeToggleRow}>
             <Pressable
               onPress={() => setSelectModeType('sentence')}
@@ -789,8 +999,10 @@ export default function BookReaderScreen() {
                   styles.modePillText,
                   selectModeType === 'sentence' && styles.modePillTextActive,
                 ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
               >
-                Cümlə Seç
+                {t('story_mode_sentence_select') || 'Cümlə'}
               </Text>
             </Pressable>
 
@@ -806,8 +1018,10 @@ export default function BookReaderScreen() {
                   styles.modePillText,
                   selectModeType === 'word' && styles.modePillTextActive,
                 ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
               >
-                Söz Seç
+                {t('story_mode_word_select') || 'Sözlər'}
               </Text>
             </Pressable>
           </View>
@@ -828,15 +1042,17 @@ export default function BookReaderScreen() {
                   style={styles.storyConfirmBtn}
                   onPress={() => setStoryVisible(true)}
                 >
-                  <Feather name="camera" size={13} color="#0d0f17" style={{ marginRight: 4 }} />
-                  <Text style={styles.storyConfirmBtnText}>
-                    Story Yarat ({selectedWordIds.length})
+                  <Feather name="camera" size={12} color="#0d0f17" style={{ marginRight: 4 }} />
+                  <Text style={styles.storyConfirmBtnText} numberOfLines={1} adjustsFontSizeToFit>
+                    {t('story_mode_create_btn') || 'Story'} ({selectedWordIds.length})
                   </Text>
                 </Pressable>
               </>
             ) : (
-              <Text style={styles.selectionHintText}>
-                {selectModeType === 'sentence' ? 'Cümləyə toxunun' : 'Sözlərə toxunun'}
+              <Text style={styles.selectionHintText} numberOfLines={1} adjustsFontSizeToFit>
+                {selectModeType === 'sentence'
+                  ? (t('story_mode_tap_sentence_hint') || 'Cümləyə toxunun')
+                  : (t('story_mode_tap_words_hint') || 'Sözlərə toxunun')}
               </Text>
             )}
           </View>
@@ -867,27 +1083,39 @@ export default function BookReaderScreen() {
           <Image source={MASCOT_READING} style={styles.tutorialMascotAvatar} />
           <View style={styles.tutorialTextWrap}>
             <View style={styles.mascotSpeechRow}>
-              <Text style={styles.mascotNameBadge}>Lumi (Bələdçi)</Text>
+              <View style={[styles.mascotNameBadge, { backgroundColor: '#f59e0b' }]}>
+                <Text style={styles.mascotNameBadgeText}>{t('reader_tut_mascot_guide') || 'Lumi (Bələdçi)'}</Text>
+              </View>
             </View>
             <Text style={styles.tutorialTitle}>{t('reader_tut_tap_word_title')}</Text>
             <Text style={styles.tutorialDesc}>{t('reader_tut_tap_word_desc')}</Text>
           </View>
-          <Pressable onPress={() => setReaderTutorialStep(2)} style={[styles.tutorialNextBtn, { backgroundColor: '#f59e0b' }]}>
-            <Text style={styles.tutorialNextBtnText}>{(t('tutorial_next') || 'Növbəti') + ' ➡️'}</Text>
+          <Pressable
+            onPress={() => setReaderTutorialStep(2)}
+            style={[styles.tutorialNextBtn, { backgroundColor: '#f59e0b' }]}
+          >
+            <Text style={styles.tutorialNextBtnText}>{t('tutorial_next') || 'Növbəti'}</Text>
+            <Feather name="arrow-right" size={13} color="#0d0f17" />
           </Pressable>
         </View>
       ) : readerTutorialStep === 2 ? (
-        <View style={[styles.tutorialBanner, { backgroundColor: '#1e1b4b', borderColor: '#d4af7a' }]}>
+        <View style={[styles.tutorialBanner, { backgroundColor: '#18103a', borderColor: '#e1306c' }]}>
           <Image source={MASCOT_STORY} style={styles.tutorialMascotAvatar} />
           <View style={styles.tutorialTextWrap}>
             <View style={styles.mascotSpeechRow}>
-              <Text style={[styles.mascotNameBadge, { backgroundColor: '#e1306c', color: '#fff' }]}>Story Bələdçisi</Text>
+              <View style={[styles.mascotNameBadge, { backgroundColor: '#e1306c' }]}>
+                <Text style={[styles.mascotNameBadgeText, { color: '#ffffff' }]}>{t('reader_tut_mascot_story') || 'Story Bələdçisi'}</Text>
+              </View>
             </View>
             <Text style={styles.tutorialTitle}>{t('reader_tut_story_title')}</Text>
             <Text style={styles.tutorialDesc}>{t('reader_tut_story_desc')}</Text>
           </View>
-          <Pressable onPress={dismissTutorial} style={[styles.tutorialNextBtn, { backgroundColor: '#d4af7a' }]}>
-            <Text style={[styles.tutorialNextBtnText, { color: '#0d0f17' }]}>{t('reader_tut_got_it') || 'Anladım 👍'}</Text>
+          <Pressable
+            onPress={dismissTutorial}
+            style={[styles.tutorialNextBtn, { backgroundColor: '#e1306c' }]}
+          >
+            <Text style={[styles.tutorialNextBtnText, { color: '#ffffff' }]}>{t('reader_tut_got_it') || 'Anladım'}</Text>
+            <Feather name="check" size={13} color="#ffffff" />
           </Pressable>
         </View>
       ) : null}
@@ -907,6 +1135,7 @@ export default function BookReaderScreen() {
         onClose={() => {
           setPopupWord(null);
           setPopupSentenceContext(null);
+          setActiveTappedWordId(null);
           listSavedWords(targetLang).then((list) => setSavedWordsCount(list.length)).catch(() => {});
         }}
       />
@@ -1083,8 +1312,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#191e2e",
     borderBottomWidth: 1,
     borderBottomColor: "rgba(212, 175, 122, 0.25)",
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: 10,
     paddingVertical: 6,
+    gap: 6,
   },
   modeToggleRow: {
     flexDirection: "row",
@@ -1093,9 +1323,10 @@ const styles = StyleSheet.create({
     padding: 2,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.1)",
+    flexShrink: 0,
   },
   modePillBtn: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: Radius.pill,
   },
@@ -1104,7 +1335,7 @@ const styles = StyleSheet.create({
   },
   modePillText: {
     color: "#94a3b8",
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: FontWeight.bold,
   },
   modePillTextActive: {
@@ -1114,36 +1345,42 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+    flexShrink: 1,
+    justifyContent: "flex-end",
   },
   selectionHintText: {
     color: "#d4af7a",
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: FontWeight.medium,
+    textAlign: "right",
+    flexShrink: 1,
   },
   clearSelectionBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: "rgba(239, 68, 68, 0.15)",
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
   clearSelectionText: {
     color: "#ef4444",
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: FontWeight.bold,
   },
   storyConfirmBtn: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#d4af7a",
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: Radius.pill,
+    flexShrink: 1,
   },
   storyConfirmBtnText: {
     color: "#0d0f17",
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: FontWeight.bold,
   },
   pageWrapper: {
@@ -1172,21 +1409,27 @@ const styles = StyleSheet.create({
   paragraphBlock: {
     flexDirection: "row",
     flexWrap: "wrap",
+    alignItems: "center",
   },
-  paragraphText: {
-    letterSpacing: 0.2,
+  wordPressableWrap: {
+    position: "relative",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  wordBase: {
-    // Clean zero-shift base style
+  wordHighlightHalo: {
+    position: "absolute",
+    top: -1,
+    bottom: -1,
+    left: -2,
+    right: -2,
+    borderRadius: 4,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 8,
+    elevation: 3,
   },
-  wordSelected: {
-    backgroundColor: "rgba(212, 175, 122, 0.45)",
-    borderRadius: 2,
-  },
-  wordSpokenHighlight: {
-    backgroundColor: "#fef08a",
-    color: "#854d0e",
-    borderRadius: 2,
+  wordText: {
+    includeFontPadding: false,
+    textAlignVertical: "center",
   },
   footer: {
     alignItems: "center",
@@ -1200,78 +1443,107 @@ const styles = StyleSheet.create({
   },
   storyHeaderBtnHighlight: {
     borderWidth: 2,
-    borderColor: '#f59e0b',
-    shadowColor: '#f59e0b',
+    borderColor: '#e1306c',
+    shadowColor: '#e1306c',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.85,
+    shadowOpacity: 0.9,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  storyBtnContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  storyBorderGlowHalo: {
+    position: 'absolute',
+    top: -3,
+    left: -3,
+    right: -3,
+    bottom: -3,
+    borderRadius: Radius.pill,
+    borderWidth: 2,
+    borderColor: '#e1306c',
+    shadowColor: '#e1306c',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
     shadowRadius: 8,
     elevation: 8,
   },
   tutorialBanner: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 36,
     left: Spacing.md,
     right: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: Radius.lg,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 20,
     borderWidth: 1.5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 10,
-    gap: 10,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 16,
+    gap: 12,
     zIndex: 99,
   },
   tutorialMascotAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1.5,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
     borderColor: '#fbbf24',
   },
   mascotSpeechRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   mascotNameBadge: {
-    backgroundColor: '#f59e0b',
-    color: '#0d0f17',
-    fontSize: 9,
-    fontWeight: FontWeight.bold,
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     borderRadius: Radius.pill,
+  },
+  mascotNameBadgeText: {
+    color: '#0d0f17',
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
   tutorialTextWrap: {
     flex: 1,
   },
   tutorialTitle: {
     color: '#ffffff',
-    fontSize: 13,
-    fontWeight: FontWeight.bold,
-    marginBottom: 2,
+    fontSize: 14.5,
+    fontWeight: '800',
+    marginBottom: 3,
+    letterSpacing: -0.2,
   },
   tutorialDesc: {
     color: '#cbd5e1',
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 12,
+    lineHeight: 17,
   },
   tutorialNextBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: Radius.pill,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: Radius.pill,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
   tutorialNextBtnText: {
     color: '#0d0f17',
-    fontSize: 11,
-    fontWeight: FontWeight.bold,
+    fontSize: 12,
+    fontWeight: '800',
   },
   pressed: {
     opacity: 0.7,

@@ -40,7 +40,13 @@ export function BookPrepareModal({
 }: BookPrepareModalProps) {
   const { colors } = useAppTheme();
   const { uiLang, t } = useLanguage();
-  const loadingText = MESSAGES[uiLang] ?? MESSAGES.en;
+  
+  let loadingText = t('reading_loading');
+  if (progress?.stage === 'saving') {
+    loadingText = t('book_saving_to_device');
+  } else if (progress?.stage === 'downloading') {
+    loadingText = t('book_preparing_download');
+  }
 
   return (
     <Modal

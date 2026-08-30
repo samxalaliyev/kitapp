@@ -8,9 +8,11 @@ export default function Index() {
     return null;
   }
 
-  if (!onboarded) {
-    return <Redirect href="/onboarding/welcome" />;
-  }
+  // TODO: Test mode — always show onboarding. Remove this when done.
+  return <Redirect href="/onboarding/welcome" />;
 
-  return <Redirect href="/(tabs)" />;
+  // if (!onboarded) {
+  //   return <Redirect href="/onboarding/welcome" />;
+  // }
+  // return <Redirect href="/(tabs)" />;
 }

@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import { DEFAULT_LANGUAGE, type LanguageCode } from './constants';
+import { DEFAULT_LANGUAGE, getDeviceDefaultLanguage, type LanguageCode } from './constants';
 import { getUITranslation, type TranslationKey } from './translations';
 import {
   getTargetLanguage,
@@ -31,12 +31,14 @@ interface LanguageContextValue {
   completeOnboarding: () => Promise<void>;
 }
 
+const initialLang = getDeviceDefaultLanguage();
+
 const LanguageContext = createContext<LanguageContextValue>({
-  targetLang: DEFAULT_LANGUAGE,
-  uiLang: DEFAULT_LANGUAGE,
+  targetLang: initialLang,
+  uiLang: initialLang,
   ready: false,
   onboarded: false,
-  t: (key) => getUITranslation(DEFAULT_LANGUAGE, key),
+  t: (key) => getUITranslation(initialLang, key),
   setTargetLang: async () => {},
   setUILang: async () => {},
   setLanguage: async () => {},
@@ -44,8 +46,8 @@ const LanguageContext = createContext<LanguageContextValue>({
 });
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [targetLang, setTargetLangState] = useState<LanguageCode>(DEFAULT_LANGUAGE);
-  const [uiLang, setUILangState] = useState<LanguageCode>(DEFAULT_LANGUAGE);
+  const [targetLang, setTargetLangState] = useState<LanguageCode>(initialLang);
+  const [uiLang, setUILangState] = useState<LanguageCode>(initialLang);
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
 

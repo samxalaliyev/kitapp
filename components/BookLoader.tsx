@@ -62,7 +62,7 @@ const LITERARY_QUOTES: Record<string, string[]> = {
 
 export function BookLoader({ size = 80, message, style }: BookLoaderProps) {
   const { colors } = useAppTheme();
-  const { uiLang } = useLanguage();
+  const { uiLang, t } = useLanguage();
   const [pulseAnim] = useState(new Animated.Value(1));
   const [quoteIndex, setQuoteIndex] = useState(0);
 
@@ -122,7 +122,7 @@ export function BookLoader({ size = 80, message, style }: BookLoaderProps) {
       <View style={styles.statusRow}>
         <ActivityIndicator size="small" color={colors.primary} style={{ marginRight: 8 }} />
         <Text style={[styles.messageText, { color: colors.text }]}>
-          {message || 'Kitab hazırlanır...'}
+          {message || t('reading_loading') || 'Loading...'}
         </Text>
       </View>
 

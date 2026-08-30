@@ -30,6 +30,8 @@ try {
   // Platform does not support react-native-share in Expo Go, fallback used.
 }
 
+import { TranslationKey } from '@/lib/i18n/translations';
+
 export interface QuoteStoryModalProps {
   visible: boolean;
   quote: string;
@@ -41,7 +43,7 @@ export interface QuoteStoryModalProps {
 
 interface Theme {
   id: string;
-  name: string;
+  nameKey: TranslationKey;
   colors: [string, string, string];
   cardBg: string;
   cardBorder: string;
@@ -54,7 +56,7 @@ interface Theme {
 const THEMES: Theme[] = [
   {
     id: 'obsidian_gold',
-    name: 'Obsidian Gold',
+    nameKey: 'story_theme_obsidian_gold',
     colors: ['#090d16', '#111827', '#030712'],
     cardBg: 'rgba(255, 255, 255, 0.05)',
     cardBorder: 'rgba(212, 175, 122, 0.35)',
@@ -65,7 +67,7 @@ const THEMES: Theme[] = [
   },
   {
     id: 'sunset_glow',
-    name: 'Qürub',
+    nameKey: 'story_theme_sunset_glow',
     colors: ['#4c0519', '#881337', '#be123c'],
     cardBg: 'rgba(0, 0, 0, 0.2)',
     cardBorder: 'rgba(255, 255, 255, 0.25)',
@@ -76,7 +78,7 @@ const THEMES: Theme[] = [
   },
   {
     id: 'royal_velvet',
-    name: 'Bənövşəyi',
+    nameKey: 'story_theme_royal_velvet',
     colors: ['#1e1b4b', '#312e81', '#4338ca'],
     cardBg: 'rgba(0, 0, 0, 0.25)',
     cardBorder: 'rgba(255, 255, 255, 0.25)',
@@ -87,7 +89,7 @@ const THEMES: Theme[] = [
   },
   {
     id: 'emerald_forest',
-    name: 'Zümrüd',
+    nameKey: 'story_theme_emerald_forest',
     colors: ['#022c22', '#064e3b', '#065f46'],
     cardBg: 'rgba(0, 0, 0, 0.22)',
     cardBorder: 'rgba(255, 255, 255, 0.22)',
@@ -98,7 +100,7 @@ const THEMES: Theme[] = [
   },
   {
     id: 'warm_parchment',
-    name: 'Kağız',
+    nameKey: 'story_theme_warm_parchment',
     colors: ['#fef3c7', '#fde68a', '#f59e0b'],
     cardBg: 'rgba(255, 255, 255, 0.45)',
     cardBorder: 'rgba(180, 83, 9, 0.25)',
@@ -133,7 +135,7 @@ export function QuoteStoryModal({
 
   // Dynamic Typography & Clamping Calculation for 100% Stability
   const formattedQuote = useMemo(() => {
-    let raw = (quote || 'Kitab oxumaq başqa bir dünyada yaşamaqdır.').trim();
+    let raw = (quote || '').trim();
     if (raw.length > MAX_STORY_CHARS) {
       raw = raw.slice(0, MAX_STORY_CHARS - 3).trim() + '...';
     }
@@ -178,7 +180,7 @@ export function QuoteStoryModal({
     try {
       const uri = await capture();
       if (!uri) {
-        setError('Story şəkli hazırlana bilmədi');
+        setError(t('story_modal_capture_error') || 'Story şəkli hazırlana bilmədi');
         return;
       }
 
@@ -211,7 +213,7 @@ export function QuoteStoryModal({
           await RNShare.open({
             url: Platform.OS === 'android' ? fileUri : base64Uri,
             type: 'image/png',
-            title: 'Instagram Story-də Paylaş',
+            title: t('story_modal_share_title') || 'Instagram Story',
             failOnCancel: false,
           });
           return;
@@ -222,12 +224,12 @@ export function QuoteStoryModal({
         await Sharing.shareAsync(fileUri, {
           mimeType: 'image/png',
           UTI: 'public.png',
-          dialogTitle: 'Instagram Story-də Paylaş',
+          dialogTitle: t('story_modal_share_title') || 'Instagram Story',
         });
       }
     } catch (err: any) {
       if (err?.message !== 'User did not share') {
-        setError('Paylaşım xətası baş verdi');
+        setError(t('story_modal_share_error') || 'Paylaşım xətası baş verdi');
       }
     } finally {
       setBusy(false);
@@ -241,7 +243,7 @@ export function QuoteStoryModal({
     try {
       const uri = await capture();
       if (!uri) {
-        setError('Story şəkli hazırlana bilmədi');
+        setError(t('story_modal_capture_error') || 'Story şəkli hazırlana bilmədi');
         return;
       }
 
@@ -249,12 +251,12 @@ export function QuoteStoryModal({
         await Sharing.shareAsync(uri, {
           mimeType: 'image/png',
           UTI: 'public.png',
-          dialogTitle: 'Sitatı Paylaş',
+          dialogTitle: t('story_modal_quote_share_title') || 'Sitatı Paylaş',
         });
       }
     } catch (err: any) {
       if (err?.message !== 'User did not share') {
-        setError('Paylaşım xətası baş verdi');
+        setError(t('story_modal_share_error') || 'Paylaşım xətası baş verdi');
       }
     } finally {
       setBusy(false);
@@ -282,8 +284,8 @@ export function QuoteStoryModal({
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleWrap}>
-              <Text style={styles.brandBadge}>INSTAGRAM 9:16 STORY</Text>
-              <Text style={styles.title}>Story Hazırla</Text>
+              <Text style={styles.brandBadge}>{t('story_modal_badge') || 'INSTAGRAM 9:16 STORY'}</Text>
+              <Text style={styles.title}>{t('story_modal_title') || 'Story Hazırla'}</Text>
             </View>
 
             <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={12}>
@@ -367,7 +369,7 @@ export function QuoteStoryModal({
                             numberOfLines={1}
                             style={[styles.bookTitleText, { color: selectedTheme.textColor }]}
                           >
-                            {bookTitle || 'Kitab'}
+                            {bookTitle || 'Book'}
                           </Text>
                           {bookAuthor ? (
                             <Text
@@ -390,7 +392,7 @@ export function QuoteStoryModal({
             </View>
 
             {/* Theme Selector */}
-            <Text style={styles.sectionLabel}>Rəng Teması</Text>
+            <Text style={styles.sectionLabel}>{t('story_modal_color_theme') || 'Rəng Teması'}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -415,7 +417,7 @@ export function QuoteStoryModal({
                       style={styles.themeSwatch}
                     />
                     <Text style={[styles.themeLabel, active && styles.themeLabelActive]}>
-                      {th.name}
+                      {t(th.nameKey) || th.id}
                     </Text>
                   </Pressable>
                 );
@@ -440,7 +442,7 @@ export function QuoteStoryModal({
               ) : (
                 <>
                   <Feather name="camera" size={16} color="#0d0f17" style={{ marginRight: 6 }} />
-                  <Text style={styles.igBtnText}>Instagram Story</Text>
+                  <Text style={styles.igBtnText}>{t('story_modal_ig_btn') || 'Instagram Story'}</Text>
                 </>
               )}
             </Pressable>
@@ -454,7 +456,7 @@ export function QuoteStoryModal({
               ]}
             >
               <Feather name="share-2" size={16} color="#f8fafc" style={{ marginRight: 6 }} />
-              <Text style={styles.otherBtnText}>Paylaş / Saxla</Text>
+              <Text style={styles.otherBtnText}>{t('story_modal_share_save') || 'Paylaş / Saxla'}</Text>
             </Pressable>
           </View>
         </View>

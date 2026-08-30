@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {
   DEFAULT_LANGUAGE,
+  getDeviceDefaultLanguage,
   isSupportedLanguage,
   type LanguageCode,
 } from './constants';
@@ -19,7 +20,7 @@ export async function getTargetLanguage(): Promise<LanguageCode> {
   } catch {
     // ignore
   }
-  return DEFAULT_LANGUAGE;
+  return getDeviceDefaultLanguage();
 }
 
 export async function setTargetLanguage(lang: LanguageCode): Promise<void> {
@@ -35,7 +36,7 @@ export async function getUILanguage(): Promise<LanguageCode> {
   } catch {
     // ignore
   }
-  return DEFAULT_LANGUAGE;
+  return getDeviceDefaultLanguage();
 }
 
 export async function setUILanguage(lang: LanguageCode): Promise<void> {

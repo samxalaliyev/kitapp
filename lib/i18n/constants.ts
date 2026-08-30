@@ -27,3 +27,18 @@ export function getLanguage(code: string): LanguageOption {
 export function isSupportedLanguage(code: string): code is LanguageCode {
   return SUPPORTED_LANGUAGES.some((lang) => lang.code === code);
 }
+
+export function getDeviceDefaultLanguage(): LanguageCode {
+  try {
+    const locale = typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().locale : null;
+    if (locale) {
+      const code = locale.split(/[-_]/)[0].toLowerCase();
+      if (isSupportedLanguage(code)) {
+        return code;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return DEFAULT_LANGUAGE;
+}
