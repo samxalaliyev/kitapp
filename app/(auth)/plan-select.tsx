@@ -10,6 +10,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { LegalModal, type LegalType } from '@/components/LegalModal';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
@@ -21,44 +22,46 @@ export default function PlanSelectScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
   const { t } = useLanguage();
-  const { upgradeSubscription } = useAuth();
+  const { upgradeSubscription, restorePurchases } = useAuth();
 
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>('premium_yearly');
   const [loading, setLoading] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [activeLegal, setActiveLegal] = useState<LegalType>(null);
 
   const handleContinue = async () => {
     if (selectedPlan === 'free') {
-      // Free plan selected
       router.replace('/(tabs)');
       return;
     }
 
-    // Premium plan selected
-    const priceText = selectedPlan === 'premium_yearly' ? '$29.99 / il' : '$4.99 / ay';
-    Alert.alert(
-      '💳 App Store / Google Play Ödənişi',
-      `Litera Premium (${selectedPlan === 'premium_yearly' ? 'İllik' : 'Aylıq'}) abunəliyini təsdiqləyirsiniz?\n\nMəbləğ: ${priceText}`,
-      [
-        {
-          text: 'Pulsuz Planla Davam Et',
-          style: 'cancel',
-          onPress: () => router.replace('/(tabs)'),
-        },
-        {
-          text: '💳 Ödənişi Təsdiqlə',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              await upgradeSubscription(selectedPlan);
-              Alert.alert('🌟 Təbriklər!', 'Premium abunəliyiniz uğurla aktivləşdirildi.');
-              router.replace('/(tabs)');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ],
-    );
+    setLoading(true);
+    try {
+      await upgradeSubscription(selectedPlan);
+      Alert.alert('🌟 Təbriklər!', 'Premium abunəliyiniz uğurla aktivləşdirildi.');
+      router.replace('/(tabs)');
+    } catch (err: any) {
+      Alert.alert('Xəta', err?.message || 'Abunəlik tamamlana bilmədi. Zəhmət olmasa yenidən cəhd edin.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    setRestoring(true);
+    try {
+      const res = await restorePurchases();
+      if (res.hasActiveSubscription) {
+        Alert.alert('🌟 ' + (t('restore_purchases') || 'Bərpa edildi'), t('restore_success') || 'Alışlarınız uğurla bərpa edildi.');
+        router.replace('/(tabs)');
+      } else {
+        Alert.alert(t('restore_purchases') || 'Alışların Bərpası', t('no_purchases_found') || 'Aktiv abunəlik tapılmadı.');
+      }
+    } catch (err: any) {
+      Alert.alert('Xəta', err?.message || 'Bərpa zamanı xəta baş verdi.');
+    } finally {
+      setRestoring(false);
+    }
   };
 
   return (
@@ -236,15 +239,71 @@ export default function PlanSelectScreen() {
           </Text>
         </Pressable>
 
+        {/* Restore Purchases Button */}
+        <Pressable
+          onPress={handleRestore}
+          disabled={restoring || loading}
+          style={({ pressed }) => [styles.restoreBtn, pressed && styles.pressed]}
+        >
+          <Text style={[styles.restoreBtnText, { color: colors.primary }]}>
+            {restoring ? 'Bərpa edilir...' : `🔄 ${t('restore_purchases') || 'Alışları Bərpa Et'}`}
+          </Text>
+        </Pressable>
+
         <Pressable onPress={() => router.replace('/(tabs)')} style={styles.skipBtn}>
           <Text style={[styles.skipBtnText, { color: colors.textMuted }]}>İndi Yox, Sonra Keçid Et</Text>
         </Pressable>
+
+        {/* Legal Disclosures (Google Play Policy Compliance) */}
+        <View style={styles.legalFooter}>
+          <Text style={[styles.legalText, { color: colors.textMuted }]}>
+            Abunə olmaqla siz{' '}
+            <Text style={[styles.legalLink, { color: colors.primary }]} onPress={() => setActiveLegal('terms')}>
+              {t('terms_of_service')}
+            </Text>
+            {' '}və{' '}
+            <Text style={[styles.legalLink, { color: colors.primary }]} onPress={() => setActiveLegal('privacy')}>
+              {t('privacy_policy')}
+            </Text>
+            {' '}ilə razılaşırsınız. Abunəlik dövrün sonunda avtomatik yenilənir və istənilən vaxt Google Play ayarlarından ləğv edilə bilər.
+          </Text>
+        </View>
       </ScrollView>
+
+      <LegalModal
+        visible={!!activeLegal}
+        type={activeLegal}
+        onClose={() => setActiveLegal(null)}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  restoreBtn: {
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  restoreBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+  },
+  legalFooter: {
+    marginTop: Spacing.xl,
+    paddingTop: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  legalText: {
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  legalLink: {
+    textDecorationLine: 'underline',
+    fontWeight: FontWeight.medium,
+  },
   container: {
     flex: 1,
   },

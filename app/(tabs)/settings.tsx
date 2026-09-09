@@ -142,12 +142,14 @@ export default function SettingsScreen() {
     logout,
     deleteAccount,
     watchAdForWords,
+    restorePurchases,
   } = useAuth();
 
   const [fontSize, setFontSizeState] = useState<FontSizeLevel>('normal');
   const [fontFamily, setFontFamilyState] = useState<FontFamilyChoice>('serif');
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [restoringPurchases, setRestoringPurchases] = useState(false);
 
   // Active Picker Modal State
   const [activePicker, setActivePicker] = useState<PickerType>(null);
@@ -247,6 +249,23 @@ export default function SettingsScreen() {
   const handleOpenTerms = useCallback(() => {
     setActiveLegal('terms');
   }, []);
+
+  const handleRestorePurchases = useCallback(async () => {
+    if (restoringPurchases) return;
+    setRestoringPurchases(true);
+    try {
+      const res = await restorePurchases();
+      if (res.hasActiveSubscription) {
+        Alert.alert('🌟 ' + (t('restore_purchases') || 'Bərpa edildi'), t('restore_success') || 'Alışlarınız uğurla bərpa edildi.');
+      } else {
+        Alert.alert(t('restore_purchases') || 'Alışların Bərpası', t('no_purchases_found') || 'Aktiv abunəlik tapılmadı.');
+      }
+    } catch (err: any) {
+      Alert.alert('Xəta', err?.message || 'Bərpa zamanı xəta baş verdi.');
+    } finally {
+      setRestoringPurchases(false);
+    }
+  }, [restorePurchases, restoringPurchases, t]);
 
   const planBadgeText = isAdmin
     ? 'ADMIN'
@@ -520,6 +539,13 @@ export default function SettingsScreen() {
               onPress={() => setPaywallVisible(true)}
             />
           ) : null}
+          <SettingRow
+            iconName="refresh-cw"
+            iconColor="#818cf8"
+            iconBgColor="rgba(129, 140, 248, 0.12)"
+            label={restoringPurchases ? (t('connecting') || 'Gözləyin...') : t('restore_purchases')}
+            onPress={handleRestorePurchases}
+          />
           <SettingRow
             iconName="shield"
             label={t('privacy_policy')}

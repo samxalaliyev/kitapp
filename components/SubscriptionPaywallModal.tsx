@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 
+import { LegalModal, type LegalType } from '@/components/LegalModal';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
@@ -29,34 +30,42 @@ export function SubscriptionPaywallModal({
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
   const { uiLang, t } = useLanguage();
-  const { upgradeSubscription, subscriptionPlan } = useAuth();
+  const { upgradeSubscription, restorePurchases, subscriptionPlan } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>('premium_yearly');
   const [loading, setLoading] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [activeLegal, setActiveLegal] = useState<LegalType>(null);
 
   if (!visible) return null;
 
   const handleSubscribe = async () => {
-    const priceText = selectedPlan === 'premium_yearly' ? '$29.99 / il' : '$4.99 / ay';
-    Alert.alert(
-      '💳 Google Play / App Store',
-      `Litera Premium (${selectedPlan === 'premium_yearly' ? t('plan_yearly') : t('plan_monthly')}) ${priceText}`,
-      [
-        { text: t('cancel_search') || 'Ləğv et', style: 'cancel' },
-        {
-          text: t('subscribe_now') || 'Təsdiqlə',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              await upgradeSubscription(selectedPlan);
-              Alert.alert('🌟 Litera Premium', t('premium_title'));
-              onClose();
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ],
-    );
+    setLoading(true);
+    try {
+      await upgradeSubscription(selectedPlan);
+      Alert.alert('🌟 Litera Premium', t('premium_title'));
+      onClose();
+    } catch (err: any) {
+      Alert.alert('Xəta', err?.message || 'Ödəniş tamamlana bilmədi.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    setRestoring(true);
+    try {
+      const res = await restorePurchases();
+      if (res.hasActiveSubscription) {
+        Alert.alert('🌟 ' + (t('restore_purchases') || 'Bərpa edildi'), t('restore_success') || 'Alışlarınız uğurla bərpa edildi.');
+        onClose();
+      } else {
+        Alert.alert(t('restore_purchases') || 'Alışların Bərpası', t('no_purchases_found') || 'Aktiv abunəlik tapılmadı.');
+      }
+    } catch (err: any) {
+      Alert.alert('Xəta', err?.message || 'Bərpa zamanı xəta baş verdi.');
+    } finally {
+      setRestoring(false);
+    }
   };
 
   return (
@@ -190,14 +199,73 @@ export function SubscriptionPaywallModal({
                   : t('subscribe_now')}
               </Text>
             </Pressable>
+
+            {/* Restore Purchases Button */}
+            <Pressable
+              onPress={handleRestore}
+              disabled={restoring || loading}
+              style={({ pressed }) => [styles.restoreBtn, pressed && styles.pressed]}
+            >
+              <Text style={styles.restoreBtnText}>
+                {restoring
+                  ? (t('connecting') || 'Bərpa edilir...')
+                  : `🔄 ${t('restore_purchases') || 'Alışları Bərpa Et'}`}
+              </Text>
+            </Pressable>
+
+            {/* Legal Disclosures */}
+            <View style={styles.legalFooter}>
+              <Text style={styles.legalText}>
+                Abunəlik Google Play hesabınızdan tutulur və dövrün sonunda avtomatik yenilənir.{'\n'}
+                <Text style={styles.legalLink} onPress={() => setActiveLegal('terms')}>
+                  {t('terms_of_service')}
+                </Text>
+                {'  •  '}
+                <Text style={styles.legalLink} onPress={() => setActiveLegal('privacy')}>
+                  {t('privacy_policy')}
+                </Text>
+              </Text>
+            </View>
           </ScrollView>
         </View>
       </View>
+
+      <LegalModal
+        visible={!!activeLegal}
+        type={activeLegal}
+        onClose={() => setActiveLegal(null)}
+      />
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  restoreBtn: {
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.xs,
+  },
+  restoreBtnText: {
+    color: '#d4af7a',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+  },
+  legalFooter: {
+    marginTop: Spacing.md,
+    paddingTop: Spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  legalText: {
+    color: '#94a3b8',
+    fontSize: 11,
+    lineHeight: 16,
+    textAlign: 'center',
+  },
+  legalLink: {
+    color: '#d4af7a',
+    textDecorationLine: 'underline',
+  },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',

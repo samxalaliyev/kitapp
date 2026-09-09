@@ -23,6 +23,7 @@ import {
 } from '@/lib/permissions/rbac';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { watchRewardedAd } from '@/lib/monetization/rewarded-ads';
+import { purchasesService } from '@/lib/monetization/purchases';
 import { purgeUserLocalCache, syncCloudData } from '@/lib/sync/sync-service';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -46,6 +47,7 @@ interface AuthContextValue {
   deleteAccount: () => Promise<void>;
   logout: () => Promise<void>;
   upgradeSubscription: (plan: SubscriptionPlan) => Promise<void>;
+  restorePurchases: () => Promise<{ success: boolean; hasActiveSubscription: boolean; errorMessage?: string }>;
   consumeTranslation: () => boolean; // Returns true if allowed, false if limit reached
   watchAdForWords: () => void;
   watchAdForBookDownload: () => void;
@@ -76,6 +78,7 @@ const AuthContext = createContext<AuthContextValue>({
   deleteAccount: async () => {},
   logout: async () => {},
   upgradeSubscription: async () => {},
+  restorePurchases: async () => ({ success: false, hasActiveSubscription: false }),
   consumeTranslation: () => true,
   watchAdForWords: () => {},
   watchAdForBookDownload: () => {},
@@ -325,10 +328,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
 
       if (res.type === 'success' && res.url) {
-        const urlParams = new URL(res.url);
-        const hashParams = new URLSearchParams(urlParams.hash.replace('#', '?'));
-        const accessToken = hashParams.get('access_token') || urlParams.searchParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token') || urlParams.searchParams.get('refresh_token');
+        let accessToken: string | null = null;
+        let refreshToken: string | null = null;
+
+        try {
+          const hashIndex = res.url.indexOf('#');
+          const queryIndex = res.url.indexOf('?');
+          const paramStr =
+            hashIndex !== -1
+              ? res.url.substring(hashIndex + 1)
+              : queryIndex !== -1
+              ? res.url.substring(queryIndex + 1)
+              : '';
+          const searchParams = new URLSearchParams(paramStr.replace(/^[#?]/, ''));
+          accessToken = searchParams.get('access_token');
+          refreshToken = searchParams.get('refresh_token');
+        } catch {}
 
         if (accessToken && refreshToken) {
           const { data: sessionData, error: sessionErr } = await supabase.auth.setSession({
@@ -342,9 +357,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await syncCloudData(sessionData.user.id).catch(() => {});
             return {};
           }
+          if (sessionErr) {
+            return { error: sessionErr.message };
+          }
         }
+        return { error: 'Autentifikasiya məlumatları alına bilmədi.' };
       }
-      return {};
+
+      if (res.type === 'cancel' || res.type === 'dismiss') {
+        return { error: 'cancelled' };
+      }
+
+      return { error: 'Giriş tamamlanmadı.' };
     } catch (err: any) {
       return { error: err?.message || 'Sosial giriş zamanı xəta baş verdi.' };
     }
@@ -352,7 +376,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     if (isSupabaseConfigured) {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut().catch(() => {});
     }
     await purgeUserLocalCache();
     setProfile(null);
@@ -364,36 +388,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const deleteAccount = useCallback(async () => {
     if (isSupabaseConfigured && user) {
       try {
-        await supabase.from('user_saved_words').delete().eq('user_id', user.id);
+        await supabase.from('user_vocabulary').delete().eq('user_id', user.id);
         await supabase.from('user_saved_books').delete().eq('user_id', user.id);
+        await supabase.from('user_reading_progress').delete().eq('user_id', user.id);
+        await supabase.from('user_daily_usage').delete().eq('user_id', user.id);
         await supabase.from('profiles').delete().eq('id', user.id);
-        await supabase.auth.signOut();
-      } catch {}
+        await supabase.auth.signOut().catch(() => {});
+      } catch (e) {
+        console.warn('[Auth] deleteAccount cloud error:', e);
+      }
     }
     await purgeUserLocalCache();
     setProfile(null);
     setUser(null);
     setSession(null);
-    await AsyncStorage.clear();
+    await AsyncStorage.removeItem(STORAGE_KEYS.PROFILE);
   }, [user]);
 
+  useEffect(() => {
+    purchasesService.init(user?.id).catch(() => {});
+  }, [user?.id]);
+
   const upgradeSubscription = useCallback(async (plan: SubscriptionPlan) => {
+    if (plan !== 'free') {
+      const purchaseResult = await purchasesService.purchase(plan);
+      if (purchaseResult.userCancelled) {
+        return;
+      }
+      if (!purchaseResult.success) {
+        throw new Error(purchaseResult.errorMessage || 'Purchase failed');
+      }
+    }
+
     const nextRole: UserRole = plan === 'free' ? 'free' : 'premium';
     if (isSupabaseConfigured && user) {
-      await supabase
-        .from('profiles')
-        .update({
-          role: nextRole,
-          subscription_plan: plan,
-          subscription_status: 'active',
-        })
-        .eq('id', user.id);
+      try {
+        await supabase
+          .from('profiles')
+          .update({
+            role: nextRole,
+            subscription_plan: plan,
+            subscription_status: 'active',
+          })
+          .eq('id', user.id);
 
-      await fetchProfile(user.id, user.email);
+        await fetchProfile(user.id, user.email);
+      } catch {
+        setProfile((prev) => (prev ? { ...prev, role: nextRole, subscriptionPlan: plan } : null));
+      }
     } else {
       setProfile((prev) => (prev ? { ...prev, role: nextRole, subscriptionPlan: plan } : null));
     }
-  }, [user]);
+  }, [user, fetchProfile]);
+
+  const restorePurchases = useCallback(async () => {
+    const res = await purchasesService.restore();
+    if (res.success && res.hasActiveSubscription && res.activePlan) {
+      await upgradeSubscription(res.activePlan);
+      return { success: true, hasActiveSubscription: true };
+    }
+    return {
+      success: res.success,
+      hasActiveSubscription: res.hasActiveSubscription,
+      errorMessage: res.errorMessage,
+    };
+  }, [upgradeSubscription]);
 
   const consumeTranslation = useCallback((): boolean => {
     if (limits.dailyTranslationLimit === 'unlimited') {
@@ -450,6 +509,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       deleteAccount,
       logout,
       upgradeSubscription,
+      restorePurchases,
       consumeTranslation,
       watchAdForWords,
       watchAdForBookDownload,
@@ -473,6 +533,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       deleteAccount,
       logout,
       upgradeSubscription,
+      restorePurchases,
       consumeTranslation,
       watchAdForWords,
       watchAdForBookDownload,
