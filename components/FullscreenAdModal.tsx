@@ -72,8 +72,14 @@ export function FullscreenAdModal({
   const countdownText = COUNTDOWN_LABELS[uiLang]?.(countdown) || COUNTDOWN_LABELS.en(countdown);
   const unlockedText = UNLOCKED_LABELS[uiLang] || UNLOCKED_LABELS.en;
 
+  const handleRequestClose = () => {
+    if (countdown <= 0) {
+      onClose();
+    }
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={() => {}}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleRequestClose}>
       <View style={styles.container}>
         {/* Top Header */}
         <View style={styles.topBar}>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
@@ -47,8 +47,23 @@ export function RewardedVideoPlayerModal({
     onClose();
   };
 
+  const handleRequestClose = () => {
+    if (completed) {
+      handleClaimReward();
+    } else {
+      Alert.alert(
+        t('cancel_search') || 'Reklamı bağlamaq istəyirsiniz?',
+        'Reklam bitməmiş bağlasanız, əlavə tərcümə balansı qazanılmayacaq.',
+        [
+          { text: 'Davam et', style: 'cancel' },
+          { text: 'Çıx', style: 'destructive', onPress: onClose },
+        ],
+      );
+    }
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={() => {}}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleRequestClose}>
       <View style={styles.container}>
         {/* Top Header with Ad Badge and Countdown */}
         <View style={styles.topBar}>
