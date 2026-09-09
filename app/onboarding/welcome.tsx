@@ -76,176 +76,202 @@ const SLIDES: SlideConfig[] = [
   },
 ];
 
-/* ─── Card 1: Interactive Translation ─────────────────────── */
+/* ─── Card 1: Interactive Translation (Modern & Minimalist) ─── */
 function TranslationVisualCard({ isDark, t }: { isDark: boolean; t: (k: TranslationKey) => string }) {
+  const saveWordText = t('add_to_vocab')?.replace(/^\+\s*/, '') || 'Save';
+
   return (
-    <View style={[cardStyles.card, isDark ? cardStyles.cardDark : cardStyles.cardLight, { borderColor: 'rgba(245, 158, 11, 0.35)' }]}>
-      {/* Header bar */}
+    <View style={[cardStyles.card, isDark ? cardStyles.cardDark : cardStyles.cardLight, { borderColor: 'rgba(245, 158, 11, 0.22)' }]}>
+      {/* Minimal Book Header */}
       <View style={cardStyles.headerRow}>
-        <View style={[cardStyles.bookBadge, isDark ? cardStyles.bookBadgeDark : cardStyles.bookBadgeLight]}>
-          <Feather name="book" size={11} color="#f59e0b" />
-          <Text style={[cardStyles.bookTitle, { color: isDark ? '#e2e8f0' : '#1e293b' }]}>A Scandal in Bohemia</Text>
+        <View style={cardStyles.bookHeader}>
+          <Feather name="book-open" size={12} color="#f59e0b" />
+          <Text style={[cardStyles.bookTitle, { color: isDark ? '#94a3b8' : '#64748b' }]}>
+            A Scandal in Bohemia
+          </Text>
         </View>
-        <View style={cardStyles.audioPill}>
-          <Feather name="volume-2" size={12} color="#f59e0b" />
-          <Text style={cardStyles.audioText}>Audio</Text>
-        </View>
+        <Text style={[cardStyles.chapterTag, { color: isDark ? '#64748b' : '#94a3b8' }]}>
+          CH. I
+        </Text>
       </View>
 
-      {/* Floating Tooltip Callout */}
-      <View style={[cardStyles.tooltipBubble, isDark ? cardStyles.tooltipDark : cardStyles.tooltipLight]}>
-        <View style={cardStyles.tooltipTop}>
-          <View style={cardStyles.tooltipSpeaker}>
-            <Ionicons name="volume-medium" size={14} color="#ffffff" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+      {/* Floating Tooltip Callout (Sleek Glassmorphic Pill) */}
+      <View style={cardStyles.tooltipWrapper}>
+        <View style={[cardStyles.tooltipBubble, isDark ? cardStyles.tooltipDark : cardStyles.tooltipLight]}>
+          {/* Top Row: Word + Phonetics + Audio Icon */}
+          <View style={cardStyles.tooltipTop}>
+            <View style={cardStyles.tooltipWordGroup}>
               <Text style={[cardStyles.tooltipWord, { color: isDark ? '#ffffff' : '#0f172a' }]}>seldom</Text>
               <Text style={cardStyles.tooltipPhonetic}>/ˈsel.dəm/</Text>
             </View>
-            <Text style={cardStyles.tooltipMeaning}>{t('onboarding_card1_meaning')}</Text>
+            <View style={cardStyles.tooltipSpeaker}>
+              <Feather name="volume-2" size={13} color="#f59e0b" />
+            </View>
           </View>
-        </View>
-        <View style={cardStyles.tooltipActionRow}>
-          <View style={cardStyles.tooltipSaveBtn}>
-            <Feather name="plus" size={10} color="#f59e0b" />
-            <Text style={cardStyles.tooltipSaveText}>{t('add_to_vocab') || '+ Vocab'}</Text>
+
+          {/* Bottom Row: Meaning + Bookmark Pill */}
+          <View style={cardStyles.tooltipBottom}>
+            <Text style={cardStyles.tooltipMeaning} numberOfLines={1}>
+              {t('onboarding_card1_meaning')}
+            </Text>
+            <View style={cardStyles.tooltipSaveBtn}>
+              <Feather name="bookmark" size={10} color="#f59e0b" />
+              <Text style={cardStyles.tooltipSaveText}>{saveWordText}</Text>
+            </View>
           </View>
         </View>
         <View style={[cardStyles.tooltipArrow, isDark ? cardStyles.tooltipArrowDark : cardStyles.tooltipArrowLight]} />
       </View>
 
-      {/* Excerpt with highlight */}
-      <View style={[cardStyles.paragraphBox, isDark ? cardStyles.paragraphBoxDark : cardStyles.paragraphBoxLight]}>
+      {/* Clean Reading Excerpt (Unboxed with iOS-style Word Selection) */}
+      <View style={cardStyles.readerParagraphWrap}>
         <Text style={[cardStyles.readerText, { color: isDark ? '#cbd5e1' : '#334155' }]}>
           To Sherlock Holmes she is always the woman. I have{' '}
-          <Text style={cardStyles.highlightedWord}>seldom</Text> heard him mention her under any other name...
+          <Text style={cardStyles.highlightedWordCapsule}>
+            <Text style={cardStyles.highlightedWordText}>seldom</Text>
+          </Text>
+          {' '}heard him mention her under any other name...
         </Text>
       </View>
 
-      {/* Bottom Feature Badges */}
-      <View style={[cardStyles.bottomFeatureRow, { borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
-        <View style={cardStyles.featureItem}>
-          <Feather name="zap" size={11} color="#f59e0b" />
-          <Text style={[cardStyles.featureText, { color: isDark ? '#94a3b8' : '#64748b' }]}>{t('onboarding_card1_feat1')}</Text>
+      {/* Minimal Footer: Reading Progress */}
+      <View style={cardStyles.readingFooter}>
+        <View style={[cardStyles.progressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+          <View style={cardStyles.progressFill} />
         </View>
-        <View style={cardStyles.featureItem}>
-          <Feather name="headphones" size={11} color="#f59e0b" />
-          <Text style={[cardStyles.featureText, { color: isDark ? '#94a3b8' : '#64748b' }]}>{t('onboarding_card1_feat2')}</Text>
-        </View>
+        <Text style={[cardStyles.footerPageText, { color: isDark ? '#64748b' : '#94a3b8' }]}>
+          p. 1 of 24
+        </Text>
       </View>
     </View>
   );
 }
 
-/* ─── Card 2: Instagram Story ─────────────────────────────── */
+/* ─── Card 2: Instagram Story (Clean & Trend-Aligned) ─────── */
 function StoryVisualCard({ isDark, t }: { isDark: boolean; t: (k: TranslationKey) => string }) {
   return (
-    <View style={[cardStyles.card, isDark ? cardStyles.cardDark : cardStyles.cardLight, { borderColor: 'rgba(225, 48, 108, 0.35)' }]}>
-      <LinearGradient
-        colors={['#833ab4', '#fd1d1d', '#fcb045']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={cardStyles.storyGradientBorder}
-      >
-        <View style={[cardStyles.storyInner, { backgroundColor: isDark ? '#0f111a' : '#ffffff' }]}>
-          {/* Header */}
-          <View style={cardStyles.storyHeader}>
-            <View style={cardStyles.storyAvatar}>
-              <Text style={cardStyles.storyAvatarText}>L</Text>
-            </View>
-            <View>
-              <Text style={[cardStyles.storyAuthor, { color: isDark ? '#ffffff' : '#0f172a' }]}>Litera Stories</Text>
-              <Text style={cardStyles.storyBookName}>{t('onboarding_card2_book')}</Text>
-            </View>
-            <Feather name="instagram" size={14} color="#e1306c" style={{ marginLeft: 'auto' }} />
-          </View>
-
-          {/* Quote Excerpt */}
-          <View style={cardStyles.quoteBox}>
-            <Text style={cardStyles.quoteMarks}>“</Text>
-            <Text style={[cardStyles.quoteText, { color: isDark ? '#f8fafc' : '#1e293b' }]}>
-              There is no charm equal to tenderness of heart.
-            </Text>
-            <Text style={cardStyles.quoteAuthor}>— Jane Austen</Text>
-          </View>
-
-          {/* Action CTA */}
-          <View style={cardStyles.storyActionPill}>
-            <Feather name="share-2" size={12} color="#ffffff" />
-            <Text style={cardStyles.storyActionText}>{t('share_story_btn') || 'Share Story'}</Text>
-          </View>
+    <View style={[cardStyles.card, isDark ? cardStyles.cardDark : cardStyles.cardLight, { borderColor: 'rgba(225, 48, 108, 0.25)' }]}>
+      {/* Header bar */}
+      <View style={cardStyles.headerRow}>
+        <View style={cardStyles.bookHeader}>
+          <Feather name="instagram" size={13} color="#e1306c" />
+          <Text style={[cardStyles.bookTitle, { color: isDark ? '#94a3b8' : '#64748b' }]}>Litera Stories</Text>
         </View>
-      </LinearGradient>
+        <Text style={[cardStyles.chapterTag, { color: '#e1306c' }]}>STORY</Text>
+      </View>
+
+      {/* Quote Hero Card with subtle gradient tint */}
+      <View style={[cardStyles.storyCardBox, isDark ? cardStyles.storyCardBoxDark : cardStyles.storyCardBoxLight]}>
+        <Text style={cardStyles.quoteMark}>“</Text>
+        <Text style={[cardStyles.quoteText, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+          There is no charm equal to tenderness of heart.
+        </Text>
+        <Text style={cardStyles.quoteAuthor}>— Jane Austen, Emma</Text>
+      </View>
+
+      {/* Minimal Footer */}
+      <View style={cardStyles.storyFooter}>
+        <View style={cardStyles.storyFooterLeft}>
+          <View style={cardStyles.storyDot} />
+          <Text style={[cardStyles.footerPageText, { color: isDark ? '#64748b' : '#94a3b8' }]}>
+            Aesthetic Card Ready
+          </Text>
+        </View>
+        <View style={cardStyles.storySharePill}>
+          <Feather name="share-2" size={10} color="#ffffff" style={{ marginRight: 4 }} />
+          <Text style={cardStyles.storySharePillText}>{t('share_story_btn') || 'Share Story'}</Text>
+        </View>
+      </View>
     </View>
   );
 }
 
-/* ─── Card 3: Personalization & Themes ────────────────────── */
+/* ─── Card 3: Personalization & Themes (Clean & Trend-Aligned) ─── */
 function SettingsVisualCard({ isDark, t }: { isDark: boolean; t: (k: TranslationKey) => string }) {
   return (
-    <View style={[cardStyles.card, isDark ? cardStyles.cardDark : cardStyles.cardLight, { borderColor: 'rgba(99, 102, 241, 0.35)' }]}>
-      <Text style={[cardStyles.settingsHeader, { color: '#6366f1' }]}>{t('reader_settings_title')?.toUpperCase() || 'SETTINGS'}</Text>
+    <View style={[cardStyles.card, isDark ? cardStyles.cardDark : cardStyles.cardLight, { borderColor: 'rgba(99, 102, 241, 0.25)' }]}>
+      {/* Header bar */}
+      <View style={cardStyles.headerRow}>
+        <View style={cardStyles.bookHeader}>
+          <Feather name="sliders" size={12} color="#6366f1" />
+          <Text style={[cardStyles.bookTitle, { color: isDark ? '#94a3b8' : '#64748b' }]}>Display & Typography</Text>
+        </View>
+        <Text style={[cardStyles.chapterTag, { color: '#6366f1' }]}>CUSTOM</Text>
+      </View>
 
-      {/* Theme chips */}
-      <View style={cardStyles.themeRow}>
-        <View style={[cardStyles.themeChip, { backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderWidth: 1 }]}>
-          <Text style={[cardStyles.themeChipText, { color: '#111' }]}>Aa</Text>
-        </View>
-        <View style={[cardStyles.themeChip, { backgroundColor: '#f5edd6', borderColor: '#e7d8b5', borderWidth: 1 }]}>
-          <Text style={[cardStyles.themeChipText, { color: '#4a3b2c' }]}>Aa</Text>
-        </View>
-        <View style={[cardStyles.themeChip, { backgroundColor: '#131b2e', borderColor: '#6366f1', borderWidth: 2 }]}>
-          <Text style={[cardStyles.themeChipText, { color: '#818cf8' }]}>Aa</Text>
-          <View style={cardStyles.activeBadge}>
-            <Feather name="check" size={8} color="#ffffff" />
+      {/* Middle Hero */}
+      <View style={cardStyles.settingsHero}>
+        {/* Theme Swatches */}
+        <View style={cardStyles.themeRow}>
+          <View style={[cardStyles.themeChip, { backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderWidth: 1 }]}>
+            <Text style={[cardStyles.themeChipText, { color: '#1e293b' }]}>Aa</Text>
+          </View>
+          <View style={[cardStyles.themeChip, { backgroundColor: '#f5edd6', borderColor: '#e7d8b5', borderWidth: 1 }]}>
+            <Text style={[cardStyles.themeChipText, { color: '#4a3b2c' }]}>Aa</Text>
+          </View>
+          <View style={[cardStyles.themeChip, { backgroundColor: '#131b2e', borderColor: '#6366f1', borderWidth: 2 }]}>
+            <Text style={[cardStyles.themeChipText, { color: '#818cf8' }]}>Aa</Text>
+            <View style={cardStyles.activeBadge}>
+              <Feather name="check" size={8} color="#ffffff" />
+            </View>
+          </View>
+          <View style={[cardStyles.themeChip, { backgroundColor: '#000000', borderColor: '#334155', borderWidth: 1 }]}>
+            <Text style={[cardStyles.themeChipText, { color: '#ffffff' }]}>Aa</Text>
           </View>
         </View>
-        <View style={[cardStyles.themeChip, { backgroundColor: '#000000' }]}>
-          <Text style={[cardStyles.themeChipText, { color: '#fff' }]}>Aa</Text>
+
+        {/* Font Selector Pills */}
+        <View style={cardStyles.fontRow}>
+          <View style={[cardStyles.fontPill, cardStyles.activeFontPill]}>
+            <Text style={cardStyles.fontPillActiveText}>{t('font_serif') || 'Serif'}</Text>
+          </View>
+          <View style={[cardStyles.fontPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+            <Text style={[cardStyles.fontPillText, { color: isDark ? '#94a3b8' : '#64748b' }]}>{t('font_sans') || 'Sans'}</Text>
+          </View>
+          <View style={[cardStyles.fontPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+            <Text style={[cardStyles.fontPillText, { color: isDark ? '#94a3b8' : '#64748b' }]}>{t('font_sofia') || 'Sofia'}</Text>
+          </View>
+        </View>
+
+        {/* Live Reader Preview Box */}
+        <View style={[cardStyles.sampleBox, isDark ? cardStyles.paragraphBoxDark : cardStyles.paragraphBoxLight]}>
+          <Text style={[cardStyles.sampleText, { color: isDark ? '#e2e8f0' : '#1e293b' }]}>
+            “The only way to do great work is to love what you do.”
+          </Text>
         </View>
       </View>
 
-      {/* Font pills */}
-      <View style={cardStyles.fontRow}>
-        <View style={[cardStyles.fontPill, cardStyles.activeFontPill]}>
-          <Text style={cardStyles.fontPillActiveText} numberOfLines={1} adjustsFontSizeToFit>{t('font_serif') || 'Serif'}</Text>
+      {/* Footer: Font Size Slider */}
+      <View style={cardStyles.sliderFooter}>
+        <Text style={[cardStyles.sizeLabel, { color: isDark ? '#94a3b8' : '#64748b' }]}>A-</Text>
+        <View style={[cardStyles.sizeTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+          <View style={[cardStyles.sizeFill, { backgroundColor: '#6366f1' }]} />
+          <View style={[cardStyles.sizeThumb, { borderColor: '#6366f1' }]} />
         </View>
-        <View style={[cardStyles.fontPill, isDark ? { backgroundColor: 'rgba(255,255,255,0.06)' } : { backgroundColor: 'rgba(0,0,0,0.05)' }]}>
-          <Text style={[cardStyles.fontPillText, { color: isDark ? '#94a3b8' : '#64748b' }]} numberOfLines={1} adjustsFontSizeToFit>{t('font_sans') || 'Sans'}</Text>
-        </View>
-        <View style={[cardStyles.fontPill, isDark ? { backgroundColor: 'rgba(255,255,255,0.06)' } : { backgroundColor: 'rgba(0,0,0,0.05)' }]}>
-          <Text style={[cardStyles.fontPillText, { color: isDark ? '#94a3b8' : '#64748b' }]} numberOfLines={1} adjustsFontSizeToFit>{t('font_sofia') || 'Sofia'}</Text>
-        </View>
-      </View>
-
-      {/* Reading sample */}
-      <View style={[cardStyles.sampleBox, isDark ? cardStyles.paragraphBoxDark : cardStyles.paragraphBoxLight]}>
-        <Text style={[cardStyles.sampleText, { color: isDark ? '#cbd5e1' : '#334155' }]}>
-          “The only way to do great work is to love what you do.”
-        </Text>
-        <View style={cardStyles.sizeSliderMock}>
-          <Text style={[cardStyles.sizeLabel, { color: isDark ? '#94a3b8' : '#64748b' }]}>A-</Text>
-          <View style={[cardStyles.sizeTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
-            <View style={[cardStyles.sizeFill, { backgroundColor: '#6366f1' }]} />
-            <View style={[cardStyles.sizeThumb, { borderColor: '#6366f1' }]} />
-          </View>
-          <Text style={[cardStyles.sizeLabel, { color: isDark ? '#94a3b8' : '#64748b', fontSize: 13, fontWeight: '700' }]}>A+</Text>
-        </View>
+        <Text style={[cardStyles.sizeLabel, { color: isDark ? '#94a3b8' : '#64748b', fontSize: 13, fontWeight: '700' }]}>A+</Text>
       </View>
     </View>
   );
 }
 
-/* ─── Card 4: 1500+ Classics ──────────────────────────────── */
+/* ─── Card 4: 1500+ Classics (Clean & Trend-Aligned) ───────── */
 function LibraryVisualCard({ isDark, t }: { isDark: boolean; t: (k: TranslationKey) => string }) {
   return (
-    <View style={[cardStyles.card, isDark ? cardStyles.cardDark : cardStyles.cardLight, { borderColor: 'rgba(16, 185, 129, 0.35)' }]}>
-      {/* Book Covers Stack */}
+    <View style={[cardStyles.card, isDark ? cardStyles.cardDark : cardStyles.cardLight, { borderColor: 'rgba(16, 185, 129, 0.25)' }]}>
+      {/* Header bar */}
+      <View style={cardStyles.headerRow}>
+        <View style={cardStyles.bookHeader}>
+          <Feather name="book" size={12} color="#10b981" />
+          <Text style={[cardStyles.bookTitle, { color: isDark ? '#94a3b8' : '#64748b' }]}>Standard Ebooks Library</Text>
+        </View>
+        <Text style={[cardStyles.chapterTag, { color: '#10b981' }]}>1,500+</Text>
+      </View>
+
+      {/* Books Stack Hero */}
       <View style={cardStyles.booksStackRow}>
         <View style={[cardStyles.miniBook, { backgroundColor: '#1e3a8a', transform: [{ rotate: '-7deg' }] }]}>
           <Text style={cardStyles.miniBookAuthor}>Dostoyevsky</Text>
-          <Text style={cardStyles.miniBookTitle}>{t('onboarding_card4_book1')}</Text>
+          <Text style={cardStyles.miniBookTitle} numberOfLines={2}>{t('onboarding_card4_book1')}</Text>
           <View style={cardStyles.miniBookGoldLine} />
         </View>
 
@@ -255,30 +281,30 @@ function LibraryVisualCard({ isDark, t }: { isDark: boolean; t: (k: TranslationK
             <Text style={cardStyles.miniBookRating}>Top 100</Text>
           </View>
           <Text style={cardStyles.miniBookAuthor}>Leo Tolstoy</Text>
-          <Text style={[cardStyles.miniBookTitle, { fontSize: 13 }]}>{t('onboarding_card4_book2')}</Text>
+          <Text style={[cardStyles.miniBookTitle, { fontSize: 12.5 }]} numberOfLines={2}>{t('onboarding_card4_book2')}</Text>
           <View style={[cardStyles.miniBookGoldLine, { backgroundColor: '#f59e0b' }]} />
         </View>
 
         <View style={[cardStyles.miniBook, { backgroundColor: '#14532d', transform: [{ rotate: '7deg' }] }]}>
           <Text style={cardStyles.miniBookAuthor}>Oscar Wilde</Text>
-          <Text style={cardStyles.miniBookTitle}>Dorian Gray</Text>
+          <Text style={cardStyles.miniBookTitle} numberOfLines={2}>Dorian Gray</Text>
           <View style={cardStyles.miniBookGoldLine} />
         </View>
       </View>
 
-      {/* Features Footer */}
-      <View style={[cardStyles.libraryFeaturesRow, { borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
+      {/* Footer */}
+      <View style={cardStyles.libraryFooter}>
         <View style={cardStyles.libBadge}>
           <Feather name="check-circle" size={11} color="#10b981" />
-          <Text style={[cardStyles.libBadgeText, { color: isDark ? '#94a3b8' : '#64748b' }]} numberOfLines={1} adjustsFontSizeToFit>{t('onboarding_card4_feat1')}</Text>
+          <Text style={[cardStyles.footerPageText, { color: isDark ? '#64748b' : '#94a3b8' }]}>
+            {t('onboarding_card4_feat1') || 'Offline EPUBs'}
+          </Text>
         </View>
         <View style={cardStyles.libBadge}>
-          <Feather name="zap" size={11} color="#10b981" />
-          <Text style={[cardStyles.libBadgeText, { color: isDark ? '#94a3b8' : '#64748b' }]} numberOfLines={1} adjustsFontSizeToFit>{t('onboarding_card4_feat2')}</Text>
-        </View>
-        <View style={cardStyles.libBadge}>
-          <Feather name="award" size={11} color="#10b981" />
-          <Text style={[cardStyles.libBadgeText, { color: isDark ? '#94a3b8' : '#64748b' }]} numberOfLines={1} adjustsFontSizeToFit>{t('onboarding_card4_feat3')}</Text>
+          <Feather name="cloud" size={11} color="#10b981" />
+          <Text style={[cardStyles.footerPageText, { color: isDark ? '#64748b' : '#94a3b8' }]}>
+            Cloud Sync
+          </Text>
         </View>
       </View>
     </View>
@@ -388,6 +414,8 @@ export default function WelcomeScreen() {
         showsHorizontalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
+        style={styles.carouselList}
+        contentContainerStyle={styles.carouselContent}
         renderItem={({ item }) => (
           <View style={[styles.slideItem, { width: SW }]}>
             {/* Visual Card */}
@@ -395,43 +423,51 @@ export default function WelcomeScreen() {
               {renderVisual(item.id)}
             </View>
 
-            {/* Content Text with Refined Typographic Hierarchy */}
+            {/* Content Text with Refined Typographic Hierarchy & Absolute Vertical Stability */}
             <View style={styles.contentWrap}>
               {/* Category Pill */}
               <View
                 style={[
                   styles.categoryPill,
                   {
-                    borderColor: item.accent + '40',
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                    borderColor: item.accent + '32',
+                    backgroundColor: isDark ? item.accent + '16' : item.accent + '10',
                   },
                 ]}
               >
-                <Feather name={item.badgeIcon} size={12} color={item.accent} />
+                <Feather name={item.badgeIcon} size={11} color={item.accent} />
                 <Text style={[styles.categoryText, { color: item.accent }]}>
-                  {t(item.badgeKey) || item.id}
+                  {(t(item.badgeKey) || item.id).toUpperCase()}
                 </Text>
               </View>
 
-              {/* Title */}
-              <Text
-                style={[
-                  styles.title,
-                  { color: isDark ? '#ffffff' : '#0f172a' },
-                ]}
-              >
-                {t(item.titleKey) || item.titleKey}
-              </Text>
+              {/* Title locked in fixed-height frame to eliminate vertical shifts */}
+              <View style={styles.titleWrap}>
+                <Text
+                  style={[
+                    styles.title,
+                    { color: isDark ? '#f8fafc' : '#0f172a' },
+                  ]}
+                  numberOfLines={2}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.88}
+                >
+                  {t(item.titleKey) || item.titleKey}
+                </Text>
+              </View>
 
-              {/* Subtitle */}
-              <Text
-                style={[
-                  styles.subtitle,
-                  { color: isDark ? '#94a3b8' : '#64748b' },
-                ]}
-              >
-                {t(item.subKey) || item.subKey}
-              </Text>
+              {/* Subtitle with ample height to prevent any text clipping */}
+              <View style={styles.subtitleWrap}>
+                <Text
+                  style={[
+                    styles.subtitle,
+                    { color: isDark ? '#94a3b8' : '#64748b' },
+                  ]}
+                  numberOfLines={4}
+                >
+                  {t(item.subKey) || item.subKey}
+                </Text>
+              </View>
             </View>
           </View>
         )}
@@ -497,7 +533,7 @@ export default function WelcomeScreen() {
 
 /* ─── Layout Styles ───────────────────────────────────────── */
 const CARD_WIDTH = Math.min(SW * 0.88, 340);
-const CARD_HEIGHT = 265;
+const CARD_HEIGHT = 260;
 
 const styles = StyleSheet.create({
   root: {
@@ -524,7 +560,14 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     fontWeight: '600',
   },
+  carouselList: {
+    flex: 1,
+  },
+  carouselContent: {
+    flexGrow: 1,
+  },
   slideItem: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: Spacing.md,
@@ -532,40 +575,57 @@ const styles = StyleSheet.create({
   visualWrap: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    marginBottom: Spacing.lg,
+    marginBottom: 18,
   },
   contentWrap: {
     alignItems: 'center',
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
+    width: '100%',
+    maxWidth: 360,
   },
   categoryPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    height: 28,
     paddingHorizontal: 12,
-    paddingVertical: 5,
     borderRadius: Radius.pill,
     borderWidth: 1,
     marginBottom: 10,
   },
   categoryText: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.8,
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: 1.0,
+  },
+  titleWrap: {
+    minHeight: 56,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingHorizontal: 8,
   },
   title: {
-    fontSize: 23,
-    fontWeight: '800',
+    fontSize: 22.5,
+    fontWeight: '700',
     textAlign: 'center',
-    lineHeight: 29,
-    marginBottom: 8,
+    lineHeight: 28,
     letterSpacing: -0.3,
+  },
+  subtitleWrap: {
+    minHeight: 66,
+    width: '100%',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingHorizontal: 8,
   },
   subtitle: {
     fontSize: 13.5,
     textAlign: 'center',
     lineHeight: 21,
-    maxWidth: 320,
+    maxWidth: 325,
+    fontWeight: '400',
   },
   footerContainer: {
     paddingHorizontal: Spacing.xl,
@@ -643,110 +703,103 @@ const cardStyles = StyleSheet.create({
     elevation: 6,
   },
 
-  /* Translation Card */
+  /* Translation Card (Modern E-Reader Edition) */
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingBottom: 4,
   },
-  bookBadge: {
+  bookHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: Radius.pill,
-  },
-  bookBadgeDark: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-  },
-  bookBadgeLight: {
-    backgroundColor: 'rgba(0,0,0,0.05)',
   },
   bookTitle: {
-    fontSize: 11.5,
-    fontWeight: '700',
-    fontFamily: 'serif',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
-  audioPill: {
-    flexDirection: 'row',
+  chapterTag: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+  },
+  tooltipWrapper: {
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(245,158,11,0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.pill,
-  },
-  audioText: {
-    color: '#fbbf24',
-    fontSize: 10.5,
-    fontWeight: '700',
+    marginVertical: 4,
   },
   tooltipBubble: {
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#f59e0b',
-    padding: 10,
-    alignSelf: 'center',
-    width: '94%',
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    width: '100%',
   },
   tooltipDark: {
-    backgroundColor: '#1e293b',
-    shadowColor: '#f59e0b',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+    backgroundColor: '#161d2f',
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
     elevation: 8,
   },
   tooltipLight: {
     backgroundColor: '#ffffff',
-    shadowColor: '#f59e0b',
+    borderColor: 'rgba(245, 158, 11, 0.25)',
+    shadowColor: '#64748b',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 5,
   },
   tooltipTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 6,
+    justifyContent: 'space-between',
+    marginBottom: 5,
   },
-  tooltipSpeaker: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#f59e0b',
+  tooltipWordGroup: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 6,
   },
   tooltipWord: {
-    fontSize: 14,
+    fontSize: 14.5,
     fontWeight: '800',
+    letterSpacing: -0.2,
   },
   tooltipPhonetic: {
     color: '#94a3b8',
-    fontSize: 11,
+    fontSize: 11.5,
     fontStyle: 'italic',
   },
-  tooltipMeaning: {
-    color: '#f59e0b',
-    fontSize: 11,
-    fontWeight: '600',
+  tooltipSpeaker: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  tooltipActionRow: {
+  tooltipBottom: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(245,158,11,0.15)',
-    paddingTop: 6,
+    gap: 8,
+  },
+  tooltipMeaning: {
+    color: '#f59e0b',
+    fontSize: 11.5,
+    fontWeight: '600',
+    flex: 1,
   },
   tooltipSaveBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(245,158,11,0.12)',
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: Radius.pill,
@@ -756,32 +809,62 @@ const cardStyles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
   },
-  tooltipSpeed: {
-    color: '#94a3b8',
-    fontSize: 9.5,
-    fontWeight: '600',
-  },
   tooltipArrow: {
-    position: 'absolute',
-    bottom: -6,
-    alignSelf: 'center',
-    width: 12,
-    height: 12,
-    borderRightWidth: 1.5,
-    borderBottomWidth: 1.5,
-    borderColor: '#f59e0b',
+    width: 10,
+    height: 10,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
     transform: [{ rotate: '45deg' }],
+    marginTop: -5,
   },
   tooltipArrowDark: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#161d2f',
   },
   tooltipArrowLight: {
     backgroundColor: '#ffffff',
   },
-  paragraphBox: {
-    borderRadius: 12,
-    padding: 10,
-    borderWidth: 1,
+  readerParagraphWrap: {
+    paddingVertical: 6,
+    paddingHorizontal: 2,
+  },
+  readerText: {
+    fontSize: 14.5,
+    lineHeight: 23,
+    fontFamily: 'serif',
+  },
+  highlightedWordCapsule: {
+    backgroundColor: 'rgba(245, 158, 11, 0.22)',
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+  },
+  highlightedWordText: {
+    color: '#f59e0b',
+    fontWeight: '700',
+  },
+  readingFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 8,
+  },
+  progressTrack: {
+    width: 70,
+    height: 3,
+    borderRadius: 1.5,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    width: '35%',
+    height: '100%',
+    backgroundColor: '#f59e0b',
+    borderRadius: 1.5,
+  },
+  footerPageText: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
   paragraphBoxDark: {
     backgroundColor: 'rgba(255,255,255,0.03)',
@@ -791,117 +874,100 @@ const cardStyles = StyleSheet.create({
     backgroundColor: '#f8fafc',
     borderColor: '#e2e8f0',
   },
-  readerText: {
-    fontSize: 13,
-    lineHeight: 20,
-    fontFamily: 'serif',
-  },
-  highlightedWord: {
-    color: '#0d1117',
-    backgroundColor: '#fde047',
-    fontWeight: '700',
-    paddingHorizontal: 3,
-    borderRadius: 3,
-  },
-  bottomFeatureRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    borderTopWidth: 1,
-    paddingTop: 8,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  featureText: {
-    fontSize: 10.5,
-    fontWeight: '600',
-  },
 
-  /* Story Card */
-  storyGradientBorder: {
-    flex: 1,
+  /* Story Card (Editorial Quote Canvas) */
+  storyCardBox: {
     borderRadius: 18,
-    padding: 2,
-  },
-  storyInner: {
-    flex: 1,
-    borderRadius: 16,
-    padding: 14,
-    justifyContent: 'space-between',
-  },
-  storyHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  storyAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#e1306c',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
   },
-  storyAvatarText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '900',
+  storyCardBoxDark: {
+    backgroundColor: 'rgba(225, 48, 108, 0.08)',
+    borderColor: 'rgba(225, 48, 108, 0.22)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  storyAuthor: {
-    fontSize: 11,
+  storyCardBoxLight: {
+    backgroundColor: '#fff5f8',
+    borderColor: 'rgba(225, 48, 108, 0.2)',
+    shadowColor: '#e1306c',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  quoteMark: {
+    fontSize: 28,
+    color: '#e1306c',
+    fontFamily: 'serif',
+    lineHeight: 26,
+    marginBottom: 2,
     fontWeight: '700',
   },
-  storyBookName: {
-    color: '#94a3b8',
-    fontSize: 9.5,
-  },
-  quoteBox: {
-    alignItems: 'center',
-    paddingHorizontal: 8,
-  },
-  quoteMarks: {
-    color: '#e1306c',
-    fontSize: 28,
-    fontFamily: 'serif',
-    lineHeight: 28,
-  },
   quoteText: {
-    fontSize: 14,
+    fontSize: 13.5,
     fontWeight: '600',
     fontStyle: 'italic',
     textAlign: 'center',
-    lineHeight: 21,
+    lineHeight: 20,
     fontFamily: 'serif',
+    paddingHorizontal: 6,
   },
   quoteAuthor: {
     color: '#e1306c',
     fontSize: 11,
     fontWeight: '700',
-    marginTop: 6,
+    marginTop: 8,
+    letterSpacing: 0.3,
   },
-  storyActionPill: {
+  storyFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#e1306c',
-    paddingVertical: 8,
-    borderRadius: Radius.pill,
+    justifyContent: 'space-between',
+    paddingTop: 8,
   },
-  storyActionText: {
+  storyFooterLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  storyDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#e1306c',
+  },
+  storySharePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e1306c',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: Radius.pill,
+    shadowColor: '#e1306c',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  storySharePillText: {
     color: '#ffffff',
-    fontSize: 11.5,
+    fontSize: 10,
     fontWeight: '700',
+    letterSpacing: 0.2,
   },
 
-  /* Settings Card */
-  settingsHeader: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1,
-    textAlign: 'center',
+  /* Settings Card (Customization & Themes) */
+  settingsHero: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: 9,
   },
   themeRow: {
     flexDirection: 'row',
@@ -909,9 +975,9 @@ const cardStyles = StyleSheet.create({
     gap: 12,
   },
   themeChip: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -925,8 +991,8 @@ const cardStyles = StyleSheet.create({
   },
   activeBadge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
+    top: -3,
+    right: -3,
     width: 14,
     height: 14,
     borderRadius: 7,
@@ -966,21 +1032,22 @@ const cardStyles = StyleSheet.create({
   },
   sampleBox: {
     borderRadius: 12,
-    padding: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     borderWidth: 1,
   },
   sampleText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontStyle: 'italic',
     textAlign: 'center',
     fontFamily: 'serif',
-    marginBottom: 8,
+    lineHeight: 16,
   },
-  sizeSliderMock: {
+  sliderFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 8,
+    paddingTop: 8,
   },
   sizeLabel: {
     fontSize: 11,
@@ -992,13 +1059,13 @@ const cardStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   sizeFill: {
-    width: '60%',
+    width: '55%',
     height: '100%',
     borderRadius: 2,
   },
   sizeThumb: {
     position: 'absolute',
-    left: '60%',
+    left: '55%',
     marginLeft: -6,
     width: 12,
     height: 12,
@@ -1007,17 +1074,17 @@ const cardStyles = StyleSheet.create({
     borderWidth: 2,
   },
 
-  /* Library Card */
+  /* Library Card (1,500+ Classics) */
   booksStackRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    height: 150,
+    height: 144,
     gap: -12,
   },
   miniBook: {
-    width: 88,
-    height: 125,
+    width: 86,
+    height: 122,
     borderRadius: 10,
     padding: 8,
     justifyContent: 'space-between',
@@ -1025,16 +1092,17 @@ const cardStyles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.15)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.35,
     shadowRadius: 10,
     elevation: 6,
   },
   miniBookCenter: {
-    width: 98,
-    height: 140,
+    width: 96,
+    height: 138,
     zIndex: 10,
-    borderColor: 'rgba(245, 158, 11, 0.4)',
+    borderColor: 'rgba(245, 158, 11, 0.45)',
     borderWidth: 1.5,
+    shadowOpacity: 0.5,
   },
   miniBookHeaderBadge: {
     flexDirection: 'row',
@@ -1068,27 +1136,15 @@ const cardStyles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.25)',
     borderRadius: 1,
   },
-  libraryFeaturesRow: {
+  libraryFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderTopWidth: 1,
     paddingTop: 8,
-    paddingHorizontal: 4,
-    gap: 4,
-    width: '100%',
   },
   libBadge: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
-    minWidth: 0,
-  },
-  libBadgeText: {
-    fontSize: 9.5,
-    fontWeight: '600',
-    flexShrink: 1,
+    gap: 4,
   },
 });
