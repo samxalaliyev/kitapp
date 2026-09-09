@@ -35,7 +35,7 @@ import { ReaderSettingsModal } from "@/components/reader/ReaderSettingsModal";
 import { SubscriptionPaywallModal } from "@/components/SubscriptionPaywallModal";
 import { WordPopup } from "@/components/WordPopup";
 import { isBookReady, prepareBookForReading } from "@/lib/book-service";
-import { getBook, initDatabase } from "@/lib/db";
+import { getBook, initDatabase, getReadingProgress, saveReadingProgress } from "@/lib/db";
 import { FontSize, FontWeight, Radius, Spacing } from "@/lib/design";
 import {
   parseEpubFile,
@@ -63,7 +63,47 @@ import { isPremiumMember } from "@/lib/permissions/rbac";
 import { useAppTheme } from "@/lib/theme";
 import type { ApiBook } from "@/types/book";
 
-// 1. Fine-Grained Memoized Word Component (Zero Layout Shifts)
+// Dedicated isolated pulsating glow for tutorial target only (ZERO overhead on all other words)
+const TutorialPulsingHalo = React.memo(function TutorialPulsingHalo() {
+  const pulseAnim = useSharedValue(1);
+
+  useEffect(() => {
+    pulseAnim.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 650, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.35, { duration: 650, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      true,
+    );
+  }, [pulseAnim]);
+
+  const animatedGlowStyle = useAnimatedStyle(() => ({
+    opacity: pulseAnim.value,
+  }));
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.wordHighlightHalo,
+        {
+          backgroundColor: 'rgba(245, 158, 11, 0.28)',
+          borderColor: '#f59e0b',
+          borderWidth: 1.5,
+          shadowColor: '#f59e0b',
+          shadowOpacity: 0.9,
+          left: -4,
+          right: -4,
+          borderRadius: 6,
+        },
+        animatedGlowStyle,
+      ]}
+    />
+  );
+});
+
+// 1. Ultra-Fast Zero-Hook Pure Word Component (Instant 0ms mounting across pages)
 interface WordItemProps {
   word: ReaderWord;
   theme: ThemeConfig;
@@ -90,65 +130,25 @@ const WordItem = React.memo(
     isTutorialTarget,
     onPress,
   }: WordItemProps) {
-    const isSingleGlow = isActiveTapped || isTutorialTarget;
-    const isHighlighted = isSingleGlow || isSelected || isSpoken;
-    const pulseAnim = useSharedValue(1);
-
-    useEffect(() => {
-      if (isSingleGlow) {
-        pulseAnim.value = withRepeat(
-          withSequence(
-            withTiming(1, { duration: 650, easing: Easing.inOut(Easing.ease) }),
-            withTiming(0.35, { duration: 650, easing: Easing.inOut(Easing.ease) }),
-          ),
-          -1,
-          true,
-        );
-      } else {
-        pulseAnim.value = 1;
-      }
-    }, [isSingleGlow]);
-
-    const animatedGlowStyle = useAnimatedStyle(() => {
-      if (!isSingleGlow) return {};
-      return {
-        opacity: pulseAnim.value,
-      };
-    });
-
     const spaceGap = Math.max(3, Math.round(fontSize * 0.25));
 
-    let haloBg = 'transparent';
-    let haloBorder = 'transparent';
-    let haloShadow = 'transparent';
-    let hasBorder = false;
+    let haloBg: string | null = null;
     let haloLeft = -2;
     let haloRight = -2;
     let haloRadius = 4;
 
-    if (isSingleGlow) {
-      haloBg = 'rgba(245, 158, 11, 0.28)';
-      haloBorder = '#f59e0b';
-      haloShadow = '#f59e0b';
-      hasBorder = true;
-      haloLeft = -4;
-      haloRight = -4;
-      haloRadius = 6;
-    } else if (isSelected) {
-      // Golden Amber/Gold theme matching reader highlights (NO purple!)
+    if (isActiveTapped) {
       haloBg = 'rgba(212, 175, 122, 0.42)';
-      haloBorder = 'transparent';
-      haloShadow = 'transparent';
-      hasBorder = false;
-      // Connect adjacent words in the sentence seamlessly
+      haloLeft = -3;
+      haloRight = -3;
+      haloRadius = 5;
+    } else if (isSelected) {
+      haloBg = 'rgba(212, 175, 122, 0.42)';
       haloLeft = -2;
       haloRight = -spaceGap;
       haloRadius = 2;
     } else if (isSpoken) {
       haloBg = 'rgba(250, 204, 21, 0.38)';
-      haloBorder = 'transparent';
-      haloShadow = 'transparent';
-      hasBorder = false;
       haloLeft = -2;
       haloRight = -2;
       haloRadius = 4;
@@ -156,22 +156,19 @@ const WordItem = React.memo(
 
     return (
       <Pressable onPress={onPress} style={[styles.wordPressableWrap, { marginRight: spaceGap }]}>
-        {isHighlighted ? (
-          <Animated.View
+        {isTutorialTarget ? (
+          <TutorialPulsingHalo />
+        ) : haloBg ? (
+          <View
             pointerEvents="none"
             style={[
               styles.wordHighlightHalo,
               {
                 backgroundColor: haloBg,
-                borderColor: haloBorder,
-                borderWidth: hasBorder ? 1.5 : 0,
-                shadowColor: haloShadow,
-                shadowOpacity: hasBorder ? 0.9 : 0,
                 left: haloLeft,
                 right: haloRight,
                 borderRadius: haloRadius,
               },
-              isSingleGlow ? animatedGlowStyle : undefined,
             ]}
           />
         ) : null}
@@ -423,7 +420,13 @@ export default function BookReaderScreen() {
 
   // Reader State
   const [currentPage, setCurrentPage] = useState(0);
+  const currentPageRef = useRef(0);
+  const initialPageRef = useRef(0);
   const flatListRef = useRef<FlatList<ReaderPage>>(null);
+
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+  }, [currentPage]);
 
   // Vocabulary Popup
   const [popupWord, setPopupWord] = useState<string | null>(null);
@@ -464,7 +467,7 @@ export default function BookReaderScreen() {
   // Target real in-text word for Step 1 Interactive Tutorial (from local offline dictionary for 0ms speed!)
   const tutorialTargetWordId = useMemo(() => {
     if (readerTutorialStep !== 1 || !bookData || !bookData.pages.length) return null;
-    const curPage = bookData.pages[currentPage] || bookData.pages[0];
+    const curPage = bookData.pages[0];
     if (!curPage) return null;
 
     // 1. First choice: A clean word in the first paragraphs that has a bundled offline dictionary entry
@@ -485,7 +488,7 @@ export default function BookReaderScreen() {
     }
     // 3. Fallback to first available word
     return curPage.paragraphs[0]?.words[0]?.id || null;
-  }, [readerTutorialStep, bookData, currentPage]);
+  }, [readerTutorialStep, bookData]);
 
   // Tutorial Animations
   const tutorialPulse = useSharedValue(1);
@@ -580,6 +583,21 @@ export default function BookReaderScreen() {
         const parsed = await parseEpubFile(filePath);
         if (cancelled) return;
 
+        // Restore saved reading progress if exists
+        try {
+          const progress = await getReadingProgress(id);
+          if (progress && progress.lastLocation) {
+            const savedPageIndex = parseInt(progress.lastLocation, 10);
+            if (!isNaN(savedPageIndex) && savedPageIndex >= 0 && savedPageIndex < parsed.pages.length) {
+              setCurrentPage(savedPageIndex);
+              currentPageRef.current = savedPageIndex;
+              initialPageRef.current = savedPageIndex;
+            }
+          }
+        } catch {
+          // Ignore error reading progress
+        }
+
         setBookData(parsed);
       } catch (err: any) {
         if (!cancelled) {
@@ -598,25 +616,30 @@ export default function BookReaderScreen() {
     };
   }, [id]);
 
+  // Debounced auto-save reading progress to SQLite (400ms debounce)
+  const saveProgressTimerRef = useRef<any>(null);
+  useEffect(() => {
+    if (!bookData || !id || loading) return;
+    if (saveProgressTimerRef.current) {
+      clearTimeout(saveProgressTimerRef.current);
+    }
+    saveProgressTimerRef.current = setTimeout(() => {
+      const total = bookData.pages.length || 1;
+      const pct = Math.min(100, Math.max(0, Math.round(((currentPage + 1) / total) * 100)));
+      saveReadingProgress(id, String(currentPage), pct).catch(() => {});
+    }, 400);
+
+    return () => {
+      if (saveProgressTimerRef.current) {
+        clearTimeout(saveProgressTimerRef.current);
+      }
+    };
+  }, [currentPage, bookData, id, loading]);
+
   // Active theme & typography
   const activeTheme = THEMES[settings.theme] ?? THEMES.black;
   const activeFontFamily = FONT_FAMILY_NATIVE[settings.fontFamily] || FONT_FAMILY_NATIVE.serif;
   const activeFontSize = FONT_SIZE_PX[settings.fontSize] || FONT_SIZE_PX.normal;
-
-  // Horizontal Paging scroll handler
-  const handleScroll = useCallback(
-    (e: any) => {
-      const offsetX = e.nativeEvent.contentOffset.x;
-      const pageIndex = Math.round(offsetX / windowWidth);
-      if (pageIndex !== currentPage && pageIndex >= 0) {
-        setCurrentPage(pageIndex);
-        if (isSpeaking) {
-          stopSpeech();
-        }
-      }
-    },
-    [windowWidth, currentPage, isSpeaking],
-  );
 
   const stopSpeech = useCallback(() => {
     if (speechIntervalRef.current) clearInterval(speechIntervalRef.current);
@@ -624,6 +647,103 @@ export default function BookReaderScreen() {
     setIsSpeaking(false);
     setActiveSpokenWordId(null);
   }, []);
+
+  const progressTrackWidthRef = useRef<number>(0);
+
+  // Jump directly to a page without rendering artifacts or black void
+  const jumpToPage = useCallback(
+    (targetPage: number) => {
+      if (!bookData || bookData.pages.length === 0) return;
+      const clampedPage = Math.max(0, Math.min(bookData.pages.length - 1, targetPage));
+      if (clampedPage === currentPageRef.current) return;
+
+      currentPageRef.current = clampedPage;
+      setCurrentPage(clampedPage);
+      if (isSpeaking) {
+        stopSpeech();
+      }
+
+      const offset = clampedPage * windowWidth;
+      // Immediate teleport without scrolling through empty virtualized space
+      try {
+        flatListRef.current?.scrollToOffset({ offset, animated: false });
+        flatListRef.current?.scrollToIndex({ index: clampedPage, animated: false });
+      } catch {
+        flatListRef.current?.scrollToOffset({ offset, animated: false });
+      }
+    },
+    [bookData, windowWidth, isSpeaking, stopSpeech],
+  );
+
+  // Real-time horizontal paging scroll handler
+  const handleScroll = useCallback(
+    (e: any) => {
+      const offsetX = e.nativeEvent.contentOffset.x;
+      const width = windowWidth || 1;
+      const pageIndex = Math.round(offsetX / width);
+      if (pageIndex !== currentPageRef.current && pageIndex >= 0 && (!bookData || pageIndex < bookData.pages.length)) {
+        currentPageRef.current = pageIndex;
+        setCurrentPage(pageIndex);
+        if (isSpeaking) {
+          stopSpeech();
+        }
+      }
+    },
+    [windowWidth, isSpeaking, stopSpeech, bookData],
+  );
+
+  // Instant update the exact millisecond the user's finger leaves the screen
+  const handleScrollEndDrag = useCallback(
+    (e: any) => {
+      const width = windowWidth || 1;
+      const targetOffsetX = e.nativeEvent.targetContentOffset?.x;
+      let targetIndex: number;
+
+      if (typeof targetOffsetX === 'number') {
+        targetIndex = Math.round(targetOffsetX / width);
+      } else {
+        const currentOffsetX = e.nativeEvent.contentOffset.x;
+        const velocityX = e.nativeEvent.velocity?.x || 0;
+        if (Math.abs(velocityX) > 0.1) {
+          targetIndex = velocityX > 0
+            ? Math.floor(currentOffsetX / width) + 1
+            : Math.ceil(currentOffsetX / width) - 1;
+        } else {
+          targetIndex = Math.round(currentOffsetX / width);
+        }
+      }
+
+      if (targetIndex >= 0 && (!bookData || targetIndex < bookData.pages.length)) {
+        if (targetIndex !== currentPageRef.current) {
+          currentPageRef.current = targetIndex;
+          setCurrentPage(targetIndex);
+          if (isSpeaking) {
+            stopSpeech();
+          }
+        }
+      }
+    },
+    [windowWidth, isSpeaking, stopSpeech, bookData],
+  );
+
+  // Native viewability callback: triggers the instant the new page is 40% visible
+  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    if (viewableItems && viewableItems.length > 0) {
+      const firstVisible = viewableItems[0];
+      if (firstVisible && typeof firstVisible.index === 'number') {
+        const newIndex = firstVisible.index;
+        if (newIndex !== currentPageRef.current) {
+          currentPageRef.current = newIndex;
+          setCurrentPage(newIndex);
+        }
+      }
+    }
+  }).current;
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 40,
+    waitForInteraction: false,
+  }).current;
 
   const toggleSpeech = useCallback(() => {
     if (isSpeaking) {
@@ -881,8 +1001,22 @@ export default function BookReaderScreen() {
           <Feather name="chevron-left" size={28} color={activeTheme.text} />
         </Pressable>
 
-        {/* Progress Bar Slider */}
-        <View style={styles.progressContainer}>
+        {/* Progress Bar Slider (Interactive Tap to Jump) */}
+        <Pressable
+          style={styles.progressContainer}
+          onLayout={(e) => {
+            progressTrackWidthRef.current = e.nativeEvent.layout.width;
+          }}
+          onPress={(e) => {
+            if (!bookData || bookData.pages.length <= 1) return;
+            const trackWidth = progressTrackWidthRef.current || Math.max(60, windowWidth * 0.36);
+            const clickX = e.nativeEvent.locationX;
+            const ratio = Math.max(0, Math.min(1, clickX / trackWidth));
+            const targetPage = Math.round(ratio * (bookData.pages.length - 1));
+            jumpToPage(targetPage);
+          }}
+          hitSlop={{ top: 15, bottom: 15, left: 10, right: 10 }}
+        >
           <View style={[styles.progressBarTrack, { backgroundColor: activeTheme.panel }]}>
             <View
               style={[
@@ -897,7 +1031,7 @@ export default function BookReaderScreen() {
               ]}
             />
           </View>
-        </View>
+        </Pressable>
 
         {/* Actions Row */}
         <View style={styles.headerActions}>
@@ -1059,7 +1193,7 @@ export default function BookReaderScreen() {
         </View>
       ) : null}
 
-      {/* Horizontal Paging Reader */}
+      {/* Horizontal Paging Reader with High-Performance Virtualization & Real-Time Counter */}
       <FlatList
         ref={flatListRef}
         data={bookData.pages}
@@ -1068,13 +1202,25 @@ export default function BookReaderScreen() {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         decelerationRate="fast"
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        onScrollEndDrag={handleScrollEndDrag}
         onMomentumScrollEnd={handleScroll}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         initialNumToRender={3}
         maxToRenderPerBatch={3}
-        windowSize={5}
+        windowSize={9}
         removeClippedSubviews={false}
         getItemLayout={getItemLayout}
         renderItem={renderItem}
+        initialScrollIndex={initialPageRef.current > 0 ? initialPageRef.current : undefined}
+        onScrollToIndexFailed={(info) => {
+          flatListRef.current?.scrollToOffset({
+            offset: info.index * windowWidth,
+            animated: false,
+          });
+        }}
       />
 
       {/* Interactive In-Reader Mascot Tutorial Coachmarks */}
@@ -1437,8 +1583,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   pageIndicatorText: {
-    fontSize: 12,
-    opacity: 0.45,
+    fontSize: 12.5,
+    opacity: 0.65,
+    fontWeight: FontWeight.medium,
     letterSpacing: 0.5,
   },
   storyHeaderBtnHighlight: {
