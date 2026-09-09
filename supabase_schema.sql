@@ -118,6 +118,7 @@ CREATE POLICY "Public read access on books" ON public.books FOR SELECT USING (tr
 -- Profiles Policies
 CREATE POLICY "Users can read own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users can delete own profile" ON public.profiles FOR DELETE USING (auth.uid() = id);
 CREATE POLICY "Admins full access profiles" ON public.profiles FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
@@ -175,3 +176,39 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER set_profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 CREATE TRIGGER set_usage_updated_at BEFORE UPDATE ON public.user_daily_usage FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- ====================================================================
+-- PRIVILEGE ESCALATION PROTECTION TRIGGER (SEC-01)
+-- Prevents authenticated client users from updating their own role,
+-- subscription_plan, or subscription_status directly via REST API.
+-- Only service_role (webhooks/backend) can modify these columns.
+-- ====================================================================
+
+CREATE OR REPLACE FUNCTION public.prevent_profile_privilege_escalation()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- If not service_role, block normal users from modifying role or subscription columns
+  IF (auth.role() <> 'service_role') THEN
+    IF NEW.role IS DISTINCT FROM OLD.role THEN
+      RAISE EXCEPTION 'Security violation: Users are not permitted to change their own role.';
+    END IF;
+    IF NEW.subscription_plan IS DISTINCT FROM OLD.subscription_plan THEN
+      RAISE EXCEPTION 'Security violation: Subscription plan cannot be modified directly by client.';
+    END IF;
+    IF NEW.subscription_status IS DISTINCT FROM OLD.subscription_status THEN
+      RAISE EXCEPTION 'Security violation: Subscription status cannot be modified directly by client.';
+    END IF;
+    IF NEW.subscription_expires_at IS DISTINCT FROM OLD.subscription_expires_at THEN
+      RAISE EXCEPTION 'Security violation: Subscription expiration cannot be modified directly by client.';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_prevent_profile_privilege_escalation ON public.profiles;
+CREATE TRIGGER trg_prevent_profile_privilege_escalation
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.prevent_profile_privilege_escalation();
+
