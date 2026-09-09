@@ -32,7 +32,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      setErrorMsg('Zəhmət olmasa e-poçt və şifrənizi daxil edin.');
+      setErrorMsg(t('auth_error_fill_fields'));
       return;
     }
 
@@ -56,7 +56,9 @@ export default function LoginScreen() {
     try {
       const res = await signInWithOAuth(provider);
       if (res.error) {
-        setErrorMsg(res.error);
+        if (res.error !== 'cancelled') {
+          setErrorMsg(res.error);
+        }
       } else {
         router.back();
       }
@@ -82,7 +84,7 @@ export default function LoginScreen() {
           <Text style={[styles.brandTitle, { color: colors.primary }]}>Litera</Text>
           <Text style={[styles.title, { color: colors.text }]}>{t('login_btn')}</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            Datanızı bütün cihazlarınız arasında sinxronlaşdırın
+            {t('auth_sync_subtitle')}
           </Text>
         </View>
 
@@ -114,7 +116,7 @@ export default function LoginScreen() {
                   <Text style={styles.googleIconText}>G</Text>
                 </View>
                 <Text style={[styles.socialBtnText, { color: colors.text }]}>
-                  Google ilə davam et
+                  {t('auth_continue_google')}
                 </Text>
               </>
             )}
@@ -140,7 +142,7 @@ export default function LoginScreen() {
                   <Feather name="shield" size={16} color="#d4af7a" />
                 </View>
                 <Text style={[styles.socialBtnText, { color: colors.text }]}>
-                  Apple ID ilə davam et
+                  {t('auth_continue_apple')}
                 </Text>
               </>
             )}
@@ -150,14 +152,14 @@ export default function LoginScreen() {
         {/* Divider */}
         <View style={styles.dividerRow}>
           <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
-          <Text style={[styles.dividerText, { color: colors.textMuted }]}>və ya e-poçt ilə</Text>
+          <Text style={[styles.dividerText, { color: colors.textMuted }]}>{t('auth_or_email')}</Text>
           <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
         </View>
 
         {/* Form Inputs */}
         <View style={styles.form}>
           <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.text }]}>E-poçt Ünvanı</Text>
+            <Text style={[styles.label, { color: colors.text }]}>{t('auth_email_label')}</Text>
             <TextInput
               style={[
                 styles.input,
@@ -167,7 +169,7 @@ export default function LoginScreen() {
                   color: colors.text,
                 },
               ]}
-              placeholder="nümunə@mail.com"
+              placeholder="name@example.com"
               placeholderTextColor={colors.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -177,7 +179,7 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.text }]}>Şifrə</Text>
+            <Text style={[styles.label, { color: colors.text }]}>{t('auth_password_label')}</Text>
             <TextInput
               style={[
                 styles.input,
@@ -209,10 +211,10 @@ export default function LoginScreen() {
 
           <View style={styles.footerRow}>
             <Text style={[styles.footerText, { color: colors.textMuted }]}>
-              Hesabınız yoxdur?{' '}
+              {t('auth_no_account')}{' '}
             </Text>
             <Pressable onPress={() => router.push('/(auth)/register' as any)}>
-              <Text style={[styles.linkText, { color: colors.primary }]}>Qeydiyyatdan Keçin</Text>
+              <Text style={[styles.linkText, { color: colors.primary }]}>{t('auth_register_link')}</Text>
             </Pressable>
           </View>
         </View>

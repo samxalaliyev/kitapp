@@ -113,7 +113,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(THEME_STORAGE_KEY, newMode).catch(() => {});
   };
 
-  const isDark = mode === 'dark' || (mode === 'system' && systemScheme !== 'light') || mode === 'system';
+  const isDark = mode === 'dark' || (mode === 'system' && systemScheme !== 'light');
 
   const colors = isDark ? DARK_COLORS : LIGHT_COLORS;
 

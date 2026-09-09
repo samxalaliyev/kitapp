@@ -114,8 +114,21 @@ export function tokenizeParagraphWords(paragraphText: string, pId: string): Read
   });
 }
 
-// In-memory cache for parsed books
+// In-memory cache for parsed books with LRU memory cap to prevent OOM
 const parsedBookCache = new Map<string, ParsedBookData>();
+const MAX_PARSED_CACHE = 2;
+
+export function clearParsedBookCache(): void {
+  parsedBookCache.clear();
+}
+
+function cacheParsedBook(filePath: string, data: ParsedBookData): void {
+  if (parsedBookCache.size >= MAX_PARSED_CACHE) {
+    const oldest = parsedBookCache.keys().next().value;
+    if (oldest) parsedBookCache.delete(oldest);
+  }
+  parsedBookCache.set(filePath, data);
+}
 
 export async function parseEpubFile(filePath: string): Promise<ParsedBookData> {
   if (parsedBookCache.has(filePath)) {
@@ -297,6 +310,6 @@ export async function parseEpubFile(filePath: string): Promise<ParsedBookData> {
     pages: finalPages,
   };
 
-  parsedBookCache.set(filePath, result);
+  cacheParsedBook(filePath, result);
   return result;
 }

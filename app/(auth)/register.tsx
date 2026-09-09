@@ -14,12 +14,14 @@ import { Feather } from '@expo/vector-icons';
 
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
+  const { t } = useLanguage();
   const { register, signInWithOAuth } = useAuth();
 
   const [name, setName] = useState('');
@@ -31,7 +33,7 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!email || !password) {
-      setErrorMsg('Zəhmət olmasa e-poçt və şifrənizi daxil edin.');
+      setErrorMsg(t('auth_error_fill_fields'));
       return;
     }
 
@@ -55,7 +57,9 @@ export default function RegisterScreen() {
     try {
       const res = await signInWithOAuth(provider);
       if (res.error) {
-        setErrorMsg(res.error);
+        if (res.error !== 'cancelled') {
+          setErrorMsg(res.error);
+        }
       } else {
         router.back();
       }
@@ -79,9 +83,9 @@ export default function RegisterScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={[styles.brandTitle, { color: colors.primary }]}>Litera</Text>
-          <Text style={[styles.title, { color: colors.text }]}>Yeni Hesab Yaradın</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('auth_register_title')}</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            Pulsuz hesab yaradaraq kitablarınızı və sözlərinizi saxlayın
+            {t('auth_register_subtitle')}
           </Text>
         </View>
 
@@ -113,7 +117,7 @@ export default function RegisterScreen() {
                   <Text style={styles.googleIconText}>G</Text>
                 </View>
                 <Text style={[styles.socialBtnText, { color: colors.text }]}>
-                  Google ilə qeydiyyatdan keç
+                  {t('auth_continue_google')}
                 </Text>
               </>
             )}
@@ -139,7 +143,7 @@ export default function RegisterScreen() {
                   <Feather name="shield" size={16} color="#d4af7a" />
                 </View>
                 <Text style={[styles.socialBtnText, { color: colors.text }]}>
-                  Apple ID ilə qeydiyyatdan keç
+                  {t('auth_continue_apple')}
                 </Text>
               </>
             )}
@@ -149,14 +153,14 @@ export default function RegisterScreen() {
         {/* Divider */}
         <View style={styles.dividerRow}>
           <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
-          <Text style={[styles.dividerText, { color: colors.textMuted }]}>və ya e-poçt ilə</Text>
+          <Text style={[styles.dividerText, { color: colors.textMuted }]}>{t('auth_or_email')}</Text>
           <View style={[styles.dividerLine, { backgroundColor: colors.surfaceBorder }]} />
         </View>
 
         {/* Form Inputs */}
         <View style={styles.form}>
           <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.text }]}>Adınız</Text>
+            <Text style={[styles.label, { color: colors.text }]}>{t('auth_name_label')}</Text>
             <TextInput
               style={[
                 styles.input,
@@ -174,7 +178,7 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.text }]}>E-poçt Ünvanı</Text>
+            <Text style={[styles.label, { color: colors.text }]}>{t('auth_email_label')}</Text>
             <TextInput
               style={[
                 styles.input,
@@ -184,7 +188,7 @@ export default function RegisterScreen() {
                   color: colors.text,
                 },
               ]}
-              placeholder="nümunə@mail.com"
+              placeholder="name@example.com"
               placeholderTextColor={colors.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -194,7 +198,7 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.text }]}>Şifrə</Text>
+            <Text style={[styles.label, { color: colors.text }]}>{t('auth_password_label')}</Text>
             <TextInput
               style={[
                 styles.input,
@@ -222,16 +226,16 @@ export default function RegisterScreen() {
             ]}
           >
             <Text style={styles.submitBtnText}>
-              {loading ? 'Qeydiyyat edilir...' : 'Qeydiyyatdan Keç'}
+              {loading ? t('auth_registering') : t('auth_register_btn')}
             </Text>
           </Pressable>
 
           <View style={styles.footerRow}>
             <Text style={[styles.footerText, { color: colors.textMuted }]}>
-              Artıq hesabınız var?{' '}
+              {t('auth_have_account')}{' '}
             </Text>
             <Pressable onPress={() => router.push('/(auth)/login' as any)}>
-              <Text style={[styles.linkText, { color: colors.primary }]}>Daxil Olun</Text>
+              <Text style={[styles.linkText, { color: colors.primary }]}>{t('auth_login_link')}</Text>
             </Pressable>
           </View>
         </View>

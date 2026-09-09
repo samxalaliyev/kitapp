@@ -17,6 +17,8 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { syncWordToCloud } from "@/lib/sync/sync-service";
 import {
   getPronunciationCached,
+  englishToIPA,
+  isValidPhonetic,
   type PronunciationResult,
 } from "@/lib/pronunciation";
 import { translateWord, type TranslationResult } from "@/lib/translation";
@@ -247,10 +249,14 @@ export function WordPopup({
   const handleSave = useCallback(async () => {
     if (!word) return;
     try {
+      const safePhonetic = isValidPhonetic(pronunciation?.phonetic, word)
+        ? pronunciation!.phonetic!
+        : englishToIPA(word);
+
       const input = {
         word,
         translation: translation?.translated ?? null,
-        phonetic: pronunciation?.phonetic ?? null,
+        phonetic: safePhonetic,
         language: targetLang,
       };
       await saveWord(input);
@@ -334,10 +340,10 @@ export function WordPopup({
             ) : pronunciation ? (
               <View>
                 <View style={styles.metaRow}>
-                  {pronunciation.phonetic ? (
+                  {isValidPhonetic(pronunciation.phonetic, word) ? (
                     <Text style={styles.phonetic}>{pronunciation.phonetic}</Text>
                   ) : (
-                    <Text style={styles.phonetic}>/{word.toLowerCase()}/</Text>
+                    <Text style={styles.phonetic}>{englishToIPA(word)}</Text>
                   )}
 
                   {pronunciation.meanings[0]?.partOfSpeech ? (
@@ -365,7 +371,7 @@ export function WordPopup({
               </View>
             ) : (
               <View style={styles.metaRow}>
-                <Text style={styles.phonetic}>/{word.toLowerCase()}/</Text>
+                <Text style={styles.phonetic}>{englishToIPA(word)}</Text>
               </View>
             )}
           </View>

@@ -217,7 +217,12 @@ export function getOfflineDictEntry(word: string): DictEntry | null {
     if (cached) return cached;
 
     const entry = BASE_DICTIONARY[cand];
-    if (entry) return entry;
+    if (entry) {
+      // Safeguard: ignore corrupted dummy entries
+      if (entry.def && entry.def.includes('common literary English term')) continue;
+      if (entry.az === cand && entry.ru === cand && entry.tr === cand) continue;
+      return entry;
+    }
   }
 
   return null;
@@ -234,10 +239,18 @@ export function getOfflineTranslation(
   if (!entry) return null;
 
   const trans = entry[targetLang as keyof DictEntry];
-  if (trans) return trans;
-  if (targetLang === 'az' && entry.az) return entry.az;
+  const candidateTrans = trans || (targetLang === 'az' ? entry.az : null);
+  if (!candidateTrans) return null;
 
-  return null;
+  const cleanTrans = candidateTrans.trim().toLowerCase();
+  const cleanWord = word.trim().toLowerCase();
+
+  // Safeguard: If the "translation" is literally the identical English word, reject it!
+  if (cleanTrans === cleanWord) {
+    return null;
+  }
+
+  return candidateTrans;
 }
 
 /**

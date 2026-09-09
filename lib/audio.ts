@@ -1,21 +1,18 @@
-﻿import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system/legacy';
 
-// Audio URL-i webview-load edile bilen base64 data-URL formatina cevirir.
-// CORS, mixed content, hotlink bloklama kimi problemleri onler.
-// MP3 yalniz 1 defe yuklenir, hansi soze aid olsa da.
-
-interface CachedAudio {
-  dataUrl: string;
-  fetchedAt: number;
-}
-
-const AUDIO_CACHE_PREFIX = '@kitab-oxu:audio-data:';
-const AUDIO_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 gun
+// Audio URL-i yukleyir ve expo-file-system cacheDirectory-de saxlayir.
+// AsyncStorage-e yazilmir, belelikle Android-de CursorWindow olcusunu asmir ve memory bloat yaratmir.
 
 const memoryCache = new Map<string, string>();
+const MAX_MEM_ENTRIES = 50;
 
-function audioKey(url: string): string {
-  return AUDIO_CACHE_PREFIX + encodeURIComponent(url);
+function hashUrl(url: string): string {
+  let hash = 0;
+  for (let i = 0; i < url.length; i++) {
+    hash = (hash << 5) - hash + url.charCodeAt(i);
+    hash |= 0;
+  }
+  return `cached_audio_${Math.abs(hash)}.mp3`;
 }
 
 export async function getAudioDataUrl(url: string): Promise<string> {
@@ -25,51 +22,68 @@ export async function getAudioDataUrl(url: string): Promise<string> {
   const mem = memoryCache.get(url);
   if (mem) return mem;
 
-  // 2) AsyncStorage cache
+  const filename = hashUrl(url);
+  const cacheDir = FileSystem.cacheDirectory || FileSystem.documentDirectory || '';
+  const localFilePath = `${cacheDir}${filename}`;
+
+  // 2) File cache check
   try {
-    const raw = await AsyncStorage.getItem(audioKey(url));
-    if (raw) {
-      const cached = JSON.parse(raw) as CachedAudio;
-      if (Date.now() - cached.fetchedAt < AUDIO_TTL_MS) {
-        memoryCache.set(url, cached.dataUrl);
-        return cached.dataUrl;
-      }
+    const fileInfo = await FileSystem.getInfoAsync(localFilePath);
+    if (fileInfo.exists && (fileInfo.size ?? 0) > 100) {
+      const base64 = await FileSystem.readAsStringAsync(localFilePath, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      const dataUrl = 'data:audio/mpeg;base64,' + base64;
+      addToMemoryCache(url, dataUrl);
+      return dataUrl;
     }
-  } catch {
-    // ignore
-  }
+  } catch {}
 
-  // 3) Fetch ve base64-encode
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error('Audio fetch failed: ' + response.status);
-  }
-  const bytes = await response.arrayBuffer();
-  const base64 = bufferToBase64(bytes);
-  const dataUrl = 'data:audio/mpeg;base64,' + base64;
-
-  memoryCache.set(url, dataUrl);
-
+  // 3) Download to file cache
   try {
-    const entry: CachedAudio = { dataUrl, fetchedAt: Date.now() };
-    await AsyncStorage.setItem(audioKey(url), JSON.stringify(entry));
-  } catch {
-    // ignore
-  }
+    const downloadRes = await FileSystem.downloadAsync(url, localFilePath);
+    if (downloadRes.status === 200) {
+      const base64 = await FileSystem.readAsStringAsync(localFilePath, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      const dataUrl = 'data:audio/mpeg;base64,' + base64;
+      addToMemoryCache(url, dataUrl);
+      return dataUrl;
+    }
+  } catch {}
 
-  return dataUrl;
+  // 4) Fallback fetch
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error('Audio fetch failed: ' + response.status);
+    }
+    const bytes = await response.arrayBuffer();
+    const base64 = bufferToBase64(bytes);
+    const dataUrl = 'data:audio/mpeg;base64,' + base64;
+    addToMemoryCache(url, dataUrl);
+    return dataUrl;
+  } catch {
+    return '';
+  }
+}
+
+function addToMemoryCache(url: string, dataUrl: string) {
+  if (memoryCache.size >= MAX_MEM_ENTRIES) {
+    const oldestKey = memoryCache.keys().next().value;
+    if (oldestKey) memoryCache.delete(oldestKey);
+  }
+  memoryCache.set(url, dataUrl);
 }
 
 function bufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
   let binary = '';
-  // 0x8000 ~ 32KB chunk emal edirik (call stack partlayisinin qarsisini alir)
   const chunkSize = 0x8000;
   for (let i = 0; i < bytes.length; i += chunkSize) {
     const chunk = bytes.subarray(i, i + chunkSize);
     binary += String.fromCharCode.apply(null, Array.from(chunk) as number[]);
   }
-  // global.btoa React Native-de movcud deyil, ona goredir manual kodlama.
   return base64Encode(binary);
 }
 

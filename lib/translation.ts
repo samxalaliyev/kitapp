@@ -309,7 +309,14 @@ async function tryTranslatePipeline(
     }
   }
 
-  return gtxRes || myMemory || lingva || libre || null;
+  const candidates = [gtxRes, myMemory, lingva, libre];
+  for (const c of candidates) {
+    if (c && (!isWord || c.translated.trim().toLowerCase() !== text.trim().toLowerCase())) {
+      return c;
+    }
+  }
+
+  return null;
 }
 
 export async function translateWord(
@@ -325,7 +332,7 @@ export async function translateWord(
   // 1. Check Offline Base Dictionary (0ms, 100% Offline, Zero Network)
   if (!cleaned.includes(' ')) {
     const offlineMatch = getOfflineTranslation(cleaned, targetLang);
-    if (offlineMatch) {
+    if (offlineMatch && offlineMatch.trim().toLowerCase() !== cleaned.trim().toLowerCase()) {
       return {
         source: cleaned,
         translated: offlineMatch,
@@ -346,20 +353,23 @@ export async function translateWord(
     }
   } else {
     const cachedWord = await getCachedTranslation<TranslationResult>(cleaned, targetLang);
-    if (cachedWord) return cachedWord;
+    if (cachedWord && cachedWord.translated.trim().toLowerCase() !== cleaned.trim().toLowerCase()) {
+      return cachedWord;
+    }
   }
 
   // 3. Online Multilevel Pipeline
   const result = await tryTranslatePipeline(cleaned, sourceLang, targetLang);
-  if (result) {
+  if (result && (!cleaned.includes(' ') ? result.translated.trim().toLowerCase() !== cleaned.trim().toLowerCase() : true)) {
     if (cleaned.includes(' ')) {
       await setCachedSentence(cleaned, targetLang, result.translated);
     } else {
       await setCachedTranslation(cleaned, targetLang, result);
       setOfflineTranslation(cleaned, targetLang, result.translated);
     }
+    return result;
   }
-  return result;
+  return null;
 }
 
 export async function translateToLanguage(

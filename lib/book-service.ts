@@ -28,6 +28,19 @@ export async function isBookReady(bookId: string): Promise<boolean> {
     if (fileInfo.exists && (fileInfo.size ?? 0) > MIN_VALID_EPUB_BYTES) {
       return true;
     }
+
+    // Self-healing: On iOS/Android app updates, container UUID changes.
+    // Check if the file exists in the current documentDirectory.
+    if (documentDirectory) {
+      const safeFilename = `${book.id}_${book.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.epub`;
+      const currentUri = `${documentDirectory}${safeFilename}`;
+      const healedInfo = await getInfoAsync(currentUri);
+      if (healedInfo.exists && (healedInfo.size ?? 0) > MIN_VALID_EPUB_BYTES) {
+        await markBookDownloaded(book.id, currentUri);
+        return true;
+      }
+    }
+
     if (fileInfo.exists) {
       await deleteAsync(book.epubFilePath, { idempotent: true });
     }
