@@ -6,12 +6,16 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider } from '@/lib/auth/AuthContext';
+import { crashReporter } from '@/lib/crash-reporter';
 import { LanguageProvider, useLanguage } from '@/lib/i18n/LanguageContext';
 import { ThemeProvider as AppThemeProvider } from '@/lib/theme';
 
 export {
   ErrorBoundary,
 } from 'expo-router';
+
+// Initialize global crash reporter
+crashReporter.init();
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync().catch(() => {});
