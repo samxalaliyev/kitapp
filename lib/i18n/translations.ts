@@ -123,6 +123,22 @@ export type TranslationKey =
   | 'syncing_btn'
   | 'login_btn'
   | 'logout_btn'
+  | 'auth_sync_subtitle'
+  | 'auth_continue_google'
+  | 'auth_continue_apple'
+  | 'auth_or_email'
+  | 'auth_email_label'
+  | 'auth_password_label'
+  | 'auth_name_label'
+  | 'auth_no_account'
+  | 'auth_have_account'
+  | 'auth_register_link'
+  | 'auth_login_link'
+  | 'auth_register_title'
+  | 'auth_register_subtitle'
+  | 'auth_register_btn'
+  | 'auth_registering'
+  | 'auth_error_fill_fields'
   | 'sync_success_title'
   | 'guest_user'
   | 'guest_sub'
@@ -234,6 +250,9 @@ export type TranslationKey =
   | 'share_app_msg'
   | 'privacy_policy'
   | 'terms_of_service'
+  | 'restore_purchases'
+  | 'restore_success'
+  | 'no_purchases_found'
   | 'section_legal'
   | 'tutorial_skip'
   | 'tutorial_next'
@@ -291,7 +310,8 @@ export type TranslationKey =
   | 'story_modal_capture_error'
   | 'story_modal_share_error'
   | 'story_modal_share_title'
-  | 'story_modal_quote_share_title';
+  | 'story_modal_quote_share_title'
+  | 'story_modal_instagram_not_installed';
 
 const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>> = {
   az: {
@@ -362,7 +382,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     empty_vocab_title: 'Hələ heç bir söz yadda saxlamamısınız',
     empty_vocab_sub: 'Oxuyarkən sözün üstünə toxunun və lüğətə əlavə edin.',
     translation_header: 'Tərcümə',
-    word_saved: '✓ Saxlandı',
+    word_saved: 'Saxlandı',
     add_to_vocab: '+ Lüğətə əlavə et',
     loading: 'Yüklənir...',
     translating: 'Tərcümə edilir...',
@@ -417,6 +437,22 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     syncing_btn: 'Sinxronlaşdırılır...',
     login_btn: 'Daxil Ol',
     logout_btn: 'Çıxış Et',
+    auth_sync_subtitle: 'Datanızı bütün cihazlarınız arasında sinxronlaşdırın',
+    auth_continue_google: 'Google ilə davam et',
+    auth_continue_apple: 'Apple ID ilə davam et',
+    auth_or_email: 'və ya e-poçt ilə',
+    auth_email_label: 'E-poçt Ünvanı',
+    auth_password_label: 'Şifrə',
+    auth_name_label: 'Adınız',
+    auth_no_account: 'Hesabınız yoxdur?',
+    auth_have_account: 'Artıq hesabınız var?',
+    auth_register_link: 'Qeydiyyatdan Keçin',
+    auth_login_link: 'Daxil Olun',
+    auth_register_title: 'Yeni Hesab Yaradın',
+    auth_register_subtitle: 'Pulsuz hesab yaradaraq kitablarınızı və sözlərinizi saxlayın',
+    auth_register_btn: 'Qeydiyyatdan Keç',
+    auth_registering: 'Qeydiyyat edilir...',
+    auth_error_fill_fields: 'Zəhmət olmasa e-poçt və şifrənizi daxil edin.',
     sync_success_title: 'Sinxronizasiya Tamamlandı',
     guest_user: 'Qonaq İstifadəçi',
     guest_sub: 'Sözlərinizi qorumaq üçün daxil olun',
@@ -528,6 +564,9 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     share_app_msg: 'Litera ilə ingilis dilində kitabları oxuyaraq sözləri asanlıqla öyrən! Yüklə: https://play.google.com/store/apps/details?id=com.litera.app',
     privacy_policy: 'Məxfilik Siyasəti',
     terms_of_service: 'İstifadə Şərtləri',
+    restore_purchases: 'Alışları Bərpa Et',
+    restore_success: 'Alışlarınız uğurla bərpa edildi.',
+    no_purchases_found: 'Aktiv abunəlik tapılmadı.',
     section_legal: 'Hüquqi & Haqqında',
     tutorial_skip: 'Ötür',
     tutorial_next: 'Növbəti',
@@ -586,6 +625,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     story_modal_share_error: 'Paylaşım xətası baş verdi',
     story_modal_share_title: 'Instagram Story-də Paylaş',
     story_modal_quote_share_title: 'Sitatı Paylaş',
+    story_modal_instagram_not_installed: 'Instagram tətbiqi tapılmadı. Zəhmət olmasa Instagram quraşdırın.',
   },
 
   en: {
@@ -656,7 +696,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     empty_vocab_title: 'No words saved yet',
     empty_vocab_sub: 'Tap any unknown word while reading to translate and save it.',
     translation_header: 'Translation',
-    word_saved: '✓ Saved',
+    word_saved: 'Saved',
     add_to_vocab: '+ Save Word',
     loading: 'Loading...',
     translating: 'Translating...',
@@ -711,6 +751,22 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     syncing_btn: 'Syncing...',
     login_btn: 'Log In',
     logout_btn: 'Log Out',
+    auth_sync_subtitle: 'Sync your data across all your devices',
+    auth_continue_google: 'Continue with Google',
+    auth_continue_apple: 'Continue with Apple ID',
+    auth_or_email: 'or with email',
+    auth_email_label: 'Email Address',
+    auth_password_label: 'Password',
+    auth_name_label: 'Your Name',
+    auth_no_account: "Don't have an account?",
+    auth_have_account: 'Already have an account?',
+    auth_register_link: 'Sign Up',
+    auth_login_link: 'Sign In',
+    auth_register_title: 'Create New Account',
+    auth_register_subtitle: 'Create a free account to save your books and vocabulary',
+    auth_register_btn: 'Create Account',
+    auth_registering: 'Creating account...',
+    auth_error_fill_fields: 'Please enter your email and password.',
     sync_success_title: 'Sync Complete',
     guest_user: 'Guest User',
     guest_sub: 'Log in to backup your vocabulary to the cloud',
@@ -822,6 +878,9 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     share_app_msg: 'Read English classics and build your vocabulary with Litera! Download: https://play.google.com/store/apps/details?id=com.litera.app',
     privacy_policy: 'Privacy Policy',
     terms_of_service: 'Terms of Service',
+    restore_purchases: 'Restore Purchases',
+    restore_success: 'Your purchases have been successfully restored.',
+    no_purchases_found: 'No active subscriptions found.',
     section_legal: 'Legal & About',
     tutorial_skip: 'Skip',
     tutorial_next: 'Next',
@@ -880,6 +939,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     story_modal_share_error: 'Sharing failed',
     story_modal_share_title: 'Share to Instagram Story',
     story_modal_quote_share_title: 'Share Quote',
+    story_modal_instagram_not_installed: 'Instagram app not found. Please install Instagram.',
   },
 
   ru: {
@@ -950,7 +1010,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     empty_vocab_title: 'Слов пока нет',
     empty_vocab_sub: 'Нажимайте на слова во время чтения, чтобы перевести и сохранить их.',
     translation_header: 'Перевод',
-    word_saved: '✓ Сохранено',
+    word_saved: 'Сохранено',
     add_to_vocab: '+ В словарь',
     loading: 'Загрузка...',
     translating: 'Перевод...',
@@ -1005,6 +1065,22 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     syncing_btn: 'Синхронизация...',
     login_btn: 'Войти',
     logout_btn: 'Выйти',
+    auth_sync_subtitle: 'Синхронизируйте данные между всеми устройствами',
+    auth_continue_google: 'Продолжить с Google',
+    auth_continue_apple: 'Продолжить с Apple ID',
+    auth_or_email: 'или через эл. почту',
+    auth_email_label: 'Эл. почта',
+    auth_password_label: 'Пароль',
+    auth_name_label: 'Ваше имя',
+    auth_no_account: 'Нет аккаунта?',
+    auth_have_account: 'Уже есть аккаунт?',
+    auth_register_link: 'Зарегистрироваться',
+    auth_login_link: 'Войти',
+    auth_register_title: 'Создать новый аккаунт',
+    auth_register_subtitle: 'Создайте бесплатный аккаунт для сохранения книг и слов',
+    auth_register_btn: 'Зарегистрироваться',
+    auth_registering: 'Регистрация...',
+    auth_error_fill_fields: 'Пожалуйста, введите адрес эл. почты и пароль.',
     sync_success_title: 'Синхронизация завершена',
     guest_user: 'Гостевой аккаунт',
     guest_sub: 'Войдите, чтобы сохранить словарь в облаке',
@@ -1116,6 +1192,9 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     share_app_msg: 'Читайте английскую классику и учите слова с Litera! Скачать: https://play.google.com/store/apps/details?id=com.litera.app',
     privacy_policy: 'Политика конфиденциальности',
     terms_of_service: 'Условия использования',
+    restore_purchases: 'Восстановить покупки',
+    restore_success: 'Ваши покупки успешно восстановлены.',
+    no_purchases_found: 'Активных подписок не найдено.',
     section_legal: 'Правовая информация',
     tutorial_skip: 'Пропустить',
     tutorial_next: 'Далее',
@@ -1174,6 +1253,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     story_modal_share_error: 'Ошибка при отправке',
     story_modal_share_title: 'Поделиться в Instagram Story',
     story_modal_quote_share_title: 'Поделиться цитатой',
+    story_modal_instagram_not_installed: 'Приложение Instagram не найдено. Пожалуйста, установите Instagram.',
   },
 
   tr: {
@@ -1244,7 +1324,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     empty_vocab_title: 'Henüz kelime kaydetmediniz',
     empty_vocab_sub: 'Okurken bilmediğiniz kelimelere dokunup buraya kaydedin.',
     translation_header: 'Çeviri',
-    word_saved: '✓ Kaydedildi',
+    word_saved: 'Kaydedildi',
     add_to_vocab: '+ Kelime Ekle',
     loading: 'Yükleniyor...',
     translating: 'Çevriliyor...',
@@ -1299,6 +1379,22 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     syncing_btn: 'Senkronize ediliyor...',
     login_btn: 'Giriş Yap',
     logout_btn: 'Çıkış Yap',
+    auth_sync_subtitle: 'Verilerinizi tüm cihazlarınız arasında senkronize edin',
+    auth_continue_google: 'Google ile devam et',
+    auth_continue_apple: 'Apple ID ile devam et',
+    auth_or_email: 'veya e-posta ile',
+    auth_email_label: 'E-posta Adresi',
+    auth_password_label: 'Şifre',
+    auth_name_label: 'Adınız',
+    auth_no_account: 'Hesabınız yok mu?',
+    auth_have_account: 'Zaten hesabınız var mı?',
+    auth_register_link: 'Kayıt Olun',
+    auth_login_link: 'Giriş Yapın',
+    auth_register_title: 'Yeni Hesap Oluşturun',
+    auth_register_subtitle: 'Kitaplarınızı ve kelimelerinizi kaydetmek için ücretsiz hesap oluşturun',
+    auth_register_btn: 'Kayıt Ol',
+    auth_registering: 'Kayıt olunuyor...',
+    auth_error_fill_fields: 'Lütfen e-posta ve şifrenizi girin.',
     sync_success_title: 'Senkronizasyon Başarılı',
     guest_user: 'Misafir Kullanıcı',
     guest_sub: 'Kelimelerinizi buluta yedeklemek için giriş yapın',
@@ -1410,6 +1506,9 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     share_app_msg: 'Litera ile İngilizce kitaplar oku ve kelimeleri kolayca öğren! İndir: https://play.google.com/store/apps/details?id=com.litera.app',
     privacy_policy: 'Gizlilik Politikası',
     terms_of_service: 'Kullanım Koşulları',
+    restore_purchases: 'Satın Almaları Geri Yükle',
+    restore_success: 'Satın alımlarınız başarıyla geri yüklendi.',
+    no_purchases_found: 'Aktif abonelik bulunamadı.',
     section_legal: 'Yasal & Hakkında',
     tutorial_skip: 'Geç',
     tutorial_next: 'İleri',
@@ -1468,6 +1567,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     story_modal_share_error: 'Paylaşım hatası oluştu',
     story_modal_share_title: 'Instagram Story\'de Paylaş',
     story_modal_quote_share_title: 'Alıntıyı Paylaş',
+    story_modal_instagram_not_installed: 'Instagram uygulaması bulunamadı. Lütfen Instagram yükleyin.',
   },
 
   es: {
@@ -1538,7 +1638,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     empty_vocab_title: 'Aún no hay palabras guardadas',
     empty_vocab_sub: 'Toca cualquier palabra mientras lees para traducirla y guardarla aquí.',
     translation_header: 'Traducción',
-    word_saved: '✓ Guardada',
+    word_saved: 'Guardada',
     add_to_vocab: '+ Añadir Palabra',
     loading: 'Cargando...',
     translating: 'Traduciendo...',
@@ -1593,6 +1693,22 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     syncing_btn: 'Sincronizando...',
     login_btn: 'Iniciar Sesión',
     logout_btn: 'Cerrar Sesión',
+    auth_sync_subtitle: 'Sincroniza tus datos en todos tus dispositivos',
+    auth_continue_google: 'Continuar con Google',
+    auth_continue_apple: 'Continuar con Apple ID',
+    auth_or_email: 'o con correo electrónico',
+    auth_email_label: 'Correo Electrónico',
+    auth_password_label: 'Contraseña',
+    auth_name_label: 'Tu Nombre',
+    auth_no_account: '¿No tienes una cuenta?',
+    auth_have_account: '¿Ya tienes una cuenta?',
+    auth_register_link: 'Regístrate',
+    auth_login_link: 'Inicia Sesión',
+    auth_register_title: 'Crear Nueva Cuenta',
+    auth_register_subtitle: 'Crea una cuenta gratuita para guardar tus libros y vocabulario',
+    auth_register_btn: 'Crear Cuenta',
+    auth_registering: 'Creando cuenta...',
+    auth_error_fill_fields: 'Por favor, introduce tu correo y contraseña.',
     sync_success_title: 'Sincronización Exitosa',
     guest_user: 'Usuario Invitado',
     guest_sub: 'Inicia sesión para guardar tu vocabulario en la nube',
@@ -1704,6 +1820,9 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     share_app_msg: '¡Lee libros clásicos en inglés y aprende vocabulario con Litera! Descargar: https://play.google.com/store/apps/details?id=com.litera.app',
     privacy_policy: 'Política de Privacidad',
     terms_of_service: 'Términos de Servicio',
+    restore_purchases: 'Restaurar Compras',
+    restore_success: 'Tus compras se han restaurado con éxito.',
+    no_purchases_found: 'No se encontraron suscripciones activas.',
     section_legal: 'Legal y Acerca de',
     tutorial_skip: 'Saltar',
     tutorial_next: 'Siguiente',
@@ -1762,6 +1881,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     story_modal_share_error: 'Error al compartir',
     story_modal_share_title: 'Compartir en Instagram Story',
     story_modal_quote_share_title: 'Compartir Cita',
+    story_modal_instagram_not_installed: 'Aplicación de Instagram no encontrada. Por favor, instala Instagram.',
   },
 
   de: {
@@ -1832,7 +1952,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     empty_vocab_title: 'Noch keine Wörter gespeichert',
     empty_vocab_sub: 'Tippen Sie beim Lesen auf ein beliebiges Wort, um es zu übersetzen und zu speichern.',
     translation_header: 'Übersetzung',
-    word_saved: '✓ Gespeichert',
+    word_saved: 'Gespeichert',
     add_to_vocab: '+ Zum Wortschatz',
     loading: 'Laden...',
     translating: 'Übersetzen...',
@@ -1887,6 +2007,22 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     syncing_btn: 'Synchronisierung...',
     login_btn: 'Anmelden',
     logout_btn: 'Abmelden',
+    auth_sync_subtitle: 'Synchronisieren Sie Ihre Daten auf allen Geräten',
+    auth_continue_google: 'Mit Google fortfahren',
+    auth_continue_apple: 'Mit Apple ID fortfahren',
+    auth_or_email: 'oder per E-Mail',
+    auth_email_label: 'E-Mail-Adresse',
+    auth_password_label: 'Passwort',
+    auth_name_label: 'Ihr Name',
+    auth_no_account: 'Haben Sie kein Konto?',
+    auth_have_account: 'Haben Sie bereits ein Konto?',
+    auth_register_link: 'Registrieren',
+    auth_login_link: 'Anmelden',
+    auth_register_title: 'Neues Konto erstellen',
+    auth_register_subtitle: 'Erstellen Sie ein kostenloses Konto, um Ihre Bücher und Wörter zu speichern',
+    auth_register_btn: 'Konto erstellen',
+    auth_registering: 'Konto wird erstellt...',
+    auth_error_fill_fields: 'Bitte geben Sie Ihre E-Mail und Ihr Passwort ein.',
     sync_success_title: 'Synchronisation erfolgreich',
     guest_user: 'Gast-Benutzer',
     guest_sub: 'Anmelden, um Ihren Wortschatz in der Cloud zu sichern',
@@ -1998,6 +2134,9 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     share_app_msg: 'Lesen Sie englische Klassiker und lernen Sie Vokabeln mit Litera! Download: https://play.google.com/store/apps/details?id=com.litera.app',
     privacy_policy: 'Datenschutz-Bestimmungen',
     terms_of_service: 'Nutzungsbedingungen',
+    restore_purchases: 'Käufe wiederherstellen',
+    restore_success: 'Ihre Käufe wurden erfolgreich wiederhergestellt.',
+    no_purchases_found: 'Keine aktiven Abonnements gefunden.',
     section_legal: 'Rechtliches & Über uns',
     tutorial_skip: 'Überspringen',
     tutorial_next: 'Weiter',
@@ -2056,6 +2195,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     story_modal_share_error: 'Fehler beim Teilen',
     story_modal_share_title: 'In Instagram Story teilen',
     story_modal_quote_share_title: 'Zitat Teilen',
+    story_modal_instagram_not_installed: 'Instagram-App nicht gefunden. Bitte installieren Sie Instagram.',
   },
 
   fr: {
@@ -2126,7 +2266,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     empty_vocab_title: 'Aucun mot enregistré',
     empty_vocab_sub: 'Touchez n’importe quel mot en lisant pour le traduire et l’enregistrer.',
     translation_header: 'Traduction',
-    word_saved: '✓ Enregistré',
+    word_saved: 'Enregistré',
     add_to_vocab: '+ Ajouter au Vocabulaire',
     loading: 'Chargement...',
     translating: 'Traduction...',
@@ -2181,6 +2321,22 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     syncing_btn: 'Synchronisation...',
     login_btn: 'Se Connecter',
     logout_btn: 'Se Déconnecter',
+    auth_sync_subtitle: 'Synchronisez vos données sur tous vos appareils',
+    auth_continue_google: 'Continuer avec Google',
+    auth_continue_apple: 'Continuer avec Apple ID',
+    auth_or_email: 'ou par e-mail',
+    auth_email_label: 'Adresse e-mail',
+    auth_password_label: 'Mot de passe',
+    auth_name_label: 'Votre nom',
+    auth_no_account: "Vous n'avez pas de compte ?",
+    auth_have_account: 'Vous avez déjà un compte ?',
+    auth_register_link: "S'inscrire",
+    auth_login_link: 'Se connecter',
+    auth_register_title: 'Créer un nouveau compte',
+    auth_register_subtitle: 'Créez un compte gratuit pour enregistrer vos livres et votre vocabulaire',
+    auth_register_btn: 'Créer un compte',
+    auth_registering: 'Création du compte...',
+    auth_error_fill_fields: 'Veuillez saisir votre e-mail et votre mot de passe.',
     sync_success_title: 'Synchronisation Réussie',
     guest_user: 'Utilisateur Invité',
     guest_sub: 'Connectez-vous pour sauvegarder votre vocabulaire',
@@ -2292,6 +2448,9 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     share_app_msg: 'Lisez des classiques en anglais et enrichissez votre vocabulaire avec Litera ! Télécharger : https://play.google.com/store/apps/details?id=com.litera.app',
     privacy_policy: 'Politique de Confidentialité',
     terms_of_service: 'Conditions d’Utilisation',
+    restore_purchases: 'Restaurer les achats',
+    restore_success: 'Vos achats ont été restaurés avec succès.',
+    no_purchases_found: 'Aucun abonnement actif trouvé.',
     section_legal: 'Mentions Légales',
     tutorial_skip: 'Passer',
     tutorial_next: 'Suivant',
@@ -2350,6 +2509,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     story_modal_share_error: 'Échec du partage',
     story_modal_share_title: 'Partager dans Instagram Story',
     story_modal_quote_share_title: 'Partager la Citation',
+    story_modal_instagram_not_installed: 'Application Instagram introuvable. Veuillez installer Instagram.',
   },
 };
 

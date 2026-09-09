@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Dimensions,
   Image,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -66,29 +67,44 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
     setError(null);
 
     try {
+      // 1. Early check for Instagram installation
+      if (Platform.OS === 'android' && RNShare?.isPackageInstalled) {
+        try {
+          const check = await RNShare.isPackageInstalled('com.instagram.android');
+          if (check && check.isInstalled === false) {
+            setError('Instagram tətbiqi tapılmadı');
+            return;
+          }
+        } catch {}
+      } else if (Platform.OS === 'ios') {
+        try {
+          const canOpen = await Linking.canOpenURL('instagram-stories://share');
+          if (!canOpen) {
+            const canOpenApp = await Linking.canOpenURL('instagram://');
+            if (!canOpenApp) {
+              setError('Instagram tətbiqi tapılmadı');
+              return;
+            }
+          }
+        } catch {}
+      }
+
+      // 2. High-speed Capture of the 9:16 Canvas
       const uri = await capture();
       if (!uri) {
         setError('Story şəkli hazırlana bilmədi');
         return;
       }
 
-      let fileUri = uri.startsWith('file://') ? uri : 'file://' + uri;
-      let base64Image = '';
-      try {
-        base64Image = await FileSystem.readAsStringAsync(uri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-      } catch {}
+      const fileUri = uri.startsWith('file://') ? uri : 'file://' + uri;
 
-      const base64Uri = base64Image ? `data:image/png;base64,${base64Image}` : fileUri;
-
-      // Direct Instagram Stories attempt
+      // 3. Direct Native Instagram Stories Share (no generic chooser fallback)
       if (RNShare && RNSocial && RNSocial.InstagramStories) {
         try {
           const shareOptions: any = {
             social: RNSocial.InstagramStories,
-            appId: SOCIAL_CONFIG.FACEBOOK_APP_ID,
-            backgroundImage: Platform.OS === 'android' ? fileUri : base64Uri,
+            appId: SOCIAL_CONFIG.FACEBOOK_APP_ID || '386123456789012',
+            backgroundImage: fileUri,
             backgroundTopColor: '#0a0a19',
             backgroundBottomColor: '#000000',
             attributionURL: SOCIAL_CONFIG.getBookUrl(book?.id || ''),
@@ -96,34 +112,28 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
           await RNShare.shareSingle(shareOptions);
           return;
         } catch (igErr: any) {
-          // If user cancelled or direct single share failed, fallback smoothly
-          if (igErr?.message === 'User did not share' || igErr?.message?.includes('cancel')) {
+          // User dismissed or cancelled in Instagram
+          if (
+            igErr?.message === 'User did not share' ||
+            igErr?.message?.includes('cancel') ||
+            igErr?.message?.includes('dismiss')
+          ) {
             return;
           }
+          if (
+            igErr?.message?.includes('not installed') ||
+            igErr?.message?.includes('ActivityNotFoundException')
+          ) {
+            setError('Instagram tətbiqi tapılmadı');
+            return;
+          }
+          console.log('Book Instagram story share error:', igErr);
+          setError('Instagram Story açıla bilmədi');
+          return;
         }
       }
 
-      // High-reliability Fallback: Native system share sheet with Instagram target
-      if (RNShare) {
-        try {
-          await RNShare.open({
-            url: Platform.OS === 'android' ? fileUri : base64Uri,
-            type: 'image/png',
-            title: 'Instagram Story-də Paylaş',
-            failOnCancel: false,
-          });
-          return;
-        } catch {}
-      }
-
-      // Expo sharing fallback
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, {
-          mimeType: 'image/png',
-          dialogTitle: 'Instagram Story-də Paylaş',
-          UTI: 'public.png',
-        });
-      }
+      setError('Instagram Story üçün native dəstək tələb olunur');
     } catch (err: any) {
       if (err?.message !== 'User did not share') {
         setError(err instanceof Error ? err.message : 'Paylaşım xətası');
