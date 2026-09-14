@@ -80,14 +80,14 @@ export function FullscreenAdModal({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleRequestClose}>
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.bg }]}>
         {/* Top Header */}
         <View style={styles.topBar}>
           <View style={styles.badgeAd}>
             <Text style={styles.badgeAdText}>SPONSOR</Text>
           </View>
 
-          <View style={styles.timerBadge}>
+          <View style={[styles.timerBadge, { backgroundColor: colors.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)' }]}>
             {countdown > 0 ? (
               <View style={styles.timerRow}>
                 <Feather name="clock" size={12} color="#d4af7a" />
@@ -95,8 +95,8 @@ export function FullscreenAdModal({
               </View>
             ) : (
               <Pressable onPress={onClose} style={styles.skipBtn} hitSlop={8}>
-                <Feather name="x" size={14} color="#f8fafc" style={{ marginRight: 4 }} />
-                <Text style={styles.skipBtnText}>{t('not_now') || 'Bağla'}</Text>
+                <Feather name="x" size={14} color={colors.text} style={{ marginRight: 4 }} />
+                <Text style={[styles.skipBtnText, { color: colors.text }]}>{t('not_now') || 'Bağla'}</Text>
               </Pressable>
             )}
           </View>
@@ -104,12 +104,12 @@ export function FullscreenAdModal({
 
         {/* Ad Visual Box */}
         <View style={styles.adContent}>
-          <View style={styles.adVisualBox}>
+          <View style={[styles.adVisualBox, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <View style={styles.iconCircle}>
               <Feather name="award" size={36} color="#d4af7a" />
             </View>
-            <Text style={styles.adVisualTitle}>Litera Premium</Text>
-            <Text style={styles.adVisualSub}>
+            <Text style={[styles.adVisualTitle, { color: colors.text }]}>Litera Premium</Text>
+            <Text style={[styles.adVisualSub, { color: colors.textMuted }]}>
               {t('premium_banner_sub')}
             </Text>
 
@@ -141,7 +141,7 @@ export function FullscreenAdModal({
 
           {countdown === 0 ? (
             <Pressable onPress={onClose} style={styles.continueLink}>
-              <Text style={styles.continueLinkText}>{t('continue_reading') || 'Oxumağa Davam Et'} →</Text>
+              <Text style={[styles.continueLinkText, { color: colors.text }]}>{t('continue_reading') || 'Oxumağa Davam Et'} →</Text>
             </Pressable>
           ) : null}
         </View>

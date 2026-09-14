@@ -7,13 +7,20 @@ import {
   type LanguageCode,
 } from './constants';
 
-const TARGET_LANGUAGE_KEY = '@kitab-oxu:target-language';
-const UI_LANGUAGE_KEY = '@kitab-oxu:ui-language';
-const ONBOARDED_KEY = '@kitab-oxu:language-onboarded';
+const TARGET_LANGUAGE_KEY = '@litera:target-language';
+const UI_LANGUAGE_KEY = '@litera:ui-language';
+const ONBOARDED_KEY = '@litera:language-onboarded';
+
+const LEGACY_TARGET_LANGUAGE_KEY = '@kitab-oxu:target-language';
+const LEGACY_UI_LANGUAGE_KEY = '@kitab-oxu:ui-language';
+const LEGACY_ONBOARDED_KEY = '@kitab-oxu:language-onboarded';
 
 export async function getTargetLanguage(): Promise<LanguageCode> {
   try {
-    const value = await AsyncStorage.getItem(TARGET_LANGUAGE_KEY);
+    let value = await AsyncStorage.getItem(TARGET_LANGUAGE_KEY);
+    if (!value) {
+      value = await AsyncStorage.getItem(LEGACY_TARGET_LANGUAGE_KEY);
+    }
     if (value && isSupportedLanguage(value)) {
       return value;
     }
@@ -29,7 +36,10 @@ export async function setTargetLanguage(lang: LanguageCode): Promise<void> {
 
 export async function getUILanguage(): Promise<LanguageCode> {
   try {
-    const value = await AsyncStorage.getItem(UI_LANGUAGE_KEY);
+    let value = await AsyncStorage.getItem(UI_LANGUAGE_KEY);
+    if (!value) {
+      value = await AsyncStorage.getItem(LEGACY_UI_LANGUAGE_KEY);
+    }
     if (value && isSupportedLanguage(value)) {
       return value;
     }
@@ -45,7 +55,10 @@ export async function setUILanguage(lang: LanguageCode): Promise<void> {
 
 export async function isLanguageOnboarded(): Promise<boolean> {
   try {
-    const value = await AsyncStorage.getItem(ONBOARDED_KEY);
+    let value = await AsyncStorage.getItem(ONBOARDED_KEY);
+    if (value === null) {
+      value = await AsyncStorage.getItem(LEGACY_ONBOARDED_KEY);
+    }
     return value === 'true';
   } catch {
     return false;

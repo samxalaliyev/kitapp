@@ -144,12 +144,12 @@ class PurchasesService {
       }
     }
 
-    // Development / Simulator Fallback Mode (e.g. testing in Expo Go)
-    if (__DEV__) {
-      console.log(`[PurchasesService:DEV] Simulating Google Play purchase for plan: ${plan}`);
-    }
-    await new Promise((res) => setTimeout(res, 600));
-    return { success: true, plan };
+    // Fallback when native Google Play Billing SDK is not bundled or configured
+    await new Promise((res) => setTimeout(res, 400));
+    return {
+      success: false,
+      errorMessage: 'Google Play Billing xidməti hazırda aktiv deyil. Abunəlik rəsmi tətbiq mağazası yayımlandıqda istifadəyə veriləcək.',
+    };
   }
 
   /**

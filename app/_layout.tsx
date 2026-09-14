@@ -1,14 +1,14 @@
+import '@/lib/typography';
 import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider } from '@/lib/auth/AuthContext';
 import { crashReporter } from '@/lib/crash-reporter';
 import { LanguageProvider, useLanguage } from '@/lib/i18n/LanguageContext';
-import { ThemeProvider as AppThemeProvider } from '@/lib/theme';
+import { ThemeProvider as AppThemeProvider, useAppTheme } from '@/lib/theme';
 
 export {
   ErrorBoundary,
@@ -23,6 +23,13 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    'CeraPro-Light': require('../assets/fonts/CeraPro-Light.otf'),
+    'CeraPro-Medium': require('../assets/fonts/CeraPro-Medium.otf'),
+    'CeraPro-Bold': require('../assets/fonts/CeraPro-Bold.otf'),
+    'CeraPro-Black': require('../assets/fonts/CeraPro-Black.otf'),
+    'CeraPro-Italic': require('../assets/fonts/CeraPro-Italic.otf'),
+    'CeraPro-Regular': require('../assets/fonts/CeraPro-Medium.otf'),
+    CeraPro: require('../assets/fonts/CeraPro-Medium.otf'),
   });
 
   useEffect(() => {
@@ -45,7 +52,7 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  const { colors } = useAppTheme();
   const { ready } = useLanguage();
 
   useEffect(() => {
@@ -59,7 +66,7 @@ function RootLayoutNav() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={colors.isDark ? DarkTheme : DefaultTheme}>
       <Stack
         initialRouteName="index"
         screenOptions={{ headerShown: false }}

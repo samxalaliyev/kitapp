@@ -72,7 +72,7 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
         try {
           const check = await RNShare.isPackageInstalled('com.instagram.android');
           if (check && check.isInstalled === false) {
-            setError('Instagram tətbiqi tapılmadı');
+            setError(t('book_story_ig_not_installed') || 'Instagram tətbiqi tapılmadı');
             return;
           }
         } catch {}
@@ -82,7 +82,7 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
           if (!canOpen) {
             const canOpenApp = await Linking.canOpenURL('instagram://');
             if (!canOpenApp) {
-              setError('Instagram tətbiqi tapılmadı');
+              setError(t('book_story_ig_not_installed') || 'Instagram tətbiqi tapılmadı');
               return;
             }
           }
@@ -92,7 +92,7 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
       // 2. High-speed Capture of the 9:16 Canvas
       const uri = await capture();
       if (!uri) {
-        setError('Story şəkli hazırlana bilmədi');
+        setError(t('book_story_capture_err') || 'Story şəkli hazırlana bilmədi');
         return;
       }
 
@@ -124,19 +124,19 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
             igErr?.message?.includes('not installed') ||
             igErr?.message?.includes('ActivityNotFoundException')
           ) {
-            setError('Instagram tətbiqi tapılmadı');
+            setError(t('book_story_ig_not_installed') || 'Instagram tətbiqi tapılmadı');
             return;
           }
           console.log('Book Instagram story share error:', igErr);
-          setError('Instagram Story açıla bilmədi');
+          setError(t('book_story_share_err') || 'Instagram Story açıla bilmədi');
           return;
         }
       }
 
-      setError('Instagram Story üçün native dəstək tələb olunur');
+      setError(t('book_story_share_err') || 'Instagram Story üçün native dəstək tələb olunur');
     } catch (err: any) {
       if (err?.message !== 'User did not share') {
-        setError(err instanceof Error ? err.message : 'Paylaşım xətası');
+        setError(err instanceof Error ? err.message : (t('book_story_share_err') || 'Paylaşım xətası'));
       }
     } finally {
       setBusy(false);
@@ -151,7 +151,7 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
     try {
       const uri = await capture();
       if (!uri) {
-        setError('Story şəkli hazırlana bilmədi');
+        setError(t('book_story_capture_err') || 'Story şəkli hazırlana bilmədi');
         return;
       }
 
@@ -160,13 +160,13 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(fileUri, {
           mimeType: 'image/png',
-          dialogTitle: 'Kitabı paylaş',
+          dialogTitle: t('book_story_share_dialog') || 'Kitabı paylaş',
           UTI: 'public.png',
         });
       }
     } catch (err: any) {
       if (err?.message !== 'User did not share') {
-        setError(err instanceof Error ? err.message : 'Paylaşım xətası');
+        setError(err instanceof Error ? err.message : (t('book_story_share_err') || 'Paylaşım xətası'));
       }
     } finally {
       setBusy(false);
@@ -184,7 +184,7 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={[styles.heading, { color: colors.text }]}>Story Kimi Paylaş</Text>
+            <Text style={[styles.heading, { color: colors.text }]}>{t('book_story_modal_title') || 'Story Kimi Paylaş'}</Text>
             <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={12}>
               <Feather name="x" size={20} color={colors.textMuted} />
             </Pressable>
@@ -235,17 +235,14 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
                 </Text>
 
                 <Text style={styles.storyBookAuthor} numberOfLines={1}>
-                  {book.author || 'Klassik Ədəbiyyat'}
+                  {book.author || (t('book_story_classic_lit') || 'Klassik Ədəbiyyat')}
                 </Text>
 
                 {/* Call to Action Badge: "Elə indi Litera ilə oxu" */}
                 <View style={styles.ctaBadge}>
                   <Feather name="book-open" size={12} color="#ffffff" style={{ marginRight: 5 }} />
-                  <Text style={styles.ctaBadgeText}>Elə indi Litera ilə oxu</Text>
+                  <Text style={styles.ctaBadgeText}>{t('book_story_read_now') || 'Elə indi Litera ilə oxu'}</Text>
                 </View>
-
-                {/* Watermark / Deep Link */}
-                <Text style={styles.watermarkText}>litera://book/{book.id}</Text>
               </View>
             </ViewShot>
           </View>
@@ -266,7 +263,7 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
               ) : (
                 <>
                   <Feather name="camera" size={18} color="#ffffff" />
-                  <Text style={styles.instagramBtnText}>Instagram Story-də Paylaş</Text>
+                  <Text style={styles.instagramBtnText}>{t('book_story_ig_btn') || 'Instagram Story-də Paylaş'}</Text>
                 </>
               )}
             </Pressable>
@@ -283,7 +280,7 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
               disabled={busy}
             >
               <Feather name="share" size={18} color={colors.text} />
-              <Text style={[styles.otherBtnText, { color: colors.text }]}>Digər Tətbiqlərdə Paylaş</Text>
+              <Text style={[styles.otherBtnText, { color: colors.text }]}>{t('book_story_other_btn') || 'Digər Tətbiqlərdə Paylaş'}</Text>
             </Pressable>
           </View>
         </View>

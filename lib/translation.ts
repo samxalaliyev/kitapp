@@ -1,4 +1,4 @@
-import { getCachedTranslation, setCachedTranslation } from './i18n/cache';
+import { getCachedTranslation, setCachedTranslation, getCachedTranslationSync } from './i18n/cache';
 import { getTargetLanguage } from './i18n/settings';
 import type { LanguageCode } from './i18n/constants';
 import {
@@ -120,14 +120,14 @@ async function tryGoogleChromeDict(
   return null;
 }
 
-// 2. Google GTX Free API (Xüsusilə cümlələr üçün güclü)
-async function tryGoogleGTX(
+// 2. Google Translate Mobile Client Engine (Limitsiz, yüksək dayanıqlılıq və sürət)
+async function tryGoogleAtSingle(
   text: string,
   sourceLang: string,
   targetLang: string,
 ): Promise<TranslationResult | null> {
   try {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(
+    const url = `https://translate.google.com/translate_a/single?client=at&sl=${encodeURIComponent(
       sourceLang,
     )}&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(text)}`;
 
@@ -136,6 +136,7 @@ async function tryGoogleGTX(
         headers: {
           'User-Agent':
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          Accept: 'application/json, text/plain, */*',
         },
       }),
       FAST_TIMEOUT_MS,
@@ -173,7 +174,7 @@ async function tryMyMemory(
 
     const response = await withTimeout(
       fetch(`${MYMEMORY_ENDPOINT}?${params.toString()}`),
-      FAST_TIMEOUT_MS,
+      1500,
     );
 
     if (!response || !response.ok) return null;
@@ -190,71 +191,6 @@ async function tryMyMemory(
   }
 }
 
-// 4. Lingva Open Translate
-async function tryLingva(
-  text: string,
-  sourceLang: string,
-  targetLang: string,
-): Promise<TranslationResult | null> {
-  for (const instance of LINGVA_INSTANCES) {
-    try {
-      const url = `${instance}/api/v1/${encodeURIComponent(sourceLang)}/${encodeURIComponent(
-        targetLang,
-      )}/${encodeURIComponent(text)}`;
-
-      const response = await withTimeout(
-        fetch(url, { headers: { Accept: 'application/json' } }),
-        1800,
-      );
-
-      if (!response || !response.ok) continue;
-      const data = (await response.json()) as LingvaResponse;
-      const translated = data.translation?.trim();
-
-      if (!translated || data.error || looksLikeError(translated)) continue;
-      return { source: text, translated, provider: 'lingva' };
-    } catch {
-      continue;
-    }
-  }
-  return null;
-}
-
-// 5. LibreTranslate Instance Fallback
-async function tryLibreTranslate(
-  text: string,
-  sourceLang: string,
-  targetLang: string,
-): Promise<TranslationResult | null> {
-  for (const instance of LIBRETRANSLATE_INSTANCES) {
-    try {
-      const response = await withTimeout(
-        fetch(`${instance}/translate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            q: text,
-            source: sourceLang,
-            target: targetLang,
-            format: 'text',
-          }),
-        }),
-        1800,
-      );
-
-      if (!response || !response.ok) continue;
-      const data = (await response.json()) as LibreTranslateResponse;
-      const translated = data.translatedText?.trim();
-
-      if (!translated || data.error || looksLikeError(translated)) continue;
-      return { source: text, translated, provider: 'libretranslate' };
-    } catch {
-      continue;
-    }
-  }
-  return null;
-}
-
 async function tryTranslatePipeline(
   text: string,
   sourceLang: string,
@@ -262,39 +198,25 @@ async function tryTranslatePipeline(
 ): Promise<TranslationResult | null> {
   const isWord = !text.includes(' ');
 
-  // 1. Google Chrome Dictionary Client (Tək sözlər üçün ən sürətli)
-  if (isWord) {
-    const chromeRes = await tryGoogleChromeDict(text, sourceLang, targetLang);
-    if (chromeRes && chromeRes.translated.toLowerCase() !== text.toLowerCase()) {
-      return chromeRes;
-    }
+  // 1. Google Chrome CDN Client - Həm sözlər, həm cümlələr üçün ən sürətli və dayanıqlı (150-200ms)
+  const chromeRes = await tryGoogleChromeDict(text, sourceLang, targetLang);
+  if (chromeRes && (!isWord || chromeRes.translated.toLowerCase() !== text.toLowerCase())) {
+    return chromeRes;
   }
 
-  // 2. Google GTX Single (Cümlələr və ifadələr üçün ən güclü)
-  const gtxRes = await tryGoogleGTX(text, sourceLang, targetLang);
-  if (gtxRes && (!isWord || gtxRes.translated.toLowerCase() !== text.toLowerCase())) {
-    return gtxRes;
+  // 2. Google Translate Mobile Client Engine - Ehtiyat sürətli qat (150-250ms)
+  const atRes = await tryGoogleAtSingle(text, sourceLang, targetLang);
+  if (atRes && (!isWord || atRes.translated.toLowerCase() !== text.toLowerCase())) {
+    return atRes;
   }
 
-  // 3. MyMemory Pro (50,000 words/day)
+  // 3. MyMemory Pro (50,000 words/day) - 3-cü dərəcəli ehtiyat
   const myMemory = await tryMyMemory(text, sourceLang, targetLang);
   if (myMemory && (!isWord || myMemory.translated.toLowerCase() !== text.toLowerCase())) {
     return myMemory;
   }
 
-  // 4. Lingva Open
-  const lingva = await tryLingva(text, sourceLang, targetLang);
-  if (lingva && (!isWord || lingva.translated.toLowerCase() !== text.toLowerCase())) {
-    return lingva;
-  }
-
-  // 5. LibreTranslate
-  const libre = await tryLibreTranslate(text, sourceLang, targetLang);
-  if (libre && (!isWord || libre.translated.toLowerCase() !== text.toLowerCase())) {
-    return libre;
-  }
-
-  // Əgər tək sözdürsə və birbaşa tərcümə tapılmadısa, lemmatizasiya edirik
+  // Əgər tək sözdürsə və birbaşa tərcümə tapılmadısa, lemmatizasiya edirik (kök sözü yoxlayırıq)
   if (isWord && text.length > 2) {
     const lemmas = getWordCandidateLemmas(text);
     for (const lemma of lemmas) {
@@ -309,12 +231,9 @@ async function tryTranslatePipeline(
     }
   }
 
-  const candidates = [gtxRes, myMemory, lingva, libre];
-  for (const c of candidates) {
-    if (c && (!isWord || c.translated.trim().toLowerCase() !== text.trim().toLowerCase())) {
-      return c;
-    }
-  }
+  if (chromeRes) return chromeRes;
+  if (atRes) return atRes;
+  if (myMemory) return myMemory;
 
   return null;
 }

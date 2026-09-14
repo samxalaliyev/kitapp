@@ -6,7 +6,7 @@ import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { computeRating } from '@/lib/rating';
 import { useAppTheme } from '@/lib/theme';
 
-export type BookCardVariant = 'horizontal' | 'vertical';
+export type BookCardVariant = 'horizontal' | 'vertical' | 'grid';
 
 interface BookCardProps {
   id: string;
@@ -20,6 +20,8 @@ interface BookCardProps {
   variant?: BookCardVariant;
   /** Cover olcusu */
   coverSize?: BookCoverSize;
+  coverWidth?: number;
+  coverHeight?: number;
   onPress?: () => void;
 }
 
@@ -31,11 +33,45 @@ export function BookCard({
   readingPercent,
   variant = 'horizontal',
   coverSize,
+  coverWidth,
+  coverHeight,
   onPress,
 }: BookCardProps) {
   const { colors } = useAppTheme();
   const rating = computeRating(downloadCount);
   const effectiveCoverSize = coverSize ?? (variant === 'horizontal' ? 'md' : 'sm');
+
+  if (variant === 'grid') {
+    return (
+      <Pressable
+        style={({ pressed }) => [
+          styles.gridCard,
+          pressed && styles.pressed,
+        ]}
+        onPress={onPress}
+      >
+        <BookCover
+          title={title}
+          author={author}
+          coverUrl={coverUrl}
+          size={effectiveCoverSize}
+          width={coverWidth}
+          height={coverHeight}
+        />
+        <View style={styles.gridInfo}>
+          <Text style={[styles.horizontalTitle, { color: colors.text }]} numberOfLines={2}>
+            {title}
+          </Text>
+          <Text style={[styles.horizontalAuthor, { color: colors.textMuted }]} numberOfLines={1}>
+            {author}
+          </Text>
+          {rating.average > 0 ? (
+            <StarRating rating={rating.average} size={12} />
+          ) : null}
+        </View>
+      </Pressable>
+    );
+  }
 
   if (variant === 'vertical') {
     return (
@@ -52,6 +88,8 @@ export function BookCard({
           author={author}
           coverUrl={coverUrl}
           size={effectiveCoverSize}
+          width={coverWidth}
+          height={coverHeight}
         />
         <View style={styles.verticalInfo}>
           <Text style={[styles.verticalTitle, { color: colors.text }]} numberOfLines={2}>
@@ -99,6 +137,8 @@ export function BookCard({
         author={author}
         coverUrl={coverUrl}
         size={effectiveCoverSize}
+        width={coverWidth}
+        height={coverHeight}
       />
       <View style={styles.horizontalInfo}>
         <Text style={[styles.horizontalTitle, { color: colors.text }]} numberOfLines={2}>
@@ -116,6 +156,17 @@ export function BookCard({
 }
 
 const styles = StyleSheet.create({
+  // --- Grid (2-column balanced grid) ---
+  gridCard: {
+    width: '100%',
+    alignItems: 'flex-start',
+  },
+  gridInfo: {
+    width: '100%',
+    marginTop: Spacing.sm,
+    gap: 2,
+  },
+
   // --- Horizontal (card in carousel) ---
   horizontalCard: {
     width: 140,

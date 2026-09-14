@@ -118,16 +118,22 @@ export default function PlanSelectScreen() {
 
             <View style={styles.featureList}>
               <Text style={[styles.featureItem, { color: colors.textMuted }]}>
-                ✓ Sərhədsiz EPUB Kitab Oxu
+                ⚡ 100 Başlanğıc Enerjisi + Gündəlik 70 ⚡
               </Text>
               <Text style={[styles.featureItem, { color: colors.textMuted }]}>
-                ✓ Gündəlik 30 Anlıq Söz Tərcüməsi
+                📖 İstənilən kitabı oxu (-10 ⚡)
               </Text>
               <Text style={[styles.featureItem, { color: colors.textMuted }]}>
-                🎥 Video izləyərək +10 tərcümə qazan
+                🔤 Söz (-2 ⚡) və Cümlə (-6 ⚡) Tərcümələri
               </Text>
               <Text style={[styles.featureItem, { color: colors.textMuted }]}>
-                📺 Səhifə keçidində interstitial reklamlar
+                🎮 Bütün Lüğət Oyunları (Flashcard, Pairs, Quiz)
+              </Text>
+              <Text style={[styles.featureItem, { color: colors.textMuted }]}>
+                🎥 Qısa video ilə +30 ⚡ Enerji bərpa et
+              </Text>
+              <Text style={[styles.featureItem, { color: colors.textMuted }]}>
+                ☁️ Bulud Yaddaşı & Liqa Yarışları
               </Text>
             </View>
           </Pressable>
@@ -145,13 +151,13 @@ export default function PlanSelectScreen() {
             ]}
           >
             <View style={styles.recommendBadge}>
-              <Text style={styles.recommendBadgeText}>🔥 ƏN ÇOX SEVİLƏN (40% QƏNAƏT)</Text>
+              <Text style={styles.recommendBadgeText}>🔥 50% ENDİRİM + 7 GÜN SINAQ</Text>
             </View>
 
             <View style={styles.planHeader}>
               <View>
                 <Text style={[styles.planTitle, { color: colors.text }]}>PREMIUM İLLİK 🌟</Text>
-                <Text style={[styles.planPrice, { color: colors.primary }]}>$29.99 / il ($2.49/ay)</Text>
+                <Text style={[styles.planPrice, { color: colors.primary }]}>$24.99 / il ($2.08/ay)</Text>
               </View>
               <View
                 style={[
@@ -167,19 +173,22 @@ export default function PlanSelectScreen() {
 
             <View style={styles.featureList}>
               <Text style={[styles.featureItem, { color: colors.text }]}>
-                🚫 100% Reklamsız Kəsintisiz Oxu
+                ⚡ Sonsuz Enerji & Limitsiz Tərcümə (⚡ ∞)
               </Text>
               <Text style={[styles.featureItem, { color: colors.text }]}>
-                ⚡ Sərhədsiz Anlıq Söz Tərcüməsi
+                🚫 100% Reklamsız Kəsintisiz Oxu
               </Text>
               <Text style={[styles.featureItem, { color: colors.text }]}>
                 📚 Sərhədsiz Oflayn Kitab Yükləmə
               </Text>
               <Text style={[styles.featureItem, { color: colors.text }]}>
+                🏆 Liqa Yarışlarında 1.5x XP Üstünlüyü
+              </Text>
+              <Text style={[styles.featureItem, { color: colors.text }]}>
                 🎨 Bütün Xüsusi Şriftlər Və OLED Mövzular
               </Text>
               <Text style={[styles.featureItem, { color: colors.text }]}>
-                ☁️ Cihazlararası Bulud Sinxronizasiyası
+                ☁️ Cihazlararası Avtomatik Bulud Sinxronizasiyası
               </Text>
             </View>
           </Pressable>
@@ -199,7 +208,7 @@ export default function PlanSelectScreen() {
             <View style={styles.planHeader}>
               <View>
                 <Text style={[styles.planTitle, { color: colors.text }]}>PREMIUM AYLIQ 🗓️</Text>
-                <Text style={[styles.planPrice, { color: colors.textMuted }]}>$4.99 / ay</Text>
+                <Text style={[styles.planPrice, { color: colors.textMuted }]}>$2.99 / ay (ilk ay $1.99)</Text>
               </View>
               <View
                 style={[

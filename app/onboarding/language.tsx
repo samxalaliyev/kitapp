@@ -22,7 +22,7 @@ export default function LanguageOnboarding() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
-  const { uiLang, setLanguage, completeOnboarding } = useLanguage();
+  const { uiLang, setLanguage } = useLanguage();
   const [selected, setSelected] = useState<LanguageCode>(uiLang ?? 'en');
   const [saving, setSaving] = useState(false);
 
@@ -32,8 +32,7 @@ export default function LanguageOnboarding() {
     try {
       // Sets BOTH target language AND interface language synchronously
       await setLanguage(selected);
-      await completeOnboarding();
-      router.replace('/(tabs)');
+      router.push('/onboarding/name');
     } finally {
       setSaving(false);
     }

@@ -61,6 +61,18 @@ export async function deleteWordFromCloud(userId: string, word: string, language
   }
 }
 
+export async function clearAllWordsFromCloud(userId: string): Promise<void> {
+  if (!isSupabaseConfigured || !userId) return;
+  try {
+    await supabase
+      .from('user_vocabulary')
+      .delete()
+      .eq('user_id', userId);
+  } catch (err) {
+    console.warn('[Sync] Failed to clear vocabulary from cloud:', err);
+  }
+}
+
 /**
  * Bidirectional Sync Engine:
  * Synchronizes local SQLite database with Supabase Cloud PostgreSQL.

@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Local-only on-device sentence LRU cache to prevent any Supabase database bloat
-const SENTENCE_CACHE_KEY_PREFIX = '@kitab-oxu:sentence-cache:';
+const SENTENCE_CACHE_KEY_PREFIX = '@litera:sentence-cache:';
+const LEGACY_SENTENCE_CACHE_KEY_PREFIX = '@kitab-oxu:sentence-cache:';
 const MAX_LOCAL_SENTENCES = 100;
 const SENTENCE_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 
@@ -48,7 +49,10 @@ export async function getCachedSentence(
 
   // 2. Local storage check
   try {
-    const raw = await AsyncStorage.getItem(SENTENCE_CACHE_KEY_PREFIX + key);
+    let raw = await AsyncStorage.getItem(SENTENCE_CACHE_KEY_PREFIX + key);
+    if (!raw) {
+      raw = await AsyncStorage.getItem(LEGACY_SENTENCE_CACHE_KEY_PREFIX + key);
+    }
     if (raw) {
       const parsed = JSON.parse(raw) as CachedSentence;
       if (Date.now() - parsed.timestamp < SENTENCE_TTL_MS) {
@@ -56,6 +60,7 @@ export async function getCachedSentence(
         return parsed.translated;
       } else {
         await AsyncStorage.removeItem(SENTENCE_CACHE_KEY_PREFIX + key);
+        await AsyncStorage.removeItem(LEGACY_SENTENCE_CACHE_KEY_PREFIX + key);
       }
     }
   } catch {}
@@ -93,4 +98,8 @@ export async function setCachedSentence(
       JSON.stringify(entry),
     );
   } catch {}
+}
+
+export function clearSentenceMemoryCache(): void {
+  memorySentenceMap.clear();
 }

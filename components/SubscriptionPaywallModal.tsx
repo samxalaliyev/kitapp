@@ -42,10 +42,10 @@ export function SubscriptionPaywallModal({
     setLoading(true);
     try {
       await upgradeSubscription(selectedPlan);
-      Alert.alert('🌟 Litera Premium', t('premium_title'));
+      Alert.alert('🌟 Litera Premium', 'Təbriklər! Premium abunəliyiniz uğurla aktivləşdirildi.');
       onClose();
     } catch (err: any) {
-      Alert.alert('Xəta', err?.message || 'Ödəniş tamamlana bilmədi.');
+      Alert.alert('Məlumat', err?.message || 'Ödəniş tamamlana bilmədi.');
     } finally {
       setLoading(false);
     }
@@ -76,58 +76,76 @@ export function SubscriptionPaywallModal({
         <View
           style={[
             styles.sheet,
-            { paddingBottom: insets.bottom + Spacing.lg },
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.surfaceBorder,
+              paddingBottom: insets.bottom + Spacing.lg,
+            },
           ]}
         >
           {/* Top Handle */}
           <View style={styles.handleContainer}>
-            <View style={styles.handle} />
+            <View style={[styles.handle, { backgroundColor: colors.surfaceBorder }]} />
           </View>
 
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleWrap}>
-              <Text style={styles.brandBadge}>LITERA EXCLUSIVE</Text>
-              <Text style={styles.title}>{t('premium_title')}</Text>
+              <Text style={[styles.brandBadge, { color: colors.primary }]}>LITERA EXCLUSIVE</Text>
+              <Text style={[styles.title, { color: colors.text }]}>{t('premium_title')}</Text>
             </View>
-            <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={12}>
-              <Feather name="x" size={20} color="#94a3b8" />
+            <Pressable
+              onPress={onClose}
+              style={[
+                styles.closeBtn,
+                { backgroundColor: colors.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)' },
+              ]}
+              hitSlop={12}
+            >
+              <Feather name="x" size={20} color={colors.text} />
             </Pressable>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-            <Text style={styles.heroSub}>
+            <Text style={[styles.heroSub, { color: colors.textMuted }]}>
               {t('premium_sub')}
             </Text>
 
             {/* Feature Highlights with Vector Icons */}
-            <View style={styles.features}>
+            <View style={[styles.features, { backgroundColor: colors.bg, borderColor: colors.surfaceBorder }]}>
               <View style={styles.featureRow}>
                 <View style={styles.iconCircle}>
                   <Feather name="shield" size={15} color="#d4af7a" />
                 </View>
-                <Text style={styles.featureText}>{t('feature_no_ads')}</Text>
+                <Text style={[styles.featureText, { color: colors.text }]}>{t('feature_no_ads') || '100% Reklamsız Kəsintisiz Oxu'}</Text>
               </View>
 
               <View style={styles.featureRow}>
                 <View style={styles.iconCircle}>
                   <Feather name="zap" size={15} color="#d4af7a" />
                 </View>
-                <Text style={styles.featureText}>{t('feature_unlimited_translations')}</Text>
+                <Text style={[styles.featureText, { color: colors.text }]}>Sonsuz Enerji & Limitsiz Tərcümə (⚡ ∞)</Text>
               </View>
 
               <View style={styles.featureRow}>
                 <View style={styles.iconCircle}>
                   <Feather name="download" size={15} color="#d4af7a" />
                 </View>
-                <Text style={styles.featureText}>{t('feature_unlimited_downloads')}</Text>
+                <Text style={[styles.featureText, { color: colors.text }]}>{t('feature_unlimited_downloads') || 'Limitsiz Oflayn Kitab Yükləmə'}</Text>
+              </View>
+
+              <View style={styles.featureRow}>
+                <View style={styles.iconCircle}>
+                  <Feather name="award" size={15} color="#d4af7a" />
+                </View>
+                <Text style={[styles.featureText, { color: colors.text }]}>Liqa Yarışlarında 1.5x XP Üstünlüyü 🏆</Text>
               </View>
 
               <View style={styles.featureRow}>
                 <View style={styles.iconCircle}>
                   <Feather name="type" size={15} color="#d4af7a" />
                 </View>
-                <Text style={styles.featureText}>{t('feature_all_fonts_themes')}</Text>
+                <Text style={[styles.featureText, { color: colors.text }]}>{t('feature_all_fonts_themes') || 'Bütün Şriftlər & OLED Mövzular'}</Text>
               </View>
             </View>
 
@@ -138,23 +156,33 @@ export function SubscriptionPaywallModal({
                 onPress={() => setSelectedPlan('premium_yearly')}
                 style={({ pressed }) => [
                   styles.planCard,
-                  selectedPlan === 'premium_yearly' && styles.planCardActive,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.surfaceBorder,
+                  },
+                  selectedPlan === 'premium_yearly' && [
+                    styles.planCardActive,
+                    {
+                      borderColor: colors.primary,
+                      backgroundColor: colors.isDark ? 'rgba(212, 175, 122, 0.1)' : '#fef3c7',
+                    },
+                  ],
                   pressed && styles.pressed,
                 ]}
               >
                 <View style={styles.badgeDiscount}>
-                  <Text style={styles.badgeDiscountText}>{t('discount_badge') || '17% QƏNAƏT'}</Text>
+                  <Text style={styles.badgeDiscountText}>🔥 50% ENDİRİM + 7 GÜN SINAQ</Text>
                 </View>
 
                 <View style={styles.planInfo}>
-                  <Text style={styles.planTitle}>
-                    {t('plan_yearly')}
+                  <Text style={[styles.planTitle, { color: colors.text }]}>
+                    İllik Abunəlik (Ən Populyar) 🌟
                   </Text>
-                  <Text style={styles.planPrice}>
-                    $29.99 <Text style={styles.planPeriod}>{t('per_year')}</Text>
+                  <Text style={[styles.planPrice, { color: colors.primary }]}>
+                    $24.99 <Text style={[styles.planPeriod, { color: colors.textMuted }]}>/ il ($2.08/ay)</Text>
                   </Text>
-                  <Text style={styles.planSub}>
-                    {t('plan_yearly_sub')}
+                  <Text style={[styles.planSub, { color: colors.textMuted }]}>
+                    7 gün pulsuz sınaq • İstənilən vaxt ləğv edilə bilər
                   </Text>
                 </View>
               </Pressable>
@@ -164,19 +192,29 @@ export function SubscriptionPaywallModal({
                 onPress={() => setSelectedPlan('premium_monthly')}
                 style={({ pressed }) => [
                   styles.planCard,
-                  selectedPlan === 'premium_monthly' && styles.planCardActive,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.surfaceBorder,
+                  },
+                  selectedPlan === 'premium_monthly' && [
+                    styles.planCardActive,
+                    {
+                      borderColor: colors.primary,
+                      backgroundColor: colors.isDark ? 'rgba(212, 175, 122, 0.1)' : '#fef3c7',
+                    },
+                  ],
                   pressed && styles.pressed,
                 ]}
               >
                 <View style={styles.planInfo}>
-                  <Text style={styles.planTitle}>
-                    {t('plan_monthly')}
+                  <Text style={[styles.planTitle, { color: colors.text }]}>
+                    Aylıq Abunəlik 🗓️
                   </Text>
-                  <Text style={styles.planPrice}>
-                    $4.99 <Text style={styles.planPeriod}>{t('per_month')}</Text>
+                  <Text style={[styles.planPrice, { color: colors.primary }]}>
+                    $2.99 <Text style={[styles.planPeriod, { color: colors.textMuted }]}>{t('per_month')}</Text>
                   </Text>
-                  <Text style={styles.planSub}>
-                    {t('plan_monthly_sub')}
+                  <Text style={[styles.planSub, { color: colors.textMuted }]}>
+                    İlk ay cəmi $1.99 • Limitsiz enerji və reklamsız oxu
                   </Text>
                 </View>
               </Pressable>
@@ -206,7 +244,7 @@ export function SubscriptionPaywallModal({
               disabled={restoring || loading}
               style={({ pressed }) => [styles.restoreBtn, pressed && styles.pressed]}
             >
-              <Text style={styles.restoreBtnText}>
+              <Text style={[styles.restoreBtnText, { color: colors.primary }]}>
                 {restoring
                   ? (t('connecting') || 'Bərpa edilir...')
                   : `🔄 ${t('restore_purchases') || 'Alışları Bərpa Et'}`}
@@ -214,14 +252,14 @@ export function SubscriptionPaywallModal({
             </Pressable>
 
             {/* Legal Disclosures */}
-            <View style={styles.legalFooter}>
-              <Text style={styles.legalText}>
+            <View style={[styles.legalFooter, { borderTopColor: colors.surfaceBorder }]}>
+              <Text style={[styles.legalText, { color: colors.textMuted }]}>
                 Abunəlik Google Play hesabınızdan tutulur və dövrün sonunda avtomatik yenilənir.{'\n'}
-                <Text style={styles.legalLink} onPress={() => setActiveLegal('terms')}>
+                <Text style={[styles.legalLink, { color: colors.primary }]} onPress={() => setActiveLegal('terms')}>
                   {t('terms_of_service')}
                 </Text>
                 {'  •  '}
-                <Text style={styles.legalLink} onPress={() => setActiveLegal('privacy')}>
+                <Text style={[styles.legalLink, { color: colors.primary }]} onPress={() => setActiveLegal('privacy')}>
                   {t('privacy_policy')}
                 </Text>
               </Text>

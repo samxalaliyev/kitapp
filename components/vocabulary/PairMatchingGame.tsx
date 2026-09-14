@@ -210,17 +210,17 @@ export function PairMatchingGame({
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <View style={[styles.root, { backgroundColor: '#0d0f17', paddingTop: insets.top + 8, paddingBottom: insets.bottom + 12 }]}>
+      <View style={[styles.root, { backgroundColor: colors.bg, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 12 }]}>
         {/* Top Header */}
         <View style={styles.topHeader}>
           <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={12}>
-            <Feather name="x" size={24} color="#94a3b8" />
+            <Feather name="x" size={24} color={colors.text} />
           </Pressable>
 
           {/* Progress Bar */}
-          <View style={styles.progressBarWrapper}>
-            <View style={styles.progressBarTrack}>
-              <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
+          <View style={[styles.progressBarWrapper, { backgroundColor: colors.surfaceBorder }]}>
+            <View style={[styles.progressBarTrack, { backgroundColor: colors.surfaceBorder }]}>
+              <View style={[styles.progressBarFill, { width: `${progress}%`, backgroundColor: colors.primary }]} />
             </View>
           </View>
 
@@ -242,32 +242,32 @@ export function PairMatchingGame({
         {roundCompleted ? (
           <View style={styles.victoryContainer}>
             <View style={styles.trophyCircle}>
-              <Feather name="award" size={48} color="#d4af7a" />
+              <Feather name="award" size={48} color={colors.primary} />
             </View>
-            <Text style={styles.victoryTitle}>{t('match_victory_title')}</Text>
-            <Text style={styles.victorySubtitle}>
+            <Text style={[styles.victoryTitle, { color: colors.text }]}>{t('match_victory_title')}</Text>
+            <Text style={[styles.victorySubtitle, { color: colors.textMuted }]}>
               {t('match_victory_sub')}
             </Text>
 
             {/* Stats Row */}
             <View style={styles.victoryStatsRow}>
-              <View style={styles.victoryStatBox}>
-                <Text style={styles.statBoxNum}>+25</Text>
-                <Text style={styles.statBoxLabel}>{t('xp_gained')}</Text>
+              <View style={[styles.victoryStatBox, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <Text style={[styles.statBoxNum, { color: colors.primary }]}>+25</Text>
+                <Text style={[styles.statBoxLabel, { color: colors.textMuted }]}>{t('xp_gained')}</Text>
               </View>
-              <View style={styles.victoryStatBox}>
-                <Text style={styles.statBoxNum}>{pairs.length}</Text>
-                <Text style={styles.statBoxLabel}>{t('words_learned_stat')}</Text>
+              <View style={[styles.victoryStatBox, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <Text style={[styles.statBoxNum, { color: colors.primary }]}>{pairs.length}</Text>
+                <Text style={[styles.statBoxLabel, { color: colors.textMuted }]}>{t('words_learned_stat')}</Text>
               </View>
-              <View style={styles.victoryStatBox}>
-                <Text style={styles.statBoxNum}>{roundStreak}</Text>
-                <Text style={styles.statBoxLabel}>{t('streak_round_stat')}</Text>
+              <View style={[styles.victoryStatBox, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <Text style={[styles.statBoxNum, { color: colors.primary }]}>{roundStreak}</Text>
+                <Text style={[styles.statBoxLabel, { color: colors.textMuted }]}>{t('streak_round_stat')}</Text>
               </View>
             </View>
 
             {/* Next Round Button */}
             <Pressable
-              style={({ pressed }) => [styles.continueBtn, pressed && styles.pressed]}
+              style={({ pressed }) => [styles.continueBtn, { backgroundColor: colors.primary }, pressed && styles.pressed]}
               onPress={startNewRound}
             >
               <Text style={styles.continueBtnText}>
@@ -281,7 +281,7 @@ export function PairMatchingGame({
             showsVerticalScrollIndicator={false}
           >
             {/* Title */}
-            <Text style={styles.mainTitle}>{t('game_pair_title')}</Text>
+            <Text style={[styles.mainTitle, { color: colors.text }]}>{t('game_pair_title')}</Text>
 
             {/* Two Column Grid */}
             <Animated.View
@@ -304,9 +304,13 @@ export function PairMatchingGame({
                       onPress={() => handleSelectLeft(card)}
                       style={({ pressed }) => [
                         styles.card,
-                        { width: CARD_WIDTH },
-                        isMatched && styles.cardMatched,
-                        isSelected && styles.cardSelected,
+                        {
+                          width: CARD_WIDTH,
+                          backgroundColor: colors.surface,
+                          borderColor: colors.surfaceBorder,
+                        },
+                        isMatched && { backgroundColor: colors.primaryBg, borderColor: colors.primary },
+                        isSelected && { backgroundColor: colors.isDark ? '#1a1e2e' : '#fef3c7', borderColor: colors.primary },
                         isWrong && styles.cardWrong,
                         pressed && !isMatched && styles.cardPressed,
                       ]}
@@ -314,8 +318,8 @@ export function PairMatchingGame({
                       <Text
                         style={[
                           styles.cardText,
-                          isSelected && styles.cardTextSelected,
-                          isMatched && styles.cardTextMatched,
+                          { color: colors.text },
+                          (isSelected || isMatched) && { color: colors.primary },
                           isWrong && styles.cardTextWrong,
                         ]}
                       >
@@ -323,7 +327,7 @@ export function PairMatchingGame({
                       </Text>
                       {isMatched ? (
                         <View style={styles.matchCheck}>
-                          <Feather name="check" size={14} color="#d4af7a" />
+                          <Feather name="check" size={14} color={colors.primary} />
                         </View>
                       ) : null}
                     </Pressable>
@@ -345,9 +349,13 @@ export function PairMatchingGame({
                       onPress={() => handleSelectRight(card)}
                       style={({ pressed }) => [
                         styles.card,
-                        { width: CARD_WIDTH },
-                        isMatched && styles.cardMatched,
-                        isSelected && styles.cardSelected,
+                        {
+                          width: CARD_WIDTH,
+                          backgroundColor: colors.surface,
+                          borderColor: colors.surfaceBorder,
+                        },
+                        isMatched && { backgroundColor: colors.primaryBg, borderColor: colors.primary },
+                        isSelected && { backgroundColor: colors.isDark ? '#1a1e2e' : '#fef3c7', borderColor: colors.primary },
                         isWrong && styles.cardWrong,
                         pressed && !isMatched && styles.cardPressed,
                       ]}
@@ -355,8 +363,8 @@ export function PairMatchingGame({
                       <Text
                         style={[
                           styles.cardText,
-                          isSelected && styles.cardTextSelected,
-                          isMatched && styles.cardTextMatched,
+                          { color: colors.text },
+                          (isSelected || isMatched) && { color: colors.primary },
                           isWrong && styles.cardTextWrong,
                         ]}
                       >
@@ -364,7 +372,7 @@ export function PairMatchingGame({
                       </Text>
                       {isMatched ? (
                         <View style={styles.matchCheck}>
-                          <Feather name="check" size={14} color="#d4af7a" />
+                          <Feather name="check" size={14} color={colors.primary} />
                         </View>
                       ) : null}
                     </Pressable>

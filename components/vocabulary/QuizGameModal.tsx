@@ -156,16 +156,16 @@ export function QuizGameModal({
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <View style={[styles.root, { backgroundColor: '#0d0f17', paddingTop: insets.top + 8, paddingBottom: insets.bottom + 12 }]}>
+      <View style={[styles.root, { backgroundColor: colors.bg, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 12 }]}>
         {/* Top Header */}
         <View style={styles.topHeader}>
           <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={12}>
-            <Feather name="x" size={24} color="#94a3b8" />
+            <Feather name="x" size={24} color={colors.text} />
           </Pressable>
 
-          <View style={styles.progressBarWrapper}>
-            <View style={styles.progressBarTrack}>
-              <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
+          <View style={[styles.progressBarWrapper, { backgroundColor: colors.surfaceBorder }]}>
+            <View style={[styles.progressBarTrack, { backgroundColor: colors.surfaceBorder }]}>
+              <View style={[styles.progressBarFill, { width: `${progress}%`, backgroundColor: colors.primary }]} />
             </View>
           </View>
 
@@ -182,19 +182,19 @@ export function QuizGameModal({
 
         {loading ? (
           <View style={styles.centered}>
-            <ActivityIndicator size="large" color="#d4af7a" />
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : completed ? (
           <View style={styles.victoryContainer}>
             <View style={styles.trophyCircle}>
-              <Feather name="award" size={48} color="#d4af7a" />
+              <Feather name="award" size={48} color={colors.primary} />
             </View>
-            <Text style={styles.victoryTitle}>{t('quiz_completed_title')}</Text>
-            <Text style={styles.victorySubtitle}>
+            <Text style={[styles.victoryTitle, { color: colors.text }]}>{t('quiz_completed_title')}</Text>
+            <Text style={[styles.victorySubtitle, { color: colors.textMuted }]}>
               {score} / {deck.length} {t('quiz_completed_sub')}
             </Text>
             <Pressable
-              style={({ pressed }) => [styles.continueBtn, pressed && styles.pressed]}
+              style={({ pressed }) => [styles.continueBtn, { backgroundColor: colors.primary }, pressed && styles.pressed]}
               onPress={startQuiz}
             >
               <Text style={styles.continueBtnText}>
@@ -205,9 +205,9 @@ export function QuizGameModal({
         ) : currentPair ? (
           <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
             {/* Target Word Card */}
-            <View style={styles.questionCard}>
-              <Text style={styles.questionHint}>{t('select_correct_trans')}</Text>
-              <Text style={styles.targetWord}>{currentPair.word}</Text>
+            <View style={[styles.questionCard, { backgroundColor: colors.surface, borderColor: colors.primary }]}>
+              <Text style={[styles.questionHint, { color: colors.textMuted }]}>{t('select_correct_trans')}</Text>
+              <Text style={[styles.targetWord, { color: colors.text }]}>{currentPair.word}</Text>
               {currentPair.phonetic ? (
                 <Text style={styles.targetPhonetic}>{currentPair.phonetic}</Text>
               ) : null}
@@ -217,7 +217,7 @@ export function QuizGameModal({
                 style={styles.speakerBtn}
                 onPress={() => Speech.speak(currentPair.word, { language: 'en-US' })}
               >
-                <Feather name="volume-2" size={20} color="#d4af7a" />
+                <Feather name="volume-2" size={20} color={colors.primary} />
               </Pressable>
             </View>
 
@@ -236,6 +236,7 @@ export function QuizGameModal({
                     onPress={() => handleSelectOption(opt)}
                     style={({ pressed }) => [
                       styles.optionCard,
+                      { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
                       showSuccess && styles.optionCardCorrect,
                       showError && styles.optionCardWrong,
                       pressed && selectedOption === null && styles.optionCardPressed,
@@ -244,13 +245,14 @@ export function QuizGameModal({
                     <Text
                       style={[
                         styles.optionText,
+                        { color: colors.text },
                         showSuccess && styles.optionTextCorrect,
                         showError && styles.optionTextWrong,
                       ]}
                     >
                       {opt}
                     </Text>
-                    {showSuccess ? <Feather name="check" size={20} color="#d4af7a" /> : null}
+                    {showSuccess ? <Feather name="check" size={20} color={colors.primary} /> : null}
                     {showError ? <Feather name="x" size={20} color="#ef4444" /> : null}
                   </Pressable>
                 );

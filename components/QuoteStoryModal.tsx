@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { SOCIAL_CONFIG } from '@/lib/social';
+import { useAppTheme } from '@/lib/theme';
 
 let RNShare: any = null;
 let RNSocial: any = null;
@@ -127,6 +128,7 @@ export function QuoteStoryModal({
   onClose,
 }: QuoteStoryModalProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
   const { t } = useLanguage();
   const viewShotRef = useRef<any>(null);
 
@@ -294,21 +296,37 @@ export function QuoteStoryModal({
       <View style={styles.backdrop}>
         <Pressable style={styles.dismissOverlay} onPress={onClose} />
 
-        <View style={[styles.sheet, { paddingBottom: insets.bottom + Spacing.sm }]}>
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.surfaceBorder,
+              paddingBottom: insets.bottom + Spacing.sm,
+            },
+          ]}
+        >
           {/* Top Drag Handle */}
           <View style={styles.handleContainer}>
-            <View style={styles.handle} />
+            <View style={[styles.handle, { backgroundColor: colors.surfaceBorder }]} />
           </View>
 
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleWrap}>
-              <Text style={styles.brandBadge}>{t('story_modal_badge') || 'INSTAGRAM 9:16 STORY'}</Text>
-              <Text style={styles.title}>{t('story_modal_title') || 'Story Hazırla'}</Text>
+              <Text style={[styles.brandBadge, { color: colors.primary }]}>{t('story_modal_badge') || 'INSTAGRAM 9:16 STORY'}</Text>
+              <Text style={[styles.title, { color: colors.text }]}>{t('story_modal_title') || 'Story Hazırla'}</Text>
             </View>
 
-            <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={12}>
-              <Feather name="x" size={18} color="#94a3b8" />
+            <Pressable
+              onPress={onClose}
+              style={[
+                styles.closeBtn,
+                { backgroundColor: colors.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)' },
+              ]}
+              hitSlop={12}
+            >
+              <Feather name="x" size={18} color={colors.text} />
             </Pressable>
           </View>
 
@@ -411,7 +429,7 @@ export function QuoteStoryModal({
             </View>
 
             {/* Theme Selector */}
-            <Text style={styles.sectionLabel}>{t('story_modal_color_theme') || 'Rəng Teması'}</Text>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{t('story_modal_color_theme') || 'Rəng Teması'}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -425,7 +443,11 @@ export function QuoteStoryModal({
                     onPress={() => setSelectedTheme(th)}
                     style={({ pressed }) => [
                       styles.themeCard,
-                      active && styles.themeCardActive,
+                      {
+                        backgroundColor: colors.isDark ? '#12151f' : '#f8fafc',
+                        borderColor: colors.surfaceBorder,
+                      },
+                      active && [styles.themeCardActive, { borderColor: colors.primary }],
                       pressed && styles.pressed,
                     ]}
                   >
@@ -435,7 +457,13 @@ export function QuoteStoryModal({
                       end={{ x: 1, y: 1 }}
                       style={styles.themeSwatch}
                     />
-                    <Text style={[styles.themeLabel, active && styles.themeLabelActive]}>
+                    <Text
+                      style={[
+                        styles.themeLabel,
+                        { color: colors.textMuted },
+                        active && [styles.themeLabelActive, { color: colors.primary }],
+                      ]}
+                    >
                       {t(th.nameKey) || th.id}
                     </Text>
                   </Pressable>
@@ -447,7 +475,7 @@ export function QuoteStoryModal({
           </ScrollView>
 
           {/* Action Buttons */}
-          <View style={styles.bottomActionRow}>
+          <View style={[styles.bottomActionRow, { backgroundColor: colors.surface, borderTopColor: colors.surfaceBorder }]}>
             <Pressable
               onPress={onInstagram}
               disabled={busy}
@@ -471,11 +499,15 @@ export function QuoteStoryModal({
               disabled={busy}
               style={({ pressed }) => [
                 styles.otherBtn,
+                {
+                  backgroundColor: colors.isDark ? '#191e2e' : '#e2e8f0',
+                  borderColor: colors.surfaceBorder,
+                },
                 pressed && styles.pressed,
               ]}
             >
-              <Feather name="share-2" size={16} color="#f8fafc" style={{ marginRight: 6 }} />
-              <Text style={styles.otherBtnText}>{t('story_modal_share_save') || 'Paylaş / Saxla'}</Text>
+              <Feather name="share-2" size={16} color={colors.text} style={{ marginRight: 6 }} />
+              <Text style={[styles.otherBtnText, { color: colors.text }]}>{t('story_modal_share_save') || 'Paylaş / Saxla'}</Text>
             </Pressable>
           </View>
         </View>

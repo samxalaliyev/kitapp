@@ -22,7 +22,8 @@ const DEFAULT_CONFIG: AppRemoteConfig = {
   announcement: null,
 };
 
-const REMOTE_CONFIG_STORAGE_KEY = '@kitab-oxu:remote-config';
+const REMOTE_CONFIG_STORAGE_KEY = '@litera:remote-config';
+const LEGACY_REMOTE_CONFIG_STORAGE_KEY = '@kitab-oxu:remote-config';
 let memoryConfig: AppRemoteConfig = { ...DEFAULT_CONFIG };
 
 /**
@@ -38,7 +39,10 @@ export async function getRemoteConfig(): Promise<AppRemoteConfig> {
 export async function initRemoteConfig(): Promise<AppRemoteConfig> {
   // 1. Try local cache first for 0ms cold start
   try {
-    const cached = await AsyncStorage.getItem(REMOTE_CONFIG_STORAGE_KEY);
+    let cached = await AsyncStorage.getItem(REMOTE_CONFIG_STORAGE_KEY);
+    if (!cached) {
+      cached = await AsyncStorage.getItem(LEGACY_REMOTE_CONFIG_STORAGE_KEY);
+    }
     if (cached) {
       memoryConfig = { ...DEFAULT_CONFIG, ...JSON.parse(cached) };
     }

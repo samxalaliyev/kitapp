@@ -33,6 +33,7 @@ import { FullscreenAdModal } from "@/components/FullscreenAdModal";
 import { QuoteStoryModal } from "@/components/QuoteStoryModal";
 import { ReaderSettingsModal } from "@/components/reader/ReaderSettingsModal";
 import { SubscriptionPaywallModal } from "@/components/SubscriptionPaywallModal";
+import { OutOfEnergyModal } from "@/components/OutOfEnergyModal";
 import { WordPopup } from "@/components/WordPopup";
 import { isBookReady, prepareBookForReading } from "@/lib/book-service";
 import { getBook, initDatabase, getReadingProgress, saveReadingProgress } from "@/lib/db";
@@ -62,6 +63,10 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { isPremiumMember } from "@/lib/permissions/rbac";
 import { useAppTheme } from "@/lib/theme";
 import type { ApiBook } from "@/types/book";
+import { ENERGY_COSTS } from "@/lib/gamification/energy";
+import { recordReadingDay } from "@/lib/gamification/streaks";
+import { addXP } from "@/lib/gamification/leagues";
+import { trackPageTurn } from "@/lib/monetization/interstitial-ads";
 
 // Dedicated isolated pulsating glow for tutorial target only (ZERO overhead on all other words)
 const TutorialPulsingHalo = React.memo(function TutorialPulsingHalo() {
@@ -398,18 +403,19 @@ export default function BookReaderScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const { colors } = useAppTheme();
   const { t, targetLang } = useLanguage();
-  const { role, subscriptionPlan } = useAuth();
+  const { role, subscriptionPlan, energy, consumeEnergy } = useAuth();
   const isPremium = isPremiumMember(role, subscriptionPlan);
 
   const [loading, setLoading] = useState(true);
   const [bookTitle, setBookTitle] = useState("Kitab");
   const [bookData, setBookData] = useState<ParsedBookData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [outOfEnergyVisible, setOutOfEnergyVisible] = useState(false);
 
   // Settings & Theme (Synchronized directly in state)
   const [settings, setSettings] = useState<ReaderSettings>({
     fontSize: "normal",
-    fontFamily: "serif",
+    fontFamily: "sans",
     theme: colors.isDark ? "black" : "paper",
     lineHeight: 1.6,
     letterSpacing: 0,
@@ -583,6 +589,19 @@ export default function BookReaderScreen() {
         const parsed = await parseEpubFile(filePath);
         if (cancelled) return;
 
+        // Energy deduction for non-premium reading session (10 ⚡)
+        if (!isPremium) {
+          const hasEnergy = await consumeEnergy(ENERGY_COSTS.BOOK_READING_SESSION);
+          if (!hasEnergy) {
+            if (!cancelled) {
+              setOutOfEnergyVisible(true);
+              setLoading(false);
+            }
+            return;
+          }
+        }
+        recordReadingDay().catch(() => {});
+
         // Restore saved reading progress if exists
         try {
           const progress = await getReadingProgress(id);
@@ -638,7 +657,7 @@ export default function BookReaderScreen() {
 
   // Active theme & typography
   const activeTheme = THEMES[settings.theme] ?? THEMES.black;
-  const activeFontFamily = FONT_FAMILY_NATIVE[settings.fontFamily] || FONT_FAMILY_NATIVE.serif;
+  const activeFontFamily = FONT_FAMILY_NATIVE[settings.fontFamily] || FONT_FAMILY_NATIVE.sans;
   const activeFontSize = FONT_SIZE_PX[settings.fontSize] || FONT_SIZE_PX.normal;
 
   const stopSpeech = useCallback(() => {
@@ -715,15 +734,20 @@ export default function BookReaderScreen() {
 
       if (targetIndex >= 0 && (!bookData || targetIndex < bookData.pages.length)) {
         if (targetIndex !== currentPageRef.current) {
+          const oldIndex = currentPageRef.current;
           currentPageRef.current = targetIndex;
           setCurrentPage(targetIndex);
+          if (targetIndex > oldIndex) {
+            addXP(5, isPremium).catch(() => {});
+            trackPageTurn(role, subscriptionPlan, () => setFullscreenAdVisible(true));
+          }
           if (isSpeaking) {
             stopSpeech();
           }
         }
       }
     },
-    [windowWidth, isSpeaking, stopSpeech, bookData],
+    [windowWidth, isSpeaking, stopSpeech, bookData, isPremium, role, subscriptionPlan],
   );
 
   // Native viewability callback: triggers the instant the new page is 40% visible
@@ -733,8 +757,13 @@ export default function BookReaderScreen() {
       if (firstVisible && typeof firstVisible.index === 'number') {
         const newIndex = firstVisible.index;
         if (newIndex !== currentPageRef.current) {
+          const oldIndex = currentPageRef.current;
           currentPageRef.current = newIndex;
           setCurrentPage(newIndex);
+          if (newIndex > oldIndex) {
+            addXP(5, isPremium).catch(() => {});
+            trackPageTurn(role, subscriptionPlan, () => setFullscreenAdVisible(true));
+          }
         }
       }
     }
@@ -1327,6 +1356,23 @@ export default function BookReaderScreen() {
       <SubscriptionPaywallModal
         visible={paywallVisible}
         onClose={() => setPaywallVisible(false)}
+      />
+
+      {/* Out of Energy Modal (10 ⚡ per reading session) */}
+      <OutOfEnergyModal
+        visible={outOfEnergyVisible}
+        onClose={() => {
+          setOutOfEnergyVisible(false);
+          router.back();
+        }}
+        onOpenPaywall={() => {
+          setOutOfEnergyVisible(false);
+          setPaywallVisible(true);
+        }}
+        onEnergyRefilled={() => {
+          setOutOfEnergyVisible(false);
+        }}
+        requiredEnergy={ENERGY_COSTS.BOOK_READING_SESSION}
       />
     </View>
   );

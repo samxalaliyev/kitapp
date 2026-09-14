@@ -21,11 +21,12 @@ import { SubscriptionPaywallModal } from '@/components/SubscriptionPaywallModal'
 import { useAuth } from '@/lib/auth/AuthContext';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
+import type { TranslationKey } from '@/lib/i18n/translations';
 import { getLanguage, SUPPORTED_LANGUAGES, type LanguageCode } from '@/lib/i18n/constants';
 import { clearTranslationCache } from '@/lib/i18n/cache';
+import { LeaguesChallengesModal } from '@/components/gamification/LeaguesChallengesModal';
 import {
-  FONT_FAMILY_LABELS,
-  FONT_SIZE_LABELS,
+  FONT_SIZE_PX,
   getReaderSettings,
   saveReaderSettings,
   type FontFamilyChoice,
@@ -146,7 +147,7 @@ export default function SettingsScreen() {
   } = useAuth();
 
   const [fontSize, setFontSizeState] = useState<FontSizeLevel>('normal');
-  const [fontFamily, setFontFamilyState] = useState<FontFamilyChoice>('serif');
+  const [fontFamily, setFontFamilyState] = useState<FontFamilyChoice>('sans');
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [restoringPurchases, setRestoringPurchases] = useState(false);
@@ -154,6 +155,8 @@ export default function SettingsScreen() {
   // Active Picker Modal State
   const [activePicker, setActivePicker] = useState<PickerType>(null);
   const [activeLegal, setActiveLegal] = useState<LegalType>(null);
+  const [leaguesModalVisible, setLeaguesModalVisible] = useState(false);
+  const [leaguesInitialTab, setLeaguesInitialTab] = useState<'league' | 'challenges'>('league');
 
   useEffect(() => {
     let cancelled = false;
@@ -188,31 +191,31 @@ export default function SettingsScreen() {
   const clearCache = useCallback(() => {
     Alert.alert(
       t('clear_cache'),
-      'Keş olunmuş kitab faylları və tərcümə keçləri silinəcək. Davam etmək istəyirsiniz?',
+      t('clear_cache_confirm_msg'),
       [
-        { text: t('not_now'), style: 'cancel' },
+        { text: t('cancel_btn') || t('not_now'), style: 'cancel' },
         {
           text: t('clear_cache'),
           style: 'destructive',
           onPress: async () => {
             try {
-              await clearTranslationCache();
-              Alert.alert('Keş Təmizləndi', 'Bütün keşlər uğurla təmizləndi.');
+              await clearTranslationCache(user?.id);
+              Alert.alert(t('clear_cache_success_title'), t('clear_cache_success_msg'));
             } catch {
-              Alert.alert('Xəta', 'Keş təmizlənərkən xəta baş verdi');
+              Alert.alert(t('error'), t('clear_cache_error_msg'));
             }
           },
         },
       ],
     );
-  }, [t]);
+  }, [t, user?.id]);
 
   const handleDeleteAccount = useCallback(() => {
     Alert.alert(
       t('delete_account_confirm_title'),
       t('delete_account_confirm_msg'),
       [
-        { text: t('cancel_search') || 'Ləğv et', style: 'cancel' },
+        { text: t('cancel_btn') || 'Ləğv et', style: 'cancel' },
         {
           text: t('delete_account_confirm_yes'),
           style: 'destructive',
@@ -261,7 +264,7 @@ export default function SettingsScreen() {
         Alert.alert(t('restore_purchases') || 'Alışların Bərpası', t('no_purchases_found') || 'Aktiv abunəlik tapılmadı.');
       }
     } catch (err: any) {
-      Alert.alert('Xəta', err?.message || 'Bərpa zamanı xəta baş verdi.');
+      Alert.alert(t('error'), err?.message || t('clear_cache_error_msg'));
     } finally {
       setRestoringPurchases(false);
     }
@@ -275,26 +278,44 @@ export default function SettingsScreen() {
     ? t('plan_monthly').toUpperCase()
     : t('plan_free_badge');
 
+  // Dynamic Multi-language Helpers for Readers & Settings
+  const sizeLabelKey: Record<FontSizeLevel, TranslationKey> = {
+    small: 'size_small',
+    normal: 'size_normal',
+    large: 'size_large',
+    xlarge: 'size_xlarge',
+  };
+  const getFontSizeDisplay = (lvl: FontSizeLevel) => `${t(sizeLabelKey[lvl])} (${FONT_SIZE_PX[lvl]}px)`;
+
+  const fontFamilyKey: Record<FontFamilyChoice, TranslationKey> = {
+    sans: 'font_sans_label',
+    serif: 'font_serif_label',
+    sofia: 'font_sofia_label',
+    outfit: 'font_outfit_label',
+    cabin: 'font_cabin_label',
+  };
+  const getFontFamilyDisplay = (choice: FontFamilyChoice) => t(fontFamilyKey[choice]);
+
   // Options Data for Pickers
   const themeOptions: OptionItem<ThemeMode>[] = [
-    { id: 'system', label: 'Sistem (Avtomatik)' },
-    { id: 'dark', label: 'Karanlık Mod' },
-    { id: 'light', label: 'Açık Mod' },
+    { id: 'system', label: t('theme_system_label') },
+    { id: 'dark', label: t('theme_dark_label') },
+    { id: 'light', label: t('theme_light_label') },
   ];
 
   const fontSizeOptions: OptionItem<FontSizeLevel>[] = [
-    { id: 'small', label: FONT_SIZE_LABELS.small },
-    { id: 'normal', label: FONT_SIZE_LABELS.normal },
-    { id: 'large', label: FONT_SIZE_LABELS.large },
-    { id: 'xlarge', label: FONT_SIZE_LABELS.xlarge },
+    { id: 'small', label: getFontSizeDisplay('small') },
+    { id: 'normal', label: getFontSizeDisplay('normal') },
+    { id: 'large', label: getFontSizeDisplay('large') },
+    { id: 'xlarge', label: getFontSizeDisplay('xlarge') },
   ];
 
   const fontFamilyOptions: OptionItem<FontFamilyChoice>[] = [
-    { id: 'serif', label: FONT_FAMILY_LABELS.serif },
-    { id: 'sans', label: FONT_FAMILY_LABELS.sans },
-    { id: 'sofia', label: FONT_FAMILY_LABELS.sofia },
-    { id: 'outfit', label: FONT_FAMILY_LABELS.outfit },
-    { id: 'cabin', label: FONT_FAMILY_LABELS.cabin },
+    { id: 'sans', label: getFontFamilyDisplay('sans') },
+    { id: 'serif', label: getFontFamilyDisplay('serif') },
+    { id: 'sofia', label: getFontFamilyDisplay('sofia') },
+    { id: 'outfit', label: getFontFamilyDisplay('outfit') },
+    { id: 'cabin', label: getFontFamilyDisplay('cabin') },
   ];
 
   const currentTargetLang = getLanguage(targetLang);
@@ -460,25 +481,54 @@ export default function SettingsScreen() {
         <AdBannerContainer onUpgradePress={() => setPaywallVisible(true)} />
 
         {/* ==================================================================== */}
+        {/* GROUP 0: LEAGUES & DAILY CHALLENGES */}
+        {/* ==================================================================== */}
+        <SettingGroup title="Liqalar və Çellenclər 🏆">
+          <SettingRow
+            iconName="award"
+            iconColor="#fbbf24"
+            iconBgColor="rgba(251, 191, 36, 0.15)"
+            label="Həftəlik Liqa Yarışı"
+            value="Top 10 Reytinq 🏆"
+            onPress={() => {
+              setLeaguesInitialTab('league');
+              setLeaguesModalVisible(true);
+            }}
+          />
+          <SettingRow
+            iconName="zap"
+            iconColor="#f97316"
+            iconBgColor="rgba(249, 115, 22, 0.15)"
+            label="Oxu Seriyası & Çellenclər"
+            value="7 və 28 Günlük 🔥"
+            onPress={() => {
+              setLeaguesInitialTab('challenges');
+              setLeaguesModalVisible(true);
+            }}
+            isLast
+          />
+        </SettingGroup>
+
+        {/* ==================================================================== */}
         {/* GROUP 1: READING & THEME */}
         {/* ==================================================================== */}
         <SettingGroup title={t('section_reading_theme')}>
           <SettingRow
             iconName="moon"
             label={t('theme_mode')}
-            value={mode === 'system' ? 'Sistem' : mode === 'dark' ? 'Karanlık' : 'Açık'}
+            value={mode === 'system' ? t('mode_system') : mode === 'dark' ? t('mode_dark') : t('mode_light')}
             onPress={() => setActivePicker('theme')}
           />
           <SettingRow
             iconName="type"
             label={t('font_size')}
-            value={FONT_SIZE_LABELS[fontSize]}
+            value={getFontSizeDisplay(fontSize)}
             onPress={() => setActivePicker('fontSize')}
           />
           <SettingRow
             iconName="edit-3"
             label={t('font_family')}
-            value={FONT_FAMILY_LABELS[fontFamily]}
+            value={getFontFamilyDisplay(fontFamily)}
             onPress={() => setActivePicker('fontFamily')}
             isLast
           />
@@ -514,7 +564,7 @@ export default function SettingsScreen() {
         {/* ==================================================================== */}
         {/* GROUP 3: GROWTH & COMMUNITY */}
         {/* ==================================================================== */}
-        <SettingGroup title="Böyümə & Paylaşım">
+        <SettingGroup title={t('section_growth_community')}>
           <SettingRow
             iconName="star"
             label={t('rate_app')}
@@ -570,7 +620,7 @@ export default function SettingsScreen() {
         {/* GROUP 5: ACCOUNT ACTIONS (LOGOUT & DELETE) */}
         {/* ==================================================================== */}
         {user ? (
-          <SettingGroup title={t('tab_settings') || 'Hesab'}>
+          <SettingGroup title={t('section_account')}>
             <SettingRow
               iconName="log-out"
               iconColor="#f59e0b"
@@ -653,6 +703,17 @@ export default function SettingsScreen() {
           type={activeLegal}
           visible={activeLegal !== null}
           onClose={() => setActiveLegal(null)}
+        />
+
+        {/* Leagues & Daily Challenges Modal */}
+        <LeaguesChallengesModal
+          visible={leaguesModalVisible}
+          initialTab={leaguesInitialTab}
+          onClose={() => setLeaguesModalVisible(false)}
+          onOpenPaywall={() => {
+            setLeaguesModalVisible(false);
+            setPaywallVisible(true);
+          }}
         />
       </ScrollView>
     </View>

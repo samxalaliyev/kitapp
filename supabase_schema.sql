@@ -18,6 +18,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   subscription_plan public.subscription_plan NOT NULL DEFAULT 'free',
   subscription_status public.subscription_status NOT NULL DEFAULT 'active',
   subscription_expires_at TIMESTAMPTZ,
+  xp INT NOT NULL DEFAULT 0,
+  weekly_xp INT NOT NULL DEFAULT 0,
+  last_xp_week TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -116,7 +119,7 @@ ALTER TABLE public.books ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public read access on books" ON public.books FOR SELECT USING (true);
 
 -- Profiles Policies
-CREATE POLICY "Users can read own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Public read leaderboard profile info" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Users can delete own profile" ON public.profiles FOR DELETE USING (auth.uid() = id);
 CREATE POLICY "Admins full access profiles" ON public.profiles FOR ALL USING (

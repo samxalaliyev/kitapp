@@ -1,4 +1,4 @@
-﻿import type { LanguageCode } from '@/lib/i18n/constants';
+import type { LanguageCode } from '@/lib/i18n/constants';
 import {
   ensureReady,
   type SavedWord,
@@ -126,4 +126,9 @@ export async function incrementReviewCount(id: number): Promise<void> {
     'UPDATE saved_words SET review_count = review_count + 1 WHERE id = ?',
     [id],
   );
+}
+
+export async function clearAllSavedWords(): Promise<void> {
+  const db = await ensureReady();
+  await db.execAsync('DELETE FROM saved_words');
 }

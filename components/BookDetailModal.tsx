@@ -21,6 +21,11 @@ import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
 import type { ApiBook, BookPrepareProgress } from '@/types/book';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { EnergyActionModal } from '@/components/EnergyActionModal';
+import { OutOfEnergyModal } from '@/components/OutOfEnergyModal';
+import { SubscriptionPaywallModal } from '@/components/SubscriptionPaywallModal';
+import { ENERGY_COSTS } from '@/lib/gamification/energy';
 
 export interface BookDetailModalProps {
   visible: boolean;
@@ -32,13 +37,17 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
   const { t } = useLanguage();
+  const { isPremium, energy } = useAuth();
   const router = useRouter();
 
   const [isSaved, setIsSaved] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [progressMsg, setProgressMsg] = useState('');
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [energyModalVisible, setEnergyModalVisible] = useState(false);
   const [storyModalVisible, setStoryModalVisible] = useState(false);
+  const [outOfEnergyVisible, setOutOfEnergyVisible] = useState(false);
+  const [paywallVisible, setPaywallVisible] = useState(false);
 
   useEffect(() => {
     if (!book) return;
@@ -56,7 +65,7 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
 
   if (!book) return null;
 
-  const toggleSave = async () => {
+  const handleToggleSave = async () => {
     try {
       const next = !isSaved;
       setIsSaved(next);
@@ -70,6 +79,12 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
 
   const handleStartReading = async () => {
     if (downloading) return;
+
+    if (!isPremium && energy < ENERGY_COSTS.BOOK_READING_SESSION) {
+      setOutOfEnergyVisible(true);
+      return;
+    }
+
     setDownloading(true);
     setDownloadError(null);
     setProgressMsg(t('reading_loading'));
@@ -194,7 +209,18 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
                 downloading && styles.btnDisabled,
                 pressed && styles.pressed,
               ]}
-              onPress={handleStartReading}
+              onPress={() => {
+                if (downloading) return;
+                if (!isPremium) {
+                  if (energy < ENERGY_COSTS.BOOK_READING_SESSION) {
+                    setOutOfEnergyVisible(true);
+                    return;
+                  }
+                  setEnergyModalVisible(true);
+                } else {
+                  handleStartReading();
+                }
+              }}
               disabled={downloading}
             >
               {downloading ? (
@@ -220,7 +246,7 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
                 },
                 pressed && styles.pressed,
               ]}
-              onPress={toggleSave}
+              onPress={handleToggleSave}
             >
               <Feather
                 name="bookmark"
@@ -284,6 +310,37 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
           book={book}
           visible={storyModalVisible}
           onClose={() => setStoryModalVisible(false)}
+        />
+
+        {/* Out of Energy Modal */}
+        <OutOfEnergyModal
+          visible={outOfEnergyVisible}
+          onClose={() => setOutOfEnergyVisible(false)}
+          onOpenPaywall={() => {
+            setOutOfEnergyVisible(false);
+            setPaywallVisible(true);
+          }}
+          requiredEnergy={ENERGY_COSTS.BOOK_READING_SESSION}
+        />
+
+        {/* Subscription Paywall Modal */}
+        <SubscriptionPaywallModal
+          visible={paywallVisible}
+          onClose={() => setPaywallVisible(false)}
+        />
+
+        {/* Energy Action Modal (Slide-up notification before reading) */}
+        <EnergyActionModal
+          visible={energyModalVisible}
+          onClose={() => setEnergyModalVisible(false)}
+          onConfirm={handleStartReading}
+          actionTitle="Kitab Oxu"
+          actionSubtitle={`"${book.title}" oxumağa başlamaq üçün enerji istifadə olunacaq.`}
+          energyCost={ENERGY_COSTS.BOOK_READING_SESSION}
+          currentEnergy={energy}
+          isPremium={isPremium}
+          confirmText="Kitabı Aç"
+          iconName="book-open"
         />
       </View>
     </Modal>

@@ -16,6 +16,7 @@ import standardEbooksCatalog from '@/assets/data/standard_ebooks.json';
 import { BookCard } from '@/components/BookCard';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
+import type { TranslationKey } from '@/lib/i18n/translations';
 import { useAppTheme } from '@/lib/theme';
 import type { ApiBook } from '@/types/book';
 
@@ -26,6 +27,7 @@ export interface AuthorItem {
   initials: string;
   era: string;
   genre: string;
+  genreKey?: TranslationKey;
   avatarUrl?: string;
 }
 
@@ -64,6 +66,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'FD',
     era: '1821 – 1881',
     genre: 'Psixoloji Realizm & Fəlsəfə',
+    genreKey: 'author_genre_psychological_realism',
   },
   {
     id: 'william-shakespeare',
@@ -72,6 +75,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'WS',
     era: '1564 – 1616',
     genre: 'Qızıl Dövr & Dram',
+    genreKey: 'author_genre_golden_age_drama',
   },
   {
     id: 'agatha-christie',
@@ -80,6 +84,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'AC',
     era: '1890 – 1976',
     genre: 'Dedektiv & Sirr',
+    genreKey: 'author_genre_detective_mystery',
   },
   {
     id: 'arthur-conan-doyle',
@@ -88,6 +93,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'ACD',
     era: '1859 – 1930',
     genre: 'Dedektiv & Macəra',
+    genreKey: 'author_genre_detective_adventure',
   },
   {
     id: 'jane-austen',
@@ -96,6 +102,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'JA',
     era: '1775 – 1817',
     genre: 'Klassik Roman & Sevgi',
+    genreKey: 'author_genre_classic_romance',
   },
   {
     id: 'charles-dickens',
@@ -104,6 +111,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'CD',
     era: '1812 – 1870',
     genre: 'Viktoriya Dövrü',
+    genreKey: 'author_genre_victorian_era',
   },
   {
     id: 'leo-tolstoy',
@@ -112,6 +120,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'LT',
     era: '1828 – 1910',
     genre: 'Realizm & Fəlsəfə',
+    genreKey: 'author_genre_realism_philosophy',
   },
   {
     id: 'victor-hugo',
@@ -120,6 +129,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'VH',
     era: '1802 – 1885',
     genre: 'Romantizm & Humanizm',
+    genreKey: 'author_genre_romanticism_humanism',
   },
   {
     id: 'franz-kafka',
@@ -128,6 +138,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'FK',
     era: '1883 – 1924',
     genre: 'Ekzistensializm & Qəribəlik',
+    genreKey: 'author_genre_existentialism',
   },
   {
     id: 'anton-chekhov',
@@ -136,6 +147,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'AC',
     era: '1860 – 1904',
     genre: 'Qısa Hekayə & Dram',
+    genreKey: 'author_genre_short_story_drama',
   },
   {
     id: 'edgar-allan-poe',
@@ -144,6 +156,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'EAP',
     era: '1809 – 1849',
     genre: 'Qotika & Sirr',
+    genreKey: 'author_genre_gothic_mystery',
   },
   {
     id: 'mark-twain',
@@ -152,6 +165,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'MT',
     era: '1835 – 1910',
     genre: 'Satira & Macəra',
+    genreKey: 'author_genre_satire_adventure',
   },
   {
     id: 'f-scott-fitzgerald',
@@ -160,6 +174,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'FSF',
     era: '1896 – 1940',
     genre: 'Caz Dövrü & Dram',
+    genreKey: 'author_genre_jazz_age_drama',
   },
   {
     id: 'oscar-wilde',
@@ -168,6 +183,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'OW',
     era: '1854 – 1900',
     genre: 'Estetizm & Dram',
+    genreKey: 'author_genre_aestheticism_drama',
   },
   {
     id: 'jules-verne',
@@ -176,6 +192,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'JV',
     era: '1828 – 1905',
     genre: 'Səyahət & Fantastika',
+    genreKey: 'author_genre_travel_fantasy',
   },
   {
     id: 'alexandre-dumas',
@@ -184,6 +201,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'AD',
     era: '1802 – 1870',
     genre: 'Tarixi Macəra',
+    genreKey: 'author_genre_historical_adventure',
   },
   {
     id: 'h-g-wells',
@@ -192,6 +210,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'HGW',
     era: '1866 – 1946',
     genre: 'Elmi Fantastika',
+    genreKey: 'author_genre_sci_fi',
   },
   {
     id: 'robert-louis-stevenson',
@@ -200,6 +219,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'RLS',
     era: '1850 – 1894',
     genre: 'Macəra & Sirr',
+    genreKey: 'author_genre_adventure_mystery',
   },
   {
     id: 'jack-london',
@@ -208,6 +228,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'JL',
     era: '1876 – 1916',
     genre: 'Təbiət & Macəra',
+    genreKey: 'author_genre_nature_adventure',
   },
   {
     id: 'mary-shelley',
@@ -216,6 +237,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'MS',
     era: '1797 – 1851',
     genre: 'Qotika & Fantastika',
+    genreKey: 'author_genre_gothic_fantasy',
   },
   {
     id: 'friedrich-nietzsche',
@@ -224,6 +246,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'FN',
     era: '1844 – 1900',
     genre: 'Fəlsəfə',
+    genreKey: 'author_genre_philosophy',
   },
   {
     id: 'james-joyce',
@@ -232,6 +255,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'JJ',
     era: '1882 – 1941',
     genre: 'Modernizm',
+    genreKey: 'author_genre_modernism',
   },
   {
     id: 'virginia-woolf',
@@ -240,6 +264,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'VW',
     era: '1882 – 1941',
     genre: 'Modernizm',
+    genreKey: 'author_genre_modernism',
   },
   {
     id: 'honore-de-balzac',
@@ -248,6 +273,7 @@ export const POPULAR_AUTHORS: AuthorItem[] = [
     initials: 'HB',
     era: '1799 – 1850',
     genre: 'Fransız Realizmi',
+    genreKey: 'author_genre_french_realism',
   },
 ];
 
@@ -258,6 +284,7 @@ export function AuthorAvatarView({
   author: AuthorItem;
   size?: number;
 }) {
+  const { colors } = useAppTheme();
   const localImg = AUTHOR_LOCAL_AVATARS[author.id];
   const [imgFailed, setImgFailed] = useState(false);
 
@@ -269,6 +296,7 @@ export function AuthorAvatarView({
           width: size,
           height: size,
           borderRadius: size / 2,
+          backgroundColor: colors.surface,
         },
       ]}
     >
@@ -287,7 +315,7 @@ export function AuthorAvatarView({
           onError={() => setImgFailed(true)}
         />
       ) : (
-        <View style={styles.initialsBox}>
+        <View style={[styles.initialsBox, { backgroundColor: colors.surface }]}>
           <Text style={[styles.initialsText, { fontSize: size * 0.32 }]}>
             {author.initials}
           </Text>
@@ -305,7 +333,10 @@ export interface AuthorBooksModalProps {
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const COLUMN_WIDTH = (SCREEN_WIDTH - Spacing.xl * 2 - Spacing.md) / 2;
+const GRID_GAP = Spacing.md;
+const COLUMN_WIDTH = Math.min(148, Math.floor((SCREEN_WIDTH - 56) / 2));
+const COVER_HEIGHT = Math.round(COLUMN_WIDTH * 1.42);
+const HORIZONTAL_PADDING = Math.floor((SCREEN_WIDTH - (COLUMN_WIDTH * 2 + GRID_GAP)) / 2);
 
 export function AuthorBooksModal({
   author,
@@ -371,7 +402,9 @@ export function AuthorBooksModal({
               {/* Tags Row */}
               <View style={styles.badgeRow}>
                 <View style={[styles.tagBadge, { backgroundColor: 'rgba(212, 175, 122, 0.15)' }]}>
-                  <Text style={[styles.tagBadgeText, { color: '#d4af7a' }]}>{author.genre}</Text>
+                  <Text style={[styles.tagBadgeText, { color: '#d4af7a' }]}>
+                    {author.genreKey ? (t(author.genreKey) || author.genre) : author.genre}
+                  </Text>
                 </View>
                 <View style={styles.booksCountBadge}>
                   <Feather name="book-open" size={12} color={colors.primary} />
@@ -397,8 +430,9 @@ export function AuthorBooksModal({
                 author={item.author}
                 coverUrl={item.coverUrl}
                 downloadCount={item.downloadCount}
-                variant="horizontal"
-                coverSize="md"
+                variant="grid"
+                coverWidth={COLUMN_WIDTH}
+                coverHeight={COVER_HEIGHT}
                 onPress={() => {
                   onSelectBook(item);
                 }}
@@ -443,7 +477,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: HORIZONTAL_PADDING,
     paddingTop: Spacing.sm,
   },
   columnWrapper: {

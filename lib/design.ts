@@ -56,6 +56,15 @@ export const FontSize = {
   hero: 32,
 };
 
+export const Fonts = {
+  light: 'CeraPro-Light',
+  regular: 'CeraPro-Medium',
+  medium: 'CeraPro-Medium',
+  bold: 'CeraPro-Bold',
+  black: 'CeraPro-Black',
+  italic: 'CeraPro-Italic',
+} as const;
+
 export const FontWeight = {
   regular: '400' as const,
   medium: '500' as const,

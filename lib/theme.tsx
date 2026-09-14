@@ -88,22 +88,22 @@ interface ThemeContextType {
 const THEME_STORAGE_KEY = '@kitab_oxu_theme_mode';
 
 const ThemeContext = createContext<ThemeContextType>({
-  mode: 'dark',
+  mode: 'system',
   setMode: () => {},
-  colors: DARK_COLORS,
+  colors: LIGHT_COLORS,
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useColorScheme();
-  const [mode, setModeState] = useState<ThemeMode>('dark');
+  const [mode, setModeState] = useState<ThemeMode>('system');
 
   useEffect(() => {
     AsyncStorage.getItem(THEME_STORAGE_KEY).then((saved) => {
       if (saved === 'light' || saved === 'dark' || saved === 'system') {
-        setModeState(saved);
+        setModeState(saved as ThemeMode);
       } else {
-        // Default to dark luxury theme
-        setModeState('dark');
+        // Default to system theme
+        setModeState('system');
       }
     });
   }, []);
@@ -113,7 +113,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(THEME_STORAGE_KEY, newMode).catch(() => {});
   };
 
-  const isDark = mode === 'dark' || (mode === 'system' && systemScheme !== 'light');
+  const isDark = mode === 'dark' || (mode === 'system' && systemScheme === 'dark');
 
   const colors = isDark ? DARK_COLORS : LIGHT_COLORS;
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Dimensions,
   FlatList,
   Pressable,
   ScrollView,
@@ -21,7 +22,10 @@ import {
 } from '@/components/AuthorBooksModal';
 import { BookCard } from '@/components/BookCard';
 import { BookDetailModal } from '@/components/BookDetailModal';
+import { LeaguesChallengesModal } from '@/components/gamification/LeaguesChallengesModal';
+import { OutOfEnergyModal } from '@/components/OutOfEnergyModal';
 import { SectionHeader } from '@/components/SectionHeader';
+import { SubscriptionPaywallModal } from '@/components/SubscriptionPaywallModal';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { getAllReadingProgress, getBook } from '@/lib/db';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
@@ -74,6 +78,12 @@ function getGreetingPrefix(lang: string): string {
 }
 
 const catalog = (standardEbooksCatalog as ApiBook[]) ?? [];
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const SEARCH_GRID_GAP = Spacing.md;
+const SEARCH_COLUMN_WIDTH = Math.min(148, Math.floor((SCREEN_WIDTH - 56) / 2));
+const SEARCH_COVER_HEIGHT = Math.round(SEARCH_COLUMN_WIDTH * 1.42);
+const SEARCH_PADDING_H = Math.floor((SCREEN_WIDTH - (SEARCH_COLUMN_WIDTH * 2 + SEARCH_GRID_GAP)) / 2);
 
 // 1. 🌟 World Masterpieces (Hand-curated top 18 absolute world classics)
 const MASTERPIECE_IDS = [
@@ -248,7 +258,12 @@ export default function HomeScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const { colors } = useAppTheme();
   const { t, uiLang } = useLanguage();
-  const { user, profile } = useAuth();
+  const { user, profile, displayName: authDisplayName, energy, isPremium } = useAuth();
+
+  // Modal states for Energy & Paywall
+  const [outOfEnergyVisible, setOutOfEnergyVisible] = useState(false);
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const [leaguesModalVisible, setLeaguesModalVisible] = useState(false);
 
   // Author Modal State
   const [selectedAuthor, setSelectedAuthor] = useState<AuthorItem | null>(null);
@@ -279,6 +294,7 @@ export default function HomeScreen() {
   const greetingText = useMemo(() => {
     const prefix = getGreetingPrefix(uiLang);
     const displayName =
+      authDisplayName ||
       profile?.displayName ||
       user?.user_metadata?.full_name ||
       (user?.email ? user.email.split('@')[0] : '');
@@ -289,7 +305,7 @@ export default function HomeScreen() {
       return `${prefix}, ${capName}!`;
     }
     return `${prefix}!`;
-  }, [profile?.displayName, user, uiLang]);
+  }, [authDisplayName, profile?.displayName, user, uiLang]);
 
   // Category Sections with localized titles and famous books
   const categoryList = useMemo(() => {
@@ -386,12 +402,66 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
-        {/* Dynamic User Greeting Header */}
+        {/* Dynamic User Greeting Header & Energy Status */}
         <View style={styles.header}>
-          <Text style={[styles.greeting, { color: colors.text }]}>{greetingText}</Text>
-          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            {t('home_header_subtitle')}
-          </Text>
+          <View style={styles.headerRow}>
+            <View style={styles.headerTextWrap}>
+              <Text style={[styles.greeting, { color: colors.text }]}>{greetingText}</Text>
+              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+                {t('home_header_subtitle')}
+              </Text>
+            </View>
+
+            <View style={styles.headerRightActions}>
+              <Pressable
+                onPress={() => setLeaguesModalVisible(true)}
+                style={({ pressed }) => [
+                  styles.leaguePill,
+                  {
+                    backgroundColor: colors.isDark ? 'rgba(212, 175, 122, 0.15)' : '#fef9c3',
+                    borderColor: '#d4af7a',
+                  },
+                  pressed && styles.pressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Həftəlik Liqa və Seriya"
+              >
+                <Text style={styles.leagueIcon}>🏆</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  if (isPremium) {
+                    setPaywallVisible(true);
+                  } else {
+                    setOutOfEnergyVisible(true);
+                  }
+                }}
+                style={({ pressed }) => [
+                  styles.energyPill,
+                  {
+                    backgroundColor: isPremium
+                      ? (colors.isDark ? 'rgba(99, 102, 241, 0.15)' : '#e0e7ff')
+                      : (colors.isDark ? 'rgba(245, 158, 11, 0.15)' : '#fef3c7'),
+                    borderColor: isPremium ? '#818cf8' : '#f59e0b',
+                  },
+                  pressed && styles.pressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Energy balance"
+              >
+                <Text style={styles.energyBolt}>⚡</Text>
+                <Text
+                  style={[
+                    styles.energyValue,
+                    { color: isPremium ? (colors.isDark ? '#a5b4fc' : '#4f46e5') : (colors.isDark ? '#fbbf24' : '#d97706') },
+                  ]}
+                >
+                  {isPremium ? 'PRO' : energy}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
         </View>
 
         {/* Real-time Search Input Row */}
@@ -446,8 +516,9 @@ export default function HomeScreen() {
                       author={item.author}
                       coverUrl={item.coverUrl}
                       downloadCount={item.downloadCount}
-                      variant="horizontal"
-                      coverSize="md"
+                      variant="grid"
+                      coverWidth={SEARCH_COLUMN_WIDTH}
+                      coverHeight={SEARCH_COVER_HEIGHT}
                       onPress={() => goToDetail(item)}
                     />
                   </View>
@@ -580,6 +651,29 @@ export default function HomeScreen() {
           setSelectedBook(book);
         }}
       />
+
+      {/* Out of Energy Modal */}
+      <OutOfEnergyModal
+        visible={outOfEnergyVisible}
+        onClose={() => setOutOfEnergyVisible(false)}
+        onOpenPaywall={() => setPaywallVisible(true)}
+      />
+
+      {/* Subscription Paywall Modal */}
+      <SubscriptionPaywallModal
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
+      />
+
+      {/* Leagues & Daily Challenges Modal */}
+      <LeaguesChallengesModal
+        visible={leaguesModalVisible}
+        onClose={() => setLeaguesModalVisible(false)}
+        onOpenPaywall={() => {
+          setLeaguesModalVisible(false);
+          setPaywallVisible(true);
+        }}
+      />
     </View>
   );
 }
@@ -587,6 +681,22 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  leaguePill: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+    borderWidth: 1.5,
+  },
+  leagueIcon: {
+    fontSize: 15,
   },
   scrollContent: {
     paddingBottom: 110,
@@ -596,6 +706,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.md,
     paddingBottom: Spacing.sm,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerTextWrap: {
+    flex: 1,
+    paddingRight: Spacing.sm,
+  },
+  energyPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+    borderWidth: 1.5,
+    gap: 4,
+  },
+  energyBolt: {
+    fontSize: 14,
+  },
+  energyValue: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   greeting: {
     fontSize: 26,
@@ -642,19 +777,18 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   searchResultsSection: {
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: SEARCH_PADDING_H,
     marginTop: Spacing.sm,
   },
   searchResultsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: Spacing.md,
     marginTop: Spacing.sm,
   },
   gridItem: {
-    width: '47%',
-    marginBottom: Spacing.md,
+    width: SEARCH_COLUMN_WIDTH,
+    marginBottom: Spacing.lg,
   },
   noResultsBox: {
     alignItems: 'center',

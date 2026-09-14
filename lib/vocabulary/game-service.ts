@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { LanguageCode } from '@/lib/i18n/constants';
 import type { SavedWord } from './db';
 import { listSavedWords } from './store';
+import { addXP, getUserXp } from '@/lib/gamification/leagues';
 
 export interface GameWordPair {
   id: string;
@@ -127,14 +128,14 @@ export async function refillHearts(amount: number = 3): Promise<number> {
  */
 export async function getGameStats(): Promise<{ xp: number; streak: number; gamesPlayed: number; matchedCount: number }> {
   try {
-    const [xp, streak, played, matched] = await Promise.all([
-      AsyncStorage.getItem(STORAGE_KEYS.XP),
+    const [userXpData, streak, played, matched] = await Promise.all([
+      getUserXp(),
       AsyncStorage.getItem(STORAGE_KEYS.STREAK),
       AsyncStorage.getItem(STORAGE_KEYS.GAMES_PLAYED),
       AsyncStorage.getItem(STORAGE_KEYS.MATCHED_COUNT),
     ]);
     return {
-      xp: parseInt(xp || '0', 10) || 0,
+      xp: userXpData.totalXp,
       streak: parseInt(streak || '1', 10) || 1,
       gamesPlayed: parseInt(played || '0', 10) || 0,
       matchedCount: parseInt(matched || '0', 10) || 0,
@@ -150,12 +151,14 @@ export async function getGameStats(): Promise<{ xp: number; streak: number; game
 export async function recordGameSuccess(xpGain: number, pairsMatched: number): Promise<void> {
   try {
     const stats = await getGameStats();
-    const newXp = stats.xp + xpGain;
     const newPlayed = stats.gamesPlayed + 1;
     const newMatched = stats.matchedCount + pairsMatched;
 
-    await AsyncStorage.setItem(STORAGE_KEYS.XP, String(newXp));
-    await AsyncStorage.setItem(STORAGE_KEYS.GAMES_PLAYED, String(newPlayed));
+    await Promise.all([
+      addXP(xpGain),
+      AsyncStorage.setItem(STORAGE_KEYS.GAMES_PLAYED, String(newPlayed)),
+      AsyncStorage.setItem(STORAGE_KEYS.MATCHED_COUNT, String(newMatched)),
+    ]);
   } catch {}
 }
 

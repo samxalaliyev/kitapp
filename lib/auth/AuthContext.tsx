@@ -4,9 +4,11 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
+import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Session, User } from '@supabase/supabase-js';
 import * as WebBrowser from 'expo-web-browser';
@@ -26,18 +28,34 @@ import { watchRewardedAd } from '@/lib/monetization/rewarded-ads';
 import { purchasesService } from '@/lib/monetization/purchases';
 import { purgeUserLocalCache, syncCloudData } from '@/lib/sync/sync-service';
 
+import {
+  getEnergyBalance,
+  consumeEnergy as consumeEnergyFromStore,
+  refillEnergyWithAd,
+} from '@/lib/gamification/energy';
+import { getUserXp, addXP as addXpToStore } from '@/lib/gamification/leagues';
+
 WebBrowser.maybeCompleteAuthSession();
 
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
+  displayName: string;
+  setDisplayName: (name: string) => Promise<void>;
   role: UserRole;
   subscriptionPlan: SubscriptionPlan;
   isPremium: boolean;
   isAdmin: boolean;
   limits: UserFeatureLimits;
   loading: boolean;
+  energy: number;
+  totalXp: number;
+  weeklyXp: number;
+  addXp: (amount: number) => Promise<{ added: number; newTotal: number; newWeekly: number }>;
+  flushXpSync: () => Promise<void>;
+  consumeEnergy: (amount: number) => Promise<boolean>;
+  refillEnergy: () => Promise<number>;
   usedTranslationsToday: number;
   bonusTranslationsToday: number;
   downloadedBooksCount: number;
@@ -54,21 +72,33 @@ interface AuthContextValue {
 }
 
 const STORAGE_KEYS = {
-  DAILY_WORDS: '@kitab-oxu:used_words_',
-  BONUS_WORDS: '@kitab-oxu:bonus_words_',
-  PROFILE: '@kitab-oxu:user_profile',
+  DAILY_WORDS: '@litera:used_words_',
+  BONUS_WORDS: '@litera:bonus_words_',
+  PROFILE: '@litera:user_profile',
+  DISPLAY_NAME: '@litera:user_display_name',
+  LEGACY_DISPLAY_NAME: '@kitab-oxu:user_display_name',
+  LEGACY_PROFILE: '@kitab-oxu:user_profile',
 };
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   session: null,
   profile: null,
+  displayName: 'Oxucu',
+  setDisplayName: async () => {},
   role: 'free',
   subscriptionPlan: 'free',
   isPremium: false,
   isAdmin: false,
   limits: getFeatureLimits('free', 'free'),
   loading: true,
+  energy: 100,
+  totalXp: 0,
+  weeklyXp: 0,
+  addXp: async () => ({ added: 0, newTotal: 0, newWeekly: 0 }),
+  flushXpSync: async () => {},
+  consumeEnergy: async () => true,
+  refillEnergy: async () => 100,
   usedTranslationsToday: 0,
   bonusTranslationsToday: 0,
   downloadedBooksCount: 0,
@@ -93,8 +123,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [usedTranslationsToday, setUsedTranslationsToday] = useState(0);
   const [bonusTranslationsToday, setBonusTranslationsToday] = useState(0);
   const [downloadedBooksCount, setDownloadedBooksCount] = useState(0);
+  const [displayName, setDisplayNameState] = useState<string>('Oxucu');
+  const [energy, setEnergyState] = useState<number>(100);
+  const [totalXp, setTotalXp] = useState<number>(0);
+  const [weeklyXp, setWeeklyXp] = useState<number>(0);
+
+  const pendingXpSyncRef = useRef<{ totalXp: number; weeklyXp: number } | null>(null);
+  const xpSyncTimerRef = useRef<any>(null);
+
+  // Load XP from storage on mount (includes auto-migration of legacy 220 XP)
+  useEffect(() => {
+    getUserXp().then(({ totalXp: t, weeklyXp: w }) => {
+      setTotalXp(t);
+      setWeeklyXp(w);
+    });
+  }, []);
 
   const todayKey = new Date().toISOString().split('T')[0];
+
+  // Load display name
+  useEffect(() => {
+    const loadName = async () => {
+      try {
+        let name = await AsyncStorage.getItem(STORAGE_KEYS.DISPLAY_NAME);
+        if (!name) {
+          name = await AsyncStorage.getItem(STORAGE_KEYS.LEGACY_DISPLAY_NAME);
+        }
+        if (name) {
+          setDisplayNameState(name);
+        }
+      } catch {}
+    };
+    loadName();
+  }, []);
+
+  // Update display name when profile changes
+  useEffect(() => {
+    if (profile?.displayName) {
+      setDisplayNameState(profile.displayName);
+    }
+  }, [profile?.displayName]);
+
+  const setDisplayName = useCallback(async (name: string) => {
+    setDisplayNameState(name);
+    await AsyncStorage.setItem(STORAGE_KEYS.DISPLAY_NAME, name).catch(() => {});
+  }, []);
 
   // Load daily limits from AsyncStorage
   useEffect(() => {
@@ -238,6 +311,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => getFeatureLimits(role, subscriptionPlan, bonusTranslationsToday, 0),
     [role, subscriptionPlan, bonusTranslationsToday],
   );
+
+  // Load energy balance
+  useEffect(() => {
+    const loadEnergy = async () => {
+      const bal = await getEnergyBalance(isPremium, !user);
+      setEnergyState(bal);
+    };
+    loadEnergy();
+  }, [isPremium, user]);
+
+  const consumeEnergy = useCallback(async (amount: number): Promise<boolean> => {
+    const res = await consumeEnergyFromStore(amount, isPremium, !user);
+    setEnergyState(res.remaining);
+    return res.success;
+  }, [isPremium, user]);
+
+  const refillEnergy = useCallback(async (): Promise<number> => {
+    const next = await refillEnergyWithAd(isPremium, !user);
+    setEnergyState(next);
+    return next;
+  }, [isPremium, user]);
 
   const login = useCallback(async (email: string, pass: string) => {
     if (!isSupabaseConfigured) {
@@ -489,17 +583,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const flushXpSync = useCallback(async () => {
+    if (xpSyncTimerRef.current) {
+      clearTimeout(xpSyncTimerRef.current);
+      xpSyncTimerRef.current = null;
+    }
+    const pending = pendingXpSyncRef.current;
+    if (!pending || !user?.id) return;
+    pendingXpSyncRef.current = null;
+    try {
+      if (isSupabaseConfigured && supabase) {
+        await supabase
+          .from('profiles')
+          .update({ xp: pending.totalXp, weekly_xp: pending.weeklyXp })
+          .eq('id', user.id);
+      }
+    } catch {}
+  }, [user?.id]);
+
+  // AppState flush: flush pending XP when app moves to background
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'background' || nextState === 'inactive') {
+        flushXpSync();
+      }
+    });
+    return () => sub.remove();
+  }, [flushXpSync]);
+
+  const addXp = useCallback(async (amount: number) => {
+    const res = await addXpToStore(amount, isPremium);
+    setTotalXp(res.newTotal);
+    setWeeklyXp(res.newWeekly);
+    pendingXpSyncRef.current = { totalXp: res.newTotal, weeklyXp: res.newWeekly };
+
+    // Threshold or Idle Debounce:
+    // If large increment (>= 20 XP, e.g. game finished), flush immediately!
+    // For small increments (word lookup/page turn), use 15-second idle debounce.
+    if (res.added >= 20) {
+      flushXpSync();
+    } else {
+      if (xpSyncTimerRef.current) clearTimeout(xpSyncTimerRef.current);
+      xpSyncTimerRef.current = setTimeout(() => {
+        flushXpSync();
+      }, 15000);
+    }
+    return res;
+  }, [isPremium, flushXpSync]);
+
   const value = useMemo(
     () => ({
       user,
       session,
       profile,
+      displayName,
+      setDisplayName,
       role,
       subscriptionPlan,
       isPremium,
       isAdmin,
       limits,
       loading,
+      energy,
+      totalXp,
+      weeklyXp,
+      addXp,
+      flushXpSync,
+      consumeEnergy,
+      refillEnergy,
       usedTranslationsToday,
       bonusTranslationsToday,
       downloadedBooksCount,
@@ -518,12 +669,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       session,
       profile,
+      displayName,
+      setDisplayName,
       role,
       subscriptionPlan,
       isPremium,
       isAdmin,
       limits,
       loading,
+      energy,
+      totalXp,
+      weeklyXp,
+      addXp,
+      flushXpSync,
+      consumeEnergy,
+      refillEnergy,
       usedTranslationsToday,
       bonusTranslationsToday,
       downloadedBooksCount,

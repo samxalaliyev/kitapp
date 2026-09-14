@@ -12,9 +12,11 @@ import { Feather } from '@expo/vector-icons';
 
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { useAppTheme } from '@/lib/theme';
 import {
   THEMES,
   saveReaderSettings,
+  FONT_FAMILY_NATIVE,
   type FontFamilyChoice,
   type FontSizeLevel,
   type ReaderSettings,
@@ -40,8 +42,8 @@ interface FontOption {
 }
 
 const FAMILY_OPTIONS: FontOption[] = [
-  { key: 'serif', labelKey: 'font_serif', isPremium: false },
   { key: 'sans', labelKey: 'font_sans', isPremium: false },
+  { key: 'serif', labelKey: 'font_serif', isPremium: false },
   { key: 'sofia', labelKey: 'font_sofia', isPremium: true },
   { key: 'outfit', labelKey: 'font_outfit', isPremium: true },
   { key: 'cabin', labelKey: 'font_cabin', isPremium: true },
@@ -58,6 +60,7 @@ export function ReaderSettingsModal({
   onOpenPaywall,
 }: ReaderSettingsModalProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
   const { t } = useLanguage();
 
   if (!visible) return null;
@@ -106,17 +109,21 @@ export function ReaderSettingsModal({
         <View
           style={[
             styles.sheet,
-            { paddingBottom: insets.bottom + Spacing.lg },
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.surfaceBorder,
+              paddingBottom: insets.bottom + Spacing.lg,
+            },
           ]}
         >
           {/* Top Drag Handle */}
           <View style={styles.handleContainer}>
-            <View style={styles.handle} />
+            <View style={[styles.handle, { backgroundColor: colors.surfaceBorder }]} />
           </View>
 
           {/* Header */}
-          <View style={styles.headerRow}>
-            <Text style={styles.sheetTitle}>
+          <View style={[styles.headerRow, { borderBottomColor: colors.surfaceBorder }]}>
+            <Text style={[styles.sheetTitle, { color: colors.text }]}>
               {t('reader_settings_title')}
             </Text>
             <Pressable
@@ -124,16 +131,17 @@ export function ReaderSettingsModal({
               hitSlop={12}
               style={({ pressed }) => [
                 styles.closeBtn,
+                { backgroundColor: colors.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)' },
                 pressed && styles.pressed,
               ]}
             >
-              <Feather name="x" size={18} color="#94a3b8" />
+              <Feather name="x" size={18} color={colors.text} />
             </Pressable>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
             {/* 1. Theme Chips */}
-            <Text style={styles.sectionLabel}>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
               {t('reader_label_theme')}
             </Text>
             <View style={styles.themeRow}>
@@ -148,7 +156,7 @@ export function ReaderSettingsModal({
                       styles.themeChip,
                       {
                         backgroundColor: themeItem.bg,
-                        borderColor: active ? '#d4af7a' : 'rgba(255, 255, 255, 0.12)',
+                        borderColor: active ? colors.primary : colors.surfaceBorder,
                         borderWidth: active ? 2.5 : 1,
                       },
                       pressed && styles.pressed,
@@ -172,23 +180,24 @@ export function ReaderSettingsModal({
             <View style={styles.controlsTwoCol}>
               {/* Font Size Step Control */}
               <View style={styles.controlBox}>
-                <Text style={styles.sectionLabel}>
+                <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
                   {t('reader_label_font_size')}
                 </Text>
-                <View style={styles.stepperContainer}>
+                <View style={[styles.stepperContainer, { backgroundColor: colors.bg, borderColor: colors.surfaceBorder }]}>
                   <Pressable
                     onPress={() => changeSizeStep(-1)}
                     disabled={settings.fontSize === 'small'}
                     style={({ pressed }) => [
                       styles.stepBtn,
+                      { backgroundColor: colors.surface },
                       settings.fontSize === 'small' && styles.stepBtnDisabled,
                       pressed && styles.pressed,
                     ]}
                   >
-                    <Text style={styles.stepBtnText}>A-</Text>
+                    <Text style={[styles.stepBtnText, { color: colors.text }]}>A-</Text>
                   </Pressable>
 
-                  <Text style={styles.sizeIndicatorText} numberOfLines={1} adjustsFontSizeToFit>
+                  <Text style={[styles.sizeIndicatorText, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
                     {t(sizeLabelKey[settings.fontSize])}
                   </Text>
 
@@ -197,21 +206,22 @@ export function ReaderSettingsModal({
                     disabled={settings.fontSize === 'xlarge'}
                     style={({ pressed }) => [
                       styles.stepBtn,
+                      { backgroundColor: colors.surface },
                       settings.fontSize === 'xlarge' && styles.stepBtnDisabled,
                       pressed && styles.pressed,
                     ]}
                   >
-                    <Text style={styles.stepBtnText}>A+</Text>
+                    <Text style={[styles.stepBtnText, { color: colors.text }]}>A+</Text>
                   </Pressable>
                 </View>
               </View>
 
               {/* Text Alignment */}
               <View style={styles.controlBox}>
-                <Text style={styles.sectionLabel} numberOfLines={1} adjustsFontSizeToFit>
+                <Text style={[styles.sectionLabel, { color: colors.textMuted }]} numberOfLines={1} adjustsFontSizeToFit>
                   {t('reader_label_text_align')}
                 </Text>
-                <View style={styles.alignToggleRow}>
+                <View style={[styles.alignToggleRow, { backgroundColor: colors.bg, borderColor: colors.surfaceBorder }]}>
                   {(['left', 'justify'] as TextAlignChoice[]).map((align) => {
                     const active = settings.textAlign === align;
                     return (
@@ -220,17 +230,23 @@ export function ReaderSettingsModal({
                         onPress={() => update({ textAlign: align })}
                         style={({ pressed }) => [
                           styles.alignBtn,
-                          active && styles.alignBtnActive,
+                          {
+                            backgroundColor: active ? colors.primary : 'transparent',
+                          },
                           pressed && styles.pressed,
                         ]}
                       >
                         <Feather
                           name={align === 'left' ? 'align-left' : 'align-justify'}
                           size={15}
-                          color={active ? '#0d0f17' : '#f8fafc'}
+                          color={active ? '#0d0f17' : colors.text}
                         />
                         <Text
-                          style={[styles.alignBtnText, active && styles.alignBtnTextActive]}
+                          style={[
+                            styles.alignBtnText,
+                            { color: active ? '#0d0f17' : colors.textMuted },
+                            active && styles.alignBtnTextActive,
+                          ]}
                           numberOfLines={1}
                           adjustsFontSizeToFit
                         >
@@ -244,7 +260,7 @@ export function ReaderSettingsModal({
             </View>
 
             {/* 3. Font Family Selection */}
-            <Text style={styles.sectionLabel}>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
               {t('reader_label_font_family')}
             </Text>
             <View style={styles.fontGrid}>
@@ -256,16 +272,29 @@ export function ReaderSettingsModal({
                     onPress={() => handleFontSelect(opt)}
                     style={({ pressed }) => [
                       styles.fontCard,
-                      active && styles.fontCardActive,
+                      {
+                        backgroundColor: colors.surface,
+                        borderColor: active ? colors.primary : colors.surfaceBorder,
+                      },
+                      active && {
+                        backgroundColor: colors.isDark ? 'rgba(212, 175, 122, 0.15)' : '#fef3c7',
+                        borderWidth: 1.5,
+                      },
                       pressed && styles.pressed,
                     ]}
                   >
-                    <Text style={[styles.fontCardText, active && styles.fontCardTextActive]}>
+                    <Text
+                      style={[
+                        styles.fontCardText,
+                        { fontFamily: FONT_FAMILY_NATIVE[opt.key], color: colors.text },
+                        active && [styles.fontCardTextActive, { color: colors.primary }],
+                      ]}
+                    >
                       {t(opt.labelKey)}
                     </Text>
                     {opt.isPremium && !isPremium ? (
                       <View style={styles.crownBadge}>
-                        <Feather name="award" size={12} color="#d4af7a" />
+                        <Feather name="award" size={12} color={colors.primary} />
                       </View>
                     ) : null}
                   </Pressable>

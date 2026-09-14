@@ -8,19 +8,23 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 
 import { AdBannerContainer } from '@/components/AdBannerContainer';
 import { BookLoader } from '@/components/BookLoader';
+import { EnergyActionModal } from '@/components/EnergyActionModal';
+import { OutOfEnergyModal } from '@/components/OutOfEnergyModal';
 import { SubscriptionPaywallModal } from '@/components/SubscriptionPaywallModal';
 import { FlashcardStudyModal } from '@/components/vocabulary/FlashcardStudyModal';
+import { LeaguesChallengesModal } from '@/components/gamification/LeaguesChallengesModal';
 import { PairMatchingGame } from '@/components/vocabulary/PairMatchingGame';
 import { QuizGameModal } from '@/components/vocabulary/QuizGameModal';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
+import { ENERGY_COSTS } from '@/lib/gamification/energy';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { deleteWordFromCloud, syncCloudData } from '@/lib/sync/sync-service';
 import { useAppTheme } from '@/lib/theme';
@@ -33,10 +37,11 @@ import { type SavedWord, initVocabularyDatabase } from '@/lib/vocabulary/db';
 import { deleteSavedWord, listSavedWords } from '@/lib/vocabulary/store';
 
 export default function VocabularyScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
   const { targetLang, t } = useLanguage();
-  const { user, isPremium } = useAuth();
+  const { user, isPremium, energy, consumeEnergy, totalXp } = useAuth();
 
   const [items, setItems] = useState<SavedWord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +54,11 @@ export default function VocabularyScreen() {
   const [quizGameVisible, setQuizGameVisible] = useState(false);
   const [flashcardStudyVisible, setFlashcardStudyVisible] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
+  const [outOfEnergyVisible, setOutOfEnergyVisible] = useState(false);
+  const [energyActionModalVisible, setEnergyActionModalVisible] = useState(false);
+  const [pendingGameType, setPendingGameType] = useState<'flashcard' | 'pair' | 'quiz' | null>(null);
+  const [leaguesModalVisible, setLeaguesModalVisible] = useState(false);
+  const [leaguesInitialTab, setLeaguesInitialTab] = useState<'league' | 'challenges'>('league');
 
   // Load words, hearts, and game stats
   const loadData = useCallback(async () => {
@@ -105,6 +115,37 @@ export default function VocabularyScreen() {
     );
   }, [items, searchQuery]);
 
+  const handleGameCardPress = (gameType: 'flashcard' | 'pair' | 'quiz') => {
+    if (!isPremium) {
+      if (energy < ENERGY_COSTS.VOCAB_GAME_ROUND) {
+        setOutOfEnergyVisible(true);
+        return;
+      }
+      setPendingGameType(gameType);
+      setEnergyActionModalVisible(true);
+    } else {
+      launchGame(gameType);
+    }
+  };
+
+  const launchGame = async (gameType: 'flashcard' | 'pair' | 'quiz') => {
+    if (!isPremium) {
+      const allowed = await consumeEnergy(ENERGY_COSTS.VOCAB_GAME_ROUND);
+      if (!allowed) {
+        setOutOfEnergyVisible(true);
+        return;
+      }
+    }
+
+    if (gameType === 'flashcard') {
+      setFlashcardStudyVisible(true);
+    } else if (gameType === 'pair') {
+      setPairGameVisible(true);
+    } else if (gameType === 'quiz') {
+      setQuizGameVisible(true);
+    }
+  };
+
   if (loading) {
     return (
       <View style={[styles.centered, { backgroundColor: colors.bg }]}>
@@ -117,7 +158,7 @@ export default function VocabularyScreen() {
     <View style={[styles.root, { backgroundColor: colors.bg, paddingTop: insets.top + 12 }]}>
       {/* Top Header */}
       <View style={styles.headerRow}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={[styles.heading, { color: colors.text }]}>
             {t('vocab_title') || 'Söz Ehtiyatı'}
           </Text>
@@ -126,22 +167,95 @@ export default function VocabularyScreen() {
           </Text>
         </View>
 
-        {/* Hearts indicator */}
-        <Pressable
-          style={[styles.heartsBadge, { backgroundColor: 'rgba(239, 68, 68, 0.12)', borderColor: 'rgba(239, 68, 68, 0.3)', borderWidth: 1 }]}
-          onPress={() => {
-            if (!isPremium) setPaywallVisible(true);
-          }}
-        >
-          <Feather name="heart" size={15} color="#ef4444" />
-          <Text style={styles.heartsCount}>{isPremium ? '∞' : hearts}</Text>
-        </Pressable>
+        <View style={styles.headerBadgesWrap}>
+          {/* Energy indicator */}
+          <Pressable
+            style={[
+              styles.energyBadge,
+              {
+                backgroundColor: isPremium
+                  ? (colors.isDark ? 'rgba(99, 102, 241, 0.15)' : '#e0e7ff')
+                  : (colors.isDark ? 'rgba(245, 158, 11, 0.15)' : '#fef3c7'),
+                borderColor: isPremium ? '#818cf8' : '#f59e0b',
+                borderWidth: 1,
+              },
+            ]}
+            onPress={() => {
+              if (isPremium) {
+                setPaywallVisible(true);
+              } else {
+                setOutOfEnergyVisible(true);
+              }
+            }}
+          >
+            <Text style={{ fontSize: 13 }}>⚡</Text>
+            <Text
+              style={[
+                styles.energyCount,
+                { color: isPremium ? (colors.isDark ? '#a5b4fc' : '#4f46e5') : (colors.isDark ? '#fbbf24' : '#d97706') },
+              ]}
+            >
+              {isPremium ? 'PRO' : energy}
+            </Text>
+          </Pressable>
+
+          {/* Hearts indicator */}
+          <Pressable
+            style={[
+              styles.heartsBadge,
+              { backgroundColor: 'rgba(239, 68, 68, 0.12)', borderColor: 'rgba(239, 68, 68, 0.3)', borderWidth: 1 },
+            ]}
+            onPress={() => {
+              if (!isPremium) setPaywallVisible(true);
+            }}
+          >
+            <Feather name="heart" size={15} color="#ef4444" />
+            <Text style={styles.heartsCount}>{isPremium ? '∞' : hearts}</Text>
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
       >
+        {/* Guest Registration Incentive Banner */}
+        {!user ? (
+          <View
+            style={[
+              styles.guestBanner,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.surfaceBorder,
+              },
+            ]}
+          >
+            <View style={styles.guestBannerLeft}>
+              <View style={[styles.guestBannerIcon, { backgroundColor: colors.primaryBg }]}>
+                <Feather name="cloud" size={18} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.guestBannerTitle, { color: colors.text }]}>
+                  Tərəqqini Buludda Qoru ☁️
+                </Text>
+                <Text style={[styles.guestBannerSub, { color: colors.textMuted }]}>
+                  Qazandığın XP və lüğətini itirməmək üçün pulsuz qeydiyyatdan keç.
+                </Text>
+              </View>
+            </View>
+            <Pressable
+              onPress={() => router.push('/(auth)/register')}
+              style={({ pressed }) => [
+                styles.guestRegisterBtn,
+                { backgroundColor: colors.primary },
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.guestRegisterBtnText}>Qeydiyyat</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         {/* Quick Stats Bar (Gold luxury aesthetic) */}
         <View
           style={[
@@ -149,12 +263,21 @@ export default function VocabularyScreen() {
             { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
           ]}
         >
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.primary }]}>{stats.xp}</Text>
+          <Pressable
+            style={({ pressed }) => [styles.statItem, pressed && styles.pressed]}
+            onPress={() => {
+              setLeaguesInitialTab('league');
+              setLeaguesModalVisible(true);
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text style={[styles.statValue, { color: colors.primary }]}>{totalXp || stats.xp}</Text>
+              <Text style={{ fontSize: 13 }}>🏆</Text>
+            </View>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>
               {t('xp_gained')}
             </Text>
-          </View>
+          </Pressable>
           <View style={[styles.statDivider, { backgroundColor: colors.surfaceBorder }]} />
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: '#f8fafc' }]}>{items.length}</Text>
@@ -179,21 +302,20 @@ export default function VocabularyScreen() {
         <View style={styles.gamesWrapper}>
           {/* Card 1: "Sərbəst Flashcards" - UNLIMITED STUDY */}
           <Pressable
-            style={({ pressed }) => [styles.gameCard, pressed && styles.pressed]}
-            onPress={() => setFlashcardStudyVisible(true)}
+            style={({ pressed }) => [
+              styles.gameCard,
+              { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+              pressed && styles.pressed,
+            ]}
+            onPress={() => handleGameCardPress('flashcard')}
           >
             <View style={styles.gameCardLeft}>
               <View style={styles.gameIconCircle}>
                 <Feather name="layers" size={22} color="#d4af7a" />
               </View>
               <View style={{ flex: 1 }}>
-                <View style={styles.badgeRow}>
-                  <Text style={styles.gameCardTitle}>{t('study_flashcard_title')}</Text>
-                  <View style={styles.goldPillBadge}>
-                    <Text style={styles.goldPillText}>{t('game_unlimited_badge')?.replace('❤️', '')?.trim()}</Text>
-                  </View>
-                </View>
-                <Text style={styles.gameCardDesc}>{t('study_flashcard_desc')}</Text>
+                <Text style={[styles.gameCardTitle, { color: colors.text }]}>{t('study_flashcard_title')}</Text>
+                <Text style={[styles.gameCardDesc, { color: colors.textMuted }]}>{t('study_flashcard_desc')}</Text>
               </View>
             </View>
             <View style={styles.playArrowCircle}>
@@ -203,8 +325,12 @@ export default function VocabularyScreen() {
 
           {/* Game 2: "Cüt Yarat" Matching Game */}
           <Pressable
-            style={({ pressed }) => [styles.gameCard, pressed && styles.pressed]}
-            onPress={() => setPairGameVisible(true)}
+            style={({ pressed }) => [
+              styles.gameCard,
+              { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+              pressed && styles.pressed,
+            ]}
+            onPress={() => handleGameCardPress('pair')}
           >
             <View style={styles.gameCardLeft}>
               <View style={styles.gameIconCircle}>
@@ -212,12 +338,12 @@ export default function VocabularyScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <View style={styles.badgeRow}>
-                  <Text style={styles.gameCardTitle}>{t('game_pair_title')}</Text>
+                  <Text style={[styles.gameCardTitle, { color: colors.text }]}>{t('game_pair_title')}</Text>
                   <View style={styles.goldPillBadge}>
                     <Text style={styles.goldPillText}>{t('game_popular_badge')}</Text>
                   </View>
                 </View>
-                <Text style={styles.gameCardDesc}>{t('game_pair_desc')}</Text>
+                <Text style={[styles.gameCardDesc, { color: colors.textMuted }]}>{t('game_pair_desc')}</Text>
               </View>
             </View>
             <View style={styles.playArrowCircle}>
@@ -227,16 +353,20 @@ export default function VocabularyScreen() {
 
           {/* Game 3: "Söz Viktorinası" Quiz Game */}
           <Pressable
-            style={({ pressed }) => [styles.gameCard, pressed && styles.pressed]}
-            onPress={() => setQuizGameVisible(true)}
+            style={({ pressed }) => [
+              styles.gameCard,
+              { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+              pressed && styles.pressed,
+            ]}
+            onPress={() => handleGameCardPress('quiz')}
           >
             <View style={styles.gameCardLeft}>
               <View style={styles.gameIconCircle}>
                 <Feather name="help-circle" size={22} color="#d4af7a" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.gameCardTitle}>{t('game_quiz_title')}</Text>
-                <Text style={styles.gameCardDesc}>{t('game_quiz_desc')}</Text>
+                <Text style={[styles.gameCardTitle, { color: colors.text }]}>{t('game_quiz_title')}</Text>
+                <Text style={[styles.gameCardDesc, { color: colors.textMuted }]}>{t('game_quiz_desc')}</Text>
               </View>
             </View>
             <View style={styles.playArrowCircle}>
@@ -385,6 +515,51 @@ export default function VocabularyScreen() {
         visible={paywallVisible}
         onClose={() => setPaywallVisible(false)}
       />
+
+      <OutOfEnergyModal
+        visible={outOfEnergyVisible}
+        onClose={() => setOutOfEnergyVisible(false)}
+        onOpenPaywall={() => setPaywallVisible(true)}
+        requiredEnergy={ENERGY_COSTS.VOCAB_GAME_ROUND}
+      />
+
+      <EnergyActionModal
+        visible={energyActionModalVisible && !!pendingGameType}
+        onClose={() => {
+          setEnergyActionModalVisible(false);
+          setPendingGameType(null);
+        }}
+        onConfirm={() => {
+          if (pendingGameType) {
+            const target = pendingGameType;
+            setPendingGameType(null);
+            launchGame(target);
+          }
+        }}
+        actionTitle={
+          pendingGameType === 'flashcard'
+            ? 'Flashcard Təkrarlaması 🃏'
+            : pendingGameType === 'pair'
+            ? 'Cüt Yarat Oyunu 🧩'
+            : 'Söz Viktorinası ❓'
+        }
+        actionSubtitle="Oyun raundu üçün enerji istifadə olunacaq."
+        energyCost={ENERGY_COSTS.VOCAB_GAME_ROUND}
+        currentEnergy={energy}
+        isPremium={isPremium}
+        confirmText="Oyuna Başla"
+        iconName="play-circle"
+      />
+
+      <LeaguesChallengesModal
+        visible={leaguesModalVisible}
+        initialTab={leaguesInitialTab}
+        onClose={() => setLeaguesModalVisible(false)}
+        onOpenPaywall={() => {
+          setLeaguesModalVisible(false);
+          setPaywallVisible(true);
+        }}
+      />
     </View>
   );
 }
@@ -405,6 +580,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingBottom: Spacing.md,
   },
+  headerBadgesWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   heading: {
     fontSize: 26,
     fontWeight: '700',
@@ -413,6 +593,18 @@ const styles = StyleSheet.create({
   subheading: {
     fontSize: FontSize.xs,
     marginTop: 2,
+  },
+  energyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+    gap: 4,
+  },
+  energyCount: {
+    fontSize: 13,
+    fontWeight: FontWeight.bold,
   },
   heartsBadge: {
     flexDirection: 'row',
@@ -425,6 +617,50 @@ const styles = StyleSheet.create({
   heartsCount: {
     color: '#ef4444',
     fontSize: 14,
+    fontWeight: FontWeight.bold,
+  },
+  guestBanner: {
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+  },
+  guestBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  guestBannerIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guestBannerTitle: {
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
+    marginBottom: 2,
+  },
+  guestBannerSub: {
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  guestRegisterBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guestRegisterBtnText: {
+    color: '#ffffff',
+    fontSize: 12,
     fontWeight: FontWeight.bold,
   },
   scrollContainer: {
@@ -466,17 +702,15 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   gameCard: {
-    backgroundColor: '#141724',
     borderRadius: Radius.xl,
     padding: Spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1.5,
-    borderColor: 'rgba(212, 175, 122, 0.25)',
-    shadowColor: '#d4af7a',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
   },
@@ -503,7 +737,6 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   gameCardTitle: {
-    color: '#ffffff',
     fontSize: 16,
     fontWeight: FontWeight.bold,
   },
@@ -521,7 +754,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   gameCardDesc: {
-    color: '#94a3b8',
     fontSize: 12,
     lineHeight: 16,
     marginTop: 2,

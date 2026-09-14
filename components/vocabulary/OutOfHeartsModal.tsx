@@ -55,10 +55,14 @@ export function OutOfHeartsModal({
       onRequestClose={onClose}
     >
       <View style={styles.backdrop}>
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.primary }]}>
           {/* Close button */}
-          <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={12}>
-            <Feather name="x" size={20} color="#94a3b8" />
+          <Pressable
+            onPress={onClose}
+            style={[styles.closeBtn, { backgroundColor: colors.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)' }]}
+            hitSlop={12}
+          >
+            <Feather name="x" size={20} color={colors.text} />
           </Pressable>
 
           {/* Heart Icon */}
@@ -67,10 +71,10 @@ export function OutOfHeartsModal({
           </View>
 
           {/* Title & Description */}
-          <Text style={styles.title}>
+          <Text style={[styles.title, { color: colors.text }]}>
             {t('hearts_out_title')}
           </Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
             {t('hearts_out_desc')?.replace('❤️', '')?.replace('👑', '')?.trim()}
           </Text>
 
@@ -80,6 +84,10 @@ export function OutOfHeartsModal({
             <Pressable
               style={({ pressed }) => [
                 styles.adBtn,
+                {
+                  backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9',
+                  borderColor: colors.surfaceBorder,
+                },
                 pressed && styles.pressed,
                 adLoading && styles.disabled,
               ]}
@@ -87,11 +95,11 @@ export function OutOfHeartsModal({
               disabled={adLoading}
             >
               {adLoading ? (
-                <ActivityIndicator size="small" color="#ffffff" />
+                <ActivityIndicator size="small" color={colors.text} />
               ) : (
                 <>
-                  <Feather name="play-circle" size={18} color="#ffffff" />
-                  <Text style={styles.adBtnText}>
+                  <Feather name="play-circle" size={18} color={colors.text} />
+                  <Text style={[styles.adBtnText, { color: colors.text }]}>
                     {t('watch_ad_hearts_btn')?.replace('❤️', '')?.trim()}
                   </Text>
                 </>

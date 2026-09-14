@@ -14,6 +14,7 @@ import * as Speech from 'expo-speech';
 import { useAuth } from "@/lib/auth/AuthContext";
 import { FontSize, FontWeight, Radius, Spacing } from "@/lib/design";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useAppTheme } from "@/lib/theme";
 import { syncWordToCloud } from "@/lib/sync/sync-service";
 import {
   getPronunciationCached,
@@ -26,6 +27,12 @@ import { isWordSaved, saveWord } from "@/lib/vocabulary/store";
 import { getAudioDataUrl } from "@/lib/audio";
 import { FullscreenAdModal } from "@/components/FullscreenAdModal";
 import { SubscriptionPaywallModal } from "@/components/SubscriptionPaywallModal";
+import { OutOfEnergyModal } from "@/components/OutOfEnergyModal";
+import { checkIsOnline } from "@/lib/network";
+import { ENERGY_COSTS } from "@/lib/gamification/energy";
+import { addXP } from "@/lib/gamification/leagues";
+import { getCachedTranslationSync } from "@/lib/i18n/cache";
+import { getOfflineTranslation } from "@/lib/dictionary/offline-dict";
 
 export interface WordPopupProps {
   visible: boolean;
@@ -108,13 +115,16 @@ export function WordPopup({
   sentenceContext,
   onClose,
 }: WordPopupProps) {
+  const { colors } = useAppTheme();
   const { targetLang, t } = useLanguage();
-  const { user, isPremium } = useAuth();
+  const { user, isPremium, energy, consumeEnergy } = useAuth();
 
   const [pronunciation, setPronunciation] = useState<PronunciationResult | null>(null);
   const [translation, setTranslation] = useState<TranslationResult | null>(null);
   const [pronState, setPronState] = useState<LoadState>("loading");
   const [transState, setTransState] = useState<LoadState>("loading");
+  const [isOffline, setIsOffline] = useState(false);
+  const [outOfEnergyVisible, setOutOfEnergyVisible] = useState(false);
 
   const [audioDataUrl, setAudioDataUrl] = useState<string | null>(null);
   const [playerKey, setPlayerKey] = useState(0);
@@ -130,11 +140,73 @@ export function WordPopup({
   const [adModalVisible, setAdModalVisible] = useState(false);
   const [paywallModalVisible, setPaywallModalVisible] = useState(false);
 
+  const lastTranslatedKeyRef = useRef<string | null>(null);
+
+  const performWordTranslation = useCallback(
+    async (cleanWord: string, isMounted: boolean) => {
+      // 1. Fast path: check synchronous L1 RAM cache
+      const syncCached = getCachedTranslationSync<TranslationResult>(cleanWord, targetLang);
+      if (syncCached) {
+        if (isMounted) {
+          setTranslation(syncCached);
+          setTransState("ready");
+          setIsOffline(false);
+        }
+        return;
+      }
+
+      // 2. Offline dictionary lookup
+      const offlineMatch = getOfflineTranslation(cleanWord, targetLang);
+      if (offlineMatch) {
+        if (isMounted) {
+          setTranslation({
+            source: cleanWord,
+            translated: offlineMatch,
+            provider: 'offline_dict',
+          });
+          setTransState("ready");
+          setIsOffline(false);
+        }
+        return;
+      }
+
+      // 3. Online network translation
+      const online = await checkIsOnline();
+      if (!online) {
+        if (isMounted) {
+          setIsOffline(true);
+          setTransState("ready");
+          setTranslation(null);
+        }
+        return;
+      }
+
+      if (isMounted) setIsOffline(false);
+
+      try {
+        const transRes = await translateWord(cleanWord, targetLang);
+        if (isMounted && transRes) {
+          if (!isPremium) {
+            await consumeEnergy(ENERGY_COSTS.TRANSLATE_WORD);
+          }
+          addXP(2, isPremium).catch(() => {});
+          setTranslation(transRes);
+          setTransState("ready");
+        }
+      } catch {
+        if (isMounted) setTransState("error");
+      }
+    },
+    [isPremium, consumeEnergy, targetLang],
+  );
+
   useEffect(() => {
     setSentenceTrans(null);
     setLoadingSentenceTrans(false);
+    setIsOffline(false);
 
     if (!visible || !word) {
+      lastTranslatedKeyRef.current = null;
       setPronunciation(null);
       setTranslation(null);
       setPronState("loading");
@@ -149,6 +221,12 @@ export function WordPopup({
 
     let isMounted = true;
     const cleanWord = word.trim().replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "");
+    const translationKey = `${cleanWord}_${targetLang}`;
+
+    if (lastTranslatedKeyRef.current === translationKey) {
+      return;
+    }
+    lastTranslatedKeyRef.current = translationKey;
 
     isWordSaved(cleanWord, targetLang)
       .then((isSavedResult) => {
@@ -156,8 +234,26 @@ export function WordPopup({
       })
       .catch(() => {});
 
+    // Instant 0ms synchronous cache check
+    const syncCached = getCachedTranslationSync<TranslationResult>(cleanWord, targetLang);
+    if (syncCached) {
+      setTranslation(syncCached);
+      setTransState("ready");
+    } else {
+      const offlineMatch = getOfflineTranslation(cleanWord, targetLang);
+      if (offlineMatch) {
+        setTranslation({
+          source: cleanWord,
+          translated: offlineMatch,
+          provider: 'offline_dict',
+        });
+        setTransState("ready");
+      } else {
+        setTransState("loading");
+      }
+    }
+
     setPronState("loading");
-    setTransState("loading");
     setAudioLoading(false);
 
     getPronunciationCached(cleanWord)
@@ -183,42 +279,64 @@ export function WordPopup({
         }
       });
 
-    translateWord(cleanWord, targetLang)
-      .then((transRes) => {
-        if (isMounted) {
-          setTranslation(transRes);
-          setTransState("ready");
-        }
-      })
-      .catch(() => {
-        if (isMounted) setTransState("error");
-      });
+    performWordTranslation(cleanWord, isMounted);
 
     return () => {
       isMounted = false;
     };
   }, [visible, word, targetLang]);
 
-  const executeSentenceTranslation = useCallback(async () => {
-    if (!sentenceContext || loadingSentenceTrans || sentenceTrans) return;
-    setLoadingSentenceTrans(true);
-    try {
-      const res = await translateWord(sentenceContext, targetLang);
-      setSentenceTrans(res?.translated || "Tərcümə alına bilmədi.");
-    } catch {
-      setSentenceTrans("Tərcümə alına bilmədi.");
-    } finally {
-      setLoadingSentenceTrans(false);
-    }
-  }, [sentenceContext, loadingSentenceTrans, sentenceTrans, targetLang]);
+  const retryTranslation = useCallback(async () => {
+    if (!word) return;
+    const cleanWord = word.trim().replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "");
+    lastTranslatedKeyRef.current = null;
+    setTransState("loading");
+    await performWordTranslation(cleanWord, true);
+  }, [word, performWordTranslation]);
+
+  const executeSentenceTranslation = useCallback(
+    async (isAdWatched = false) => {
+      if (!sentenceContext || loadingSentenceTrans || sentenceTrans) return;
+
+      const online = await checkIsOnline();
+      if (!online) {
+        setSentenceTrans("🌐 Tərcümə üçün internet bağlantısı tələb olunur.");
+        return;
+      }
+
+      setLoadingSentenceTrans(true);
+      try {
+        const res = await translateWord(sentenceContext, targetLang);
+        if (res?.translated) {
+          if (!isPremium && !isAdWatched) {
+            await consumeEnergy(ENERGY_COSTS.TRANSLATE_SENTENCE);
+          }
+          addXP(6, isPremium).catch(() => {});
+          setSentenceTrans(res.translated);
+        } else {
+          setSentenceTrans(t('no_translation'));
+        }
+      } catch {
+        setSentenceTrans(t('no_translation'));
+      } finally {
+        setLoadingSentenceTrans(false);
+      }
+    },
+    [sentenceContext, loadingSentenceTrans, sentenceTrans, targetLang, isPremium, consumeEnergy, t],
+  );
 
   const handleSentenceTranslateClick = useCallback(() => {
     if (isPremium) {
-      executeSentenceTranslation();
+      executeSentenceTranslation(false);
     } else {
-      setAdModalVisible(true);
+      if (energy >= ENERGY_COSTS.TRANSLATE_SENTENCE) {
+        executeSentenceTranslation(false);
+      } else {
+        // Not enough energy: open rewarded ad for free translation!
+        setAdModalVisible(true);
+      }
     }
-  }, [isPremium, executeSentenceTranslation]);
+  }, [isPremium, energy, executeSentenceTranslation]);
 
   const onPlayPress = useCallback(() => {
     if (audioDataUrl && !audioError) {
@@ -283,13 +401,19 @@ export function WordPopup({
     >
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable
-          style={styles.card}
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.surfaceBorder,
+            },
+          ]}
           onPress={(e) => e.stopPropagation()}
         >
           {/* Header Row: Word Title + Speaker Action + Close */}
           <View style={styles.headerRow}>
             <View style={styles.wordTitleBox}>
-              <Text style={styles.wordText} numberOfLines={1}>
+              <Text style={[styles.wordText, { color: colors.text }]} numberOfLines={1}>
                 {word}
               </Text>
             </View>
@@ -322,10 +446,11 @@ export function WordPopup({
                 hitSlop={12}
                 style={({ pressed }) => [
                   styles.closeButton,
+                  { backgroundColor: colors.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' },
                   pressed && styles.pressed,
                 ]}
               >
-                <Feather name="x" size={18} color="#94a3b8" />
+                <Feather name="x" size={18} color={colors.text} />
               </Pressable>
             </View>
           </View>
@@ -335,7 +460,7 @@ export function WordPopup({
             {pronState === "loading" ? (
               <View style={styles.loadingRow}>
                 <ActivityIndicator color="#d4af7a" size="small" />
-                <Text style={styles.mutedText}>  {t('loading')}</Text>
+                <Text style={[styles.mutedText, { color: colors.textMuted }]}>  {t('loading')}</Text>
               </View>
             ) : pronunciation ? (
               <View>
@@ -358,11 +483,11 @@ export function WordPopup({
                 {pronunciation.meanings && pronunciation.meanings.length > 0 ? (
                   pronunciation.meanings.slice(0, 1).map((meaning, idx) => (
                     <View key={idx} style={styles.meaningBlock}>
-                      <Text style={styles.definition}>{meaning.definition}</Text>
+                      <Text style={[styles.definition, { color: colors.text }]}>{meaning.definition}</Text>
                       {meaning.example ? (
                         <View style={styles.exampleBox}>
                           <Text style={styles.exampleLabel}>{t('example_label')}:</Text>
-                          <Text style={styles.example}>"{meaning.example}"</Text>
+                          <Text style={[styles.example, { color: colors.textMuted }]}>"{meaning.example}"</Text>
                         </View>
                       ) : null}
                     </View>
@@ -381,18 +506,39 @@ export function WordPopup({
 
           {/* Translation Box Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('translation_header')}</Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('translation_header')}</Text>
+              {!isOffline && transState === "ready" && translation ? (
+                <View style={styles.energySpentBadge}>
+                  <Text style={styles.energySpentText}>
+                    {isPremium ? '⚡ PRO: Sonsuz' : '-2 ⚡ Enerji'}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
 
-            {transState === "loading" ? (
+            {isOffline ? (
+              <View style={[styles.offlineNoticeBox, { backgroundColor: colors.isDark ? 'rgba(239, 68, 68, 0.08)' : '#fee2e2', borderColor: '#ef4444' }]}>
+                <View style={styles.offlineNoticeRow}>
+                  <Feather name="wifi-off" size={15} color="#ef4444" style={{ marginRight: 6 }} />
+                  <Text style={[styles.offlineNoticeText, { color: colors.text }]}>
+                    Tərcümə üçün internet bağlantısı tələb olunur.
+                  </Text>
+                </View>
+                <Pressable onPress={retryTranslation} style={styles.retryBtn}>
+                  <Text style={styles.retryBtnText}>Yenidən yoxla</Text>
+                </Pressable>
+              </View>
+            ) : transState === "loading" ? (
               <View style={styles.loadingRow}>
                 <ActivityIndicator color="#d4af7a" size="small" />
-                <Text style={styles.mutedText}>  {t('translating')}</Text>
+                <Text style={[styles.mutedText, { color: colors.textMuted }]}>  {t('translating')}</Text>
               </View>
             ) : transState === "error" || !translation ? (
-              <Text style={styles.mutedText}>{t('no_translation')}</Text>
+              <Text style={[styles.mutedText, { color: colors.textMuted }]}>{t('no_translation')}</Text>
             ) : (
-              <View style={styles.translationContainer}>
-                <Text style={styles.translationText}>{translation.translated}</Text>
+              <View style={[styles.translationContainer, { backgroundColor: colors.isDark ? 'rgba(212, 175, 122, 0.08)' : 'rgba(212, 175, 122, 0.12)', borderColor: colors.primary }]}>
+                <Text style={[styles.translationText, { color: colors.text }]}>{translation.translated}</Text>
               </View>
             )}
           </View>
@@ -419,14 +565,16 @@ export function WordPopup({
                   <>
                     <Feather name={isPremium ? "file-text" : "lock"} size={14} color="#d4af7a" />
                     <Text style={styles.sentenceBtnText}>
-                      {isPremium ? t('translate_sentence_btn') : `${t('translate_sentence_btn')} (🎬 Reklam / 👑 Premium)`}
+                      {isPremium
+                        ? t('translate_sentence_btn')
+                        : `${t('translate_sentence_btn')} (5 ⚡ / 🎬 Reklam)`}
                     </Text>
                   </>
                 )}
               </Pressable>
               {sentenceTrans ? (
-                <View style={styles.sentenceResultBox}>
-                  <Text style={styles.sentenceResultText}>"{sentenceTrans}"</Text>
+                <View style={[styles.sentenceResultBox, { backgroundColor: colors.isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)' }]}>
+                  <Text style={[styles.sentenceResultText, { color: colors.text }]}>"{sentenceTrans}"</Text>
                 </View>
               ) : null}
             </View>
@@ -474,7 +622,7 @@ export function WordPopup({
         visible={adModalVisible}
         onClose={() => {
           setAdModalVisible(false);
-          executeSentenceTranslation();
+          executeSentenceTranslation(true);
         }}
         onUpgradePremium={() => {
           setAdModalVisible(false);
@@ -486,6 +634,14 @@ export function WordPopup({
       <SubscriptionPaywallModal
         visible={paywallModalVisible}
         onClose={() => setPaywallModalVisible(false)}
+      />
+
+      {/* Out of Energy Modal */}
+      <OutOfEnergyModal
+        visible={outOfEnergyVisible}
+        onClose={() => setOutOfEnergyVisible(false)}
+        onOpenPaywall={() => setPaywallModalVisible(true)}
+        requiredEnergy={ENERGY_COSTS.TRANSLATE_WORD}
       />
     </Modal>
   );
@@ -623,13 +779,31 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: Spacing.sm,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
   sectionTitle: {
     color: "#94a3b8",
     fontSize: 11,
     fontWeight: FontWeight.bold,
     textTransform: "uppercase",
     letterSpacing: 0.5,
-    marginBottom: 6,
+  },
+  energySpentBadge: {
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+  },
+  energySpentText: {
+    fontSize: 11,
+    fontWeight: FontWeight.bold,
+    color: '#f59e0b',
   },
   translationContainer: {
     backgroundColor: "rgba(212, 175, 122, 0.08)",
@@ -642,6 +816,35 @@ const styles = StyleSheet.create({
   translationText: {
     color: "#f8fafc",
     fontSize: 19,
+    fontWeight: FontWeight.bold,
+  },
+  offlineNoticeBox: {
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    marginTop: Spacing.xs,
+    gap: 8,
+  },
+  offlineNoticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  offlineNoticeText: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.medium,
+    flex: 1,
+    lineHeight: 18,
+  },
+  retryBtn: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: Radius.pill,
+    backgroundColor: '#ef4444',
+  },
+  retryBtnText: {
+    color: '#ffffff',
+    fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
   },
   sentenceWrap: {

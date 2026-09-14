@@ -2,7 +2,12 @@ import { Alert } from 'react-native';
 
 import { isPremiumMember, type SubscriptionPlan, type UserRole } from '@/lib/permissions/rbac';
 
-const PAGE_TURNS_PER_AD = 20;
+function getRandomAdInterval(): number {
+  // 15, 16, 17, or 18 pages forward
+  return 15 + Math.floor(Math.random() * 4);
+}
+
+let nextAdThreshold = getRandomAdInterval();
 let localPageTurnCount = 0;
 
 export interface InterstitialAdResult {
@@ -11,9 +16,9 @@ export interface InterstitialAdResult {
 }
 
 /**
- * Tracks page turns while reading EPUB.
- * Triggers a full-screen interstitial ad after every 20 page turns for Free users.
- * Automatically skipped for Premium subscribers.
+ * Tracks forward page turns while reading.
+ * Triggers a full-screen interstitial ad after every 15-18 forward pages for Free / Guest users.
+ * Automatically skipped for Premium subscribers (0 ads).
  */
 export function trackPageTurn(
   role?: UserRole,
@@ -26,8 +31,9 @@ export function trackPageTurn(
 
   localPageTurnCount += 1;
 
-  if (localPageTurnCount >= PAGE_TURNS_PER_AD) {
+  if (localPageTurnCount >= nextAdThreshold) {
     localPageTurnCount = 0;
+    nextAdThreshold = getRandomAdInterval();
     if (onAdTrigger) {
       onAdTrigger();
     } else {
@@ -41,6 +47,7 @@ export function trackPageTurn(
 
 export function resetPageTurnCounter(): void {
   localPageTurnCount = 0;
+  nextAdThreshold = getRandomAdInterval();
 }
 
 function showDefaultInterstitialAdModal() {

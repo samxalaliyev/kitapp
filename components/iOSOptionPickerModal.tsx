@@ -2,6 +2,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
 
 export interface OptionItem<T extends string = string> {
@@ -17,6 +18,7 @@ export interface IOSOptionPickerModalProps<T extends string = string> {
   selectedId: T;
   onSelect: (id: T) => void;
   onClose: () => void;
+  closeLabel?: string;
 }
 
 export function IOSOptionPickerModal<T extends string = string>({
@@ -26,9 +28,11 @@ export function IOSOptionPickerModal<T extends string = string>({
   selectedId,
   onSelect,
   onClose,
+  closeLabel,
 }: IOSOptionPickerModalProps<T>) {
   const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
 
   return (
     <Modal
@@ -106,7 +110,9 @@ export function IOSOptionPickerModal<T extends string = string>({
               pressed && styles.pressed,
             ]}
           >
-            <Text style={[styles.closeBtnText, { color: colors.text }]}>Bağla</Text>
+            <Text style={[styles.closeBtnText, { color: colors.text }]}>
+              {closeLabel || t('close_btn') || 'Bağla'}
+            </Text>
           </Pressable>
         </Pressable>
       </Pressable>

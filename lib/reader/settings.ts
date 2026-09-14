@@ -2,6 +2,16 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const KEYS = {
+  fontSize: '@litera:reader-font-size',
+  fontFamily: '@litera:reader-font-family',
+  theme: '@litera:reader-theme',
+  lineHeight: '@litera:reader-line-height',
+  letterSpacing: '@litera:reader-letter-spacing',
+  paragraphSpacing: '@litera:reader-paragraph-spacing',
+  textAlign: '@litera:reader-text-align',
+};
+
+const LEGACY_KEYS = {
   fontSize: '@kitab-oxu:reader-font-size',
   fontFamily: '@kitab-oxu:reader-font-family',
   theme: '@kitab-oxu:reader-theme',
@@ -36,7 +46,7 @@ export const FONT_SIZE_PX: Record<FontSizeLevel, number> = {
 // Pure React Native platform font family mapping (iOS & Android native fonts)
 export const FONT_FAMILY_NATIVE: Record<FontFamilyChoice, string> = {
   serif: Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' }) || 'serif',
-  sans: Platform.select({ ios: 'Helvetica Neue', android: 'sans-serif', default: 'sans-serif' }) || 'sans-serif',
+  sans: 'CeraPro-Medium',
   sofia: Platform.select({ ios: 'Snell Roundhand', android: 'sans-serif-light', default: 'sans-serif' }) || 'sans-serif',
   outfit: Platform.select({ ios: 'Avenir-Medium', android: 'sans-serif-medium', default: 'sans-serif-medium' }) || 'sans-serif',
   cabin: Platform.select({ ios: 'Optima', android: 'sans-serif-condensed', default: 'sans-serif' }) || 'sans-serif',
@@ -65,7 +75,7 @@ export const FONT_SIZE_LABELS: Record<FontSizeLevel, string> = {
 
 export const FONT_FAMILY_LABELS: Record<FontFamilyChoice, string> = {
   serif: 'Serif (Klassik)',
-  sans: 'Sans-Serif (Müasir)',
+  sans: 'Cera Pro (Müasir)',
   sofia: 'Sofia (Zərif)',
   outfit: 'Outfit (Geniş Qrotesk)',
   cabin: 'Cabin (Yumşaq Həndəsi)',
@@ -86,13 +96,19 @@ export const TEXT_ALIGN_LABELS: Record<TextAlignChoice, string> = {
 
 const DEFAULTS: ReaderSettings = {
   fontSize: 'normal',
-  fontFamily: 'serif',
+  fontFamily: 'sans',
   theme: 'dark',
   lineHeight: 1.6,
   letterSpacing: 0,
   paragraphSpacing: 14,
   textAlign: 'left',
 };
+
+async function getSettingWithFallback(key: string, legacyKey: string): Promise<string | null> {
+  const val = await AsyncStorage.getItem(key);
+  if (val !== null) return val;
+  return AsyncStorage.getItem(legacyKey);
+}
 
 export async function getReaderSettings(): Promise<ReaderSettings> {
   try {
@@ -105,13 +121,13 @@ export async function getReaderSettings(): Promise<ReaderSettings> {
       savedParaSpacing,
       savedTextAlign,
     ] = await Promise.all([
-      AsyncStorage.getItem(KEYS.fontSize),
-      AsyncStorage.getItem(KEYS.fontFamily),
-      AsyncStorage.getItem(KEYS.theme),
-      AsyncStorage.getItem(KEYS.lineHeight),
-      AsyncStorage.getItem(KEYS.letterSpacing),
-      AsyncStorage.getItem(KEYS.paragraphSpacing),
-      AsyncStorage.getItem(KEYS.textAlign),
+      getSettingWithFallback(KEYS.fontSize, LEGACY_KEYS.fontSize),
+      getSettingWithFallback(KEYS.fontFamily, LEGACY_KEYS.fontFamily),
+      getSettingWithFallback(KEYS.theme, LEGACY_KEYS.theme),
+      getSettingWithFallback(KEYS.lineHeight, LEGACY_KEYS.lineHeight),
+      getSettingWithFallback(KEYS.letterSpacing, LEGACY_KEYS.letterSpacing),
+      getSettingWithFallback(KEYS.paragraphSpacing, LEGACY_KEYS.paragraphSpacing),
+      getSettingWithFallback(KEYS.textAlign, LEGACY_KEYS.textAlign),
     ]);
 
     return {

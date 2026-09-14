@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
+  Easing,
   Modal,
   Pressable,
   ScrollView,
@@ -51,31 +52,19 @@ export function FlashcardStudyModal({
   const slideAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
 
-  // Toggle Flip back and forth
+  // Toggle Flip back and forth with instant responsiveness and snappy 60fps timing
   const flipCard = () => {
     if (isTransitioning) return;
+    const nextFlipped = !isFlippedRef.current;
+    isFlippedRef.current = nextFlipped;
+    setIsFlipped(nextFlipped);
 
-    if (isFlippedRef.current) {
-      Animated.spring(rotateAnim, {
-        toValue: 0,
-        friction: 8,
-        tension: 15,
-        useNativeDriver: true,
-      }).start(() => {
-        isFlippedRef.current = false;
-        setIsFlipped(false);
-      });
-    } else {
-      Animated.spring(rotateAnim, {
-        toValue: 180,
-        friction: 8,
-        tension: 15,
-        useNativeDriver: true,
-      }).start(() => {
-        isFlippedRef.current = true;
-        setIsFlipped(true);
-      });
-    }
+    Animated.timing(rotateAnim, {
+      toValue: nextFlipped ? 180 : 0,
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
   };
 
   const frontInterpolate = rotateAnim.interpolate({
@@ -216,64 +205,56 @@ export function FlashcardStudyModal({
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <View style={[styles.root, { backgroundColor: '#0d0f17', paddingTop: insets.top + 8, paddingBottom: insets.bottom + 12 }]}>
+      <View style={[styles.root, { backgroundColor: colors.bg, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 12 }]}>
         {/* Top Header */}
         <View style={styles.topHeader}>
           <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={12}>
-            <Feather name="x" size={24} color="#94a3b8" />
+            <Feather name="x" size={24} color={colors.text} />
           </Pressable>
 
           {/* Progress Bar */}
-          <View style={styles.progressBarWrapper}>
-            <View style={styles.progressBarTrack}>
-              <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
+          <View style={[styles.progressBarWrapper, { backgroundColor: colors.surfaceBorder }]}>
+            <View style={[styles.progressBarTrack, { backgroundColor: colors.surfaceBorder }]}>
+              <View style={[styles.progressBarFill, { width: `${progress}%`, backgroundColor: colors.primary }]} />
             </View>
-          </View>
-
-          {/* Free Mode Badge */}
-          <View style={styles.freeModeBadge}>
-            <Feather name="layers" size={13} color="#d4af7a" />
-            <Text style={styles.freeModeBadgeText}>
-              {t('game_unlimited_badge')?.replace('❤️', '')?.trim()}
-            </Text>
           </View>
         </View>
 
         {loading ? (
           <View style={styles.centered}>
-            <Text style={{ color: '#94a3b8', fontSize: FontSize.sm }}>{t('loading')}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: FontSize.sm }}>{t('loading')}</Text>
           </View>
         ) : completed ? (
           /* Session Completed Summary */
           <View style={styles.summaryContainer}>
             <View style={styles.summaryIconCircle}>
-              <Feather name="award" size={44} color="#d4af7a" />
+              <Feather name="award" size={44} color={colors.primary} />
             </View>
-            <Text style={styles.summaryTitle}>{t('study_complete_title')}</Text>
-            <Text style={styles.summarySubtitle}>
+            <Text style={[styles.summaryTitle, { color: colors.text }]}>{t('study_complete_title')}</Text>
+            <Text style={[styles.summarySubtitle, { color: colors.textMuted }]}>
               {t('study_complete_sub')}
             </Text>
 
             {/* Stats Row */}
             <View style={styles.summaryStatsRow}>
-              <View style={styles.statBox}>
-                <Text style={[styles.statBoxValue, { color: '#d4af7a' }]}>{masteredCount}</Text>
-                <Text style={styles.statBoxLabel}>{t('study_mastered_label')}</Text>
+              <View style={[styles.statBox, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <Text style={[styles.statBoxValue, { color: colors.primary }]}>{masteredCount}</Text>
+                <Text style={[styles.statBoxLabel, { color: colors.textMuted }]}>{t('study_mastered_label')}</Text>
               </View>
-              <View style={styles.statBox}>
-                <Text style={[styles.statBoxValue, { color: '#f8fafc' }]}>{reviewCount}</Text>
-                <Text style={styles.statBoxLabel}>{t('study_review_label')}</Text>
+              <View style={[styles.statBox, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <Text style={[styles.statBoxValue, { color: colors.text }]}>{reviewCount}</Text>
+                <Text style={[styles.statBoxLabel, { color: colors.textMuted }]}>{t('study_review_label')}</Text>
               </View>
-              <View style={styles.statBox}>
-                <Text style={[styles.statBoxValue, { color: '#94a3b8' }]}>{deck.length}</Text>
-                <Text style={styles.statBoxLabel}>{t('study_total_cards')}</Text>
+              <View style={[styles.statBox, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <Text style={[styles.statBoxValue, { color: colors.textMuted }]}>{deck.length}</Text>
+                <Text style={[styles.statBoxLabel, { color: colors.textMuted }]}>{t('study_total_cards')}</Text>
               </View>
             </View>
 
             {/* Action Buttons */}
             <View style={styles.summaryActions}>
               <Pressable
-                style={({ pressed }) => [styles.primaryBtn, pressed && styles.pressed]}
+                style={({ pressed }) => [styles.primaryBtn, { backgroundColor: colors.primary }, pressed && styles.pressed]}
                 onPress={startSession}
               >
                 <Text style={styles.primaryBtnText}>
@@ -281,10 +262,14 @@ export function FlashcardStudyModal({
                 </Text>
               </Pressable>
               <Pressable
-                style={({ pressed }) => [styles.secondaryBtn, pressed && styles.pressed]}
+                style={({ pressed }) => [
+                  styles.secondaryBtn,
+                  { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+                  pressed && styles.pressed,
+                ]}
                 onPress={onClose}
               >
-                <Text style={styles.secondaryBtnText}>{t('study_return_vocab')}</Text>
+                <Text style={[styles.secondaryBtnText, { color: colors.text }]}>{t('study_return_vocab')}</Text>
               </Pressable>
             </View>
           </View>
@@ -294,7 +279,7 @@ export function FlashcardStudyModal({
             showsVerticalScrollIndicator={false}
           >
             {/* Card Counter */}
-            <Text style={styles.cardCounterText}>
+            <Text style={[styles.cardCounterText, { color: colors.textMuted }]}>
               {currentIndex + 1} / {deck.length}
             </Text>
 
@@ -310,85 +295,101 @@ export function FlashcardStudyModal({
             >
               {/* FRONT OF CARD (English) */}
               <Animated.View
+                pointerEvents={isFlipped ? 'none' : 'auto'}
                 style={[
                   styles.cardFace,
                   styles.cardFront,
                   {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.surfaceBorder,
                     transform: [{ rotateY: frontInterpolate }],
                     opacity: frontOpacity,
                   },
                 ]}
               >
-                <View style={styles.cardBadgeRow}>
-                  <View style={styles.languageBadge}>
-                    <Text style={styles.languageBadgeText}>ENGLISH</Text>
+                <Pressable onPress={flipCard} style={styles.cardFullTouchSurface}>
+                  <View style={styles.cardBadgeRow}>
+                    <View style={styles.languageBadge}>
+                      <Text style={styles.languageBadgeText}>ENGLISH</Text>
+                    </View>
                   </View>
-                </View>
 
-                {/* Center Word Content */}
-                <Pressable onPress={flipCard} style={styles.cardCenterBody}>
-                  <Text style={styles.frontWordText}>{currentWord.word}</Text>
-                  {currentWord.phonetic ? (
-                    <Text style={styles.phoneticText}>{currentWord.phonetic}</Text>
-                  ) : null}
-                </Pressable>
+                  {/* Center Word Content */}
+                  <View style={styles.cardCenterBody}>
+                    <Text style={[styles.frontWordText, { color: colors.text }]}>{currentWord.word}</Text>
+                    {currentWord.phonetic ? (
+                      <Text style={styles.phoneticText}>{currentWord.phonetic}</Text>
+                    ) : null}
+                  </View>
 
-                {/* Dedicated Audio Speaker Button */}
-                <Pressable
-                  style={({ pressed }) => [styles.speakerBigBtn, pressed && styles.pressed]}
-                  onPress={() => Speech.speak(currentWord.word, { language: 'en-US' })}
-                >
-                  <Feather name="volume-2" size={20} color="#d4af7a" />
-                  <Text style={styles.speakerBtnLabel}>{t('study_listen_pronunciation')}</Text>
-                </Pressable>
+                  {/* Dedicated Audio Speaker Button */}
+                  <Pressable
+                    style={({ pressed }) => [styles.speakerBigBtn, pressed && styles.pressed]}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      Speech.speak(currentWord.word, { language: 'en-US' });
+                    }}
+                  >
+                    <Feather name="volume-2" size={20} color={colors.primary} />
+                    <Text style={[styles.speakerBtnLabel, { color: colors.primary }]}>{t('study_listen_pronunciation')}</Text>
+                  </Pressable>
 
-                {/* Flip Hint */}
-                <Pressable onPress={flipCard} style={styles.flipHintWrapper}>
-                  <Feather name="refresh-cw" size={14} color="#94a3b8" />
-                  <Text style={styles.flipHintText}>{t('study_flip_hint')}</Text>
+                  {/* Flip Hint */}
+                  <View style={styles.flipHintWrapper}>
+                    <Feather name="refresh-cw" size={14} color={colors.textMuted} />
+                    <Text style={[styles.flipHintText, { color: colors.textMuted }]}>{t('study_flip_hint')}</Text>
+                  </View>
                 </Pressable>
               </Animated.View>
 
               {/* BACK OF CARD (Native Translation) */}
               <Animated.View
+                pointerEvents={isFlipped ? 'auto' : 'none'}
                 style={[
                   styles.cardFace,
                   styles.cardBack,
                   {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.surfaceBorder,
                     transform: [{ rotateY: backInterpolate }],
                     opacity: backOpacity,
                   },
                 ]}
               >
-                <View style={styles.cardBadgeRow}>
-                  <View style={styles.languageBadge}>
-                    <Text style={styles.languageBadgeText}>
-                      {t('translation_header').toUpperCase()}
-                    </Text>
+                <Pressable onPress={flipCard} style={styles.cardFullTouchSurface}>
+                  <View style={styles.cardBadgeRow}>
+                    <View style={styles.languageBadge}>
+                      <Text style={styles.languageBadgeText}>
+                        {t('translation_header').toUpperCase()}
+                      </Text>
+                    </View>
                   </View>
-                </View>
 
-                {/* Center Translation Content */}
-                <Pressable onPress={flipCard} style={styles.cardCenterBody}>
-                  <Text style={styles.backOriginalSmall}>{currentWord.word}</Text>
-                  <Text style={styles.backTranslationText}>{currentWord.translation}</Text>
-                </Pressable>
+                  {/* Center Translation Content */}
+                  <View style={styles.cardCenterBody}>
+                    <Text style={[styles.backOriginalSmall, { color: colors.textMuted }]}>{currentWord.word}</Text>
+                    <Text style={[styles.backTranslationText, { color: colors.text }]}>{currentWord.translation}</Text>
+                  </View>
 
-                {/* Dedicated Audio Speaker Button on Back */}
-                <Pressable
-                  style={({ pressed }) => [styles.speakerBigBtn, pressed && styles.pressed]}
-                  onPress={() => Speech.speak(currentWord.word, { language: 'en-US' })}
-                >
-                  <Feather name="volume-2" size={20} color="#d4af7a" />
-                  <Text style={styles.speakerBtnLabel}>
-                    {t('study_listen_pronunciation')}
-                  </Text>
-                </Pressable>
+                  {/* Dedicated Audio Speaker Button on Back */}
+                  <Pressable
+                    style={({ pressed }) => [styles.speakerBigBtn, pressed && styles.pressed]}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      Speech.speak(currentWord.word, { language: 'en-US' });
+                    }}
+                  >
+                    <Feather name="volume-2" size={20} color={colors.primary} />
+                    <Text style={[styles.speakerBtnLabel, { color: colors.primary }]}>
+                      {t('study_listen_pronunciation')}
+                    </Text>
+                  </Pressable>
 
-                {/* Flip Back Hint */}
-                <Pressable onPress={flipCard} style={styles.flipHintWrapper}>
-                  <Feather name="refresh-cw" size={14} color="#94a3b8" />
-                  <Text style={styles.flipHintText}>{t('study_flip_back_hint')}</Text>
+                  {/* Flip Back Hint */}
+                  <View style={styles.flipHintWrapper}>
+                    <Feather name="refresh-cw" size={14} color={colors.textMuted} />
+                    <Text style={[styles.flipHintText, { color: colors.textMuted }]}>{t('study_flip_back_hint')}</Text>
+                  </View>
                 </Pressable>
               </Animated.View>
             </Animated.View>
@@ -400,29 +401,29 @@ export function FlashcardStudyModal({
                 disabled={isTransitioning}
                 style={({ pressed }) => [
                   styles.studyBtnHard,
+                  { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
                   pressed && styles.pressed,
                   isTransitioning && styles.disabled,
                 ]}
                 onPress={() => handleNextWord(false)}
               >
-                <Feather name="repeat" size={18} color="#d4af7a" />
-                <Text style={styles.studyBtnHardText}>{t('study_hard_btn')}</Text>
+                <Feather name="repeat" size={18} color={colors.primary} />
+                <Text style={[styles.studyBtnHardText, { color: colors.text }]}>{t('study_hard_btn')}</Text>
               </Pressable>
 
-              {/* Button 2: Mastered / Know it */}
+              {/* Button 2: I Know It / Mastered */}
               <Pressable
                 disabled={isTransitioning}
                 style={({ pressed }) => [
                   styles.studyBtnKnow,
+                  { backgroundColor: colors.primary },
                   pressed && styles.pressed,
                   isTransitioning && styles.disabled,
                 ]}
                 onPress={() => handleNextWord(true)}
               >
-                <Feather name="check" size={20} color="#0d0f17" />
-                <Text style={styles.studyBtnKnowText}>
-                  {t('study_know_btn')?.replace('👍', '')?.trim()}
-                </Text>
+                <Feather name="check-circle" size={18} color="#0d0f17" />
+                <Text style={styles.studyBtnKnowText}>{t('study_know_btn')}</Text>
               </Pressable>
             </View>
           </ScrollView>
@@ -502,25 +503,29 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     height: 360,
     marginBottom: Spacing.xl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 3,
   },
   cardFace: {
     width: '100%',
     height: '100%',
     borderRadius: 24,
     borderWidth: 1.5,
-    borderColor: '#d4af7a',
-    padding: Spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'space-between',
     backfaceVisibility: 'hidden',
     position: 'absolute',
     top: 0,
     left: 0,
-    shadowColor: '#d4af7a',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 14,
-    elevation: 8,
+    overflow: 'hidden',
+  },
+  cardFullTouchSurface: {
+    flex: 1,
+    width: '100%',
+    padding: Spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   cardFront: {
     backgroundColor: '#141724',
