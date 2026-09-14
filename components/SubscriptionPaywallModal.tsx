@@ -42,10 +42,10 @@ export function SubscriptionPaywallModal({
     setLoading(true);
     try {
       await upgradeSubscription(selectedPlan);
-      Alert.alert('🌟 Litera Premium', 'Təbriklər! Premium abunəliyiniz uğurla aktivləşdirildi.');
+      Alert.alert('🌟 Litera Premium', t('restore_success'));
       onClose();
     } catch (err: any) {
-      Alert.alert('Məlumat', err?.message || 'Ödəniş tamamlana bilmədi.');
+      Alert.alert(t('info'), err?.message || t('no_purchases_found'));
     } finally {
       setLoading(false);
     }
@@ -56,13 +56,13 @@ export function SubscriptionPaywallModal({
     try {
       const res = await restorePurchases();
       if (res.hasActiveSubscription) {
-        Alert.alert('🌟 ' + (t('restore_purchases') || 'Bərpa edildi'), t('restore_success') || 'Alışlarınız uğurla bərpa edildi.');
+        Alert.alert('🌟 ' + t('restore_purchases'), t('restore_success'));
         onClose();
       } else {
-        Alert.alert(t('restore_purchases') || 'Alışların Bərpası', t('no_purchases_found') || 'Aktiv abunəlik tapılmadı.');
+        Alert.alert(t('restore_purchases'), t('no_purchases_found'));
       }
     } catch (err: any) {
-      Alert.alert('Xəta', err?.message || 'Bərpa zamanı xəta baş verdi.');
+      Alert.alert(t('info'), err?.message || t('no_purchases_found'));
     } finally {
       setRestoring(false);
     }
@@ -124,21 +124,21 @@ export function SubscriptionPaywallModal({
                 <View style={styles.iconCircle}>
                   <Feather name="zap" size={15} color="#d4af7a" />
                 </View>
-                <Text style={[styles.featureText, { color: colors.text }]}>Sonsuz Enerji & Limitsiz Tərcümə (⚡ ∞)</Text>
+                <Text style={[styles.featureText, { color: colors.text }]}>{t('feature_unlimited_energy_trans')}</Text>
               </View>
 
               <View style={styles.featureRow}>
                 <View style={styles.iconCircle}>
                   <Feather name="download" size={15} color="#d4af7a" />
                 </View>
-                <Text style={[styles.featureText, { color: colors.text }]}>{t('feature_unlimited_downloads') || 'Limitsiz Oflayn Kitab Yükləmə'}</Text>
+                <Text style={[styles.featureText, { color: colors.text }]}>{t('feature_unlimited_downloads')}</Text>
               </View>
 
               <View style={styles.featureRow}>
                 <View style={styles.iconCircle}>
                   <Feather name="award" size={15} color="#d4af7a" />
                 </View>
-                <Text style={[styles.featureText, { color: colors.text }]}>Liqa Yarışlarında 1.5x XP Üstünlüyü 🏆</Text>
+                <Text style={[styles.featureText, { color: colors.text }]}>{t('feature_league_xp_boost')}</Text>
               </View>
 
               <View style={styles.featureRow}>
@@ -171,18 +171,18 @@ export function SubscriptionPaywallModal({
                 ]}
               >
                 <View style={styles.badgeDiscount}>
-                  <Text style={styles.badgeDiscountText}>🔥 50% ENDİRİM + 7 GÜN SINAQ</Text>
+                  <Text style={styles.badgeDiscountText}>{t('plan_discount_badge')}</Text>
                 </View>
 
                 <View style={styles.planInfo}>
                   <Text style={[styles.planTitle, { color: colors.text }]}>
-                    İllik Abunəlik (Ən Populyar) 🌟
+                    {t('plan_yearly_title')}
                   </Text>
                   <Text style={[styles.planPrice, { color: colors.primary }]}>
-                    $24.99 <Text style={[styles.planPeriod, { color: colors.textMuted }]}>/ il ($2.08/ay)</Text>
+                    $24.99 <Text style={[styles.planPeriod, { color: colors.textMuted }]}>{t('plan_yearly_sub_period')}</Text>
                   </Text>
                   <Text style={[styles.planSub, { color: colors.textMuted }]}>
-                    7 gün pulsuz sınaq • İstənilən vaxt ləğv edilə bilər
+                    {t('plan_yearly_trial_desc')}
                   </Text>
                 </View>
               </Pressable>
@@ -208,13 +208,13 @@ export function SubscriptionPaywallModal({
               >
                 <View style={styles.planInfo}>
                   <Text style={[styles.planTitle, { color: colors.text }]}>
-                    Aylıq Abunəlik 🗓️
+                    {t('plan_monthly_title')}
                   </Text>
                   <Text style={[styles.planPrice, { color: colors.primary }]}>
                     $2.99 <Text style={[styles.planPeriod, { color: colors.textMuted }]}>{t('per_month')}</Text>
                   </Text>
                   <Text style={[styles.planSub, { color: colors.textMuted }]}>
-                    İlk ay cəmi $1.99 • Limitsiz enerji və reklamsız oxu
+                    {t('plan_monthly_desc')}
                   </Text>
                 </View>
               </Pressable>
@@ -254,7 +254,7 @@ export function SubscriptionPaywallModal({
             {/* Legal Disclosures */}
             <View style={[styles.legalFooter, { borderTopColor: colors.surfaceBorder }]}>
               <Text style={[styles.legalText, { color: colors.textMuted }]}>
-                Abunəlik Google Play hesabınızdan tutulur və dövrün sonunda avtomatik yenilənir.{'\n'}
+                {t('subscription_disclaimer')}{'\n'}
                 <Text style={[styles.legalLink, { color: colors.primary }]} onPress={() => setActiveLegal('terms')}>
                   {t('terms_of_service')}
                 </Text>

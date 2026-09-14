@@ -10,6 +10,7 @@ import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
 import { watchRewardedAd } from '@/lib/monetization/rewarded-ads';
 import { refillEnergyWithAd, REWARD_AD_ENERGY } from '@/lib/gamification/energy';
@@ -31,6 +32,7 @@ export function OutOfEnergyModal({
 }: OutOfEnergyModalProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
+  const { t } = useLanguage();
 
   if (!visible) return null;
 
@@ -77,11 +79,11 @@ export function OutOfEnergyModal({
           </View>
 
           <Text style={[styles.title, { color: colors.text }]}>
-            Enerjin Bitdi! ⚡
+            {t('out_of_energy_title')}
           </Text>
 
           <Text style={[styles.sub, { color: colors.textMuted }]}>
-            Bu əməliyyat üçün {requiredEnergy} ⚡ enerji lazımdır. Oxumağa və tərcüməyə dərhal davam etmək üçün enerji balansını bərpa et.
+            {t('out_of_energy_desc').replace('{amount}', String(requiredEnergy))}
           </Text>
 
           {/* Option 1: Rewarded Video Ad */}
@@ -96,7 +98,7 @@ export function OutOfEnergyModal({
             <View style={styles.btnContent}>
               <Feather name="video" size={18} color="#ffffff" style={styles.btnIcon} />
               <Text style={styles.btnAdText}>
-                Reklam İzlə (+{REWARD_AD_ENERGY} ⚡ Qazan)
+                {t('watch_ad_refill_btn').replace('{amount}', String(REWARD_AD_ENERGY))}
               </Text>
             </View>
           </Pressable>
@@ -117,10 +119,7 @@ export function OutOfEnergyModal({
               <Feather name="star" size={18} color="#d4af7a" style={styles.btnIcon} />
               <View>
                 <Text style={[styles.btnProTitle, { color: colors.text }]}>
-                  Litera PRO-ya Keç
-                </Text>
-                <Text style={styles.btnProSub}>
-                  ⚡ Sonsuz Enerji • 🚫 100% Reklamsız
+                  {t('go_pro_unlimited_energy_btn')}
                 </Text>
               </View>
             </View>
@@ -130,7 +129,7 @@ export function OutOfEnergyModal({
           {/* Cancel */}
           <Pressable onPress={onClose} style={styles.btnCancel}>
             <Text style={[styles.btnCancelText, { color: colors.textMuted }]}>
-              Daha sonra
+              {t('later_btn')}
             </Text>
           </Pressable>
         </View>

@@ -483,13 +483,13 @@ export default function SettingsScreen() {
         {/* ==================================================================== */}
         {/* GROUP 0: LEAGUES & DAILY CHALLENGES */}
         {/* ==================================================================== */}
-        <SettingGroup title="Liqalar və Çellenclər 🏆">
+        <SettingGroup title={t('section_leagues_challenges')}>
           <SettingRow
             iconName="award"
             iconColor="#fbbf24"
             iconBgColor="rgba(251, 191, 36, 0.15)"
-            label="Həftəlik Liqa Yarışı"
-            value="Top 10 Reytinq 🏆"
+            label={t('weekly_league_setting')}
+            value={t('top_10_rank')}
             onPress={() => {
               setLeaguesInitialTab('league');
               setLeaguesModalVisible(true);
@@ -499,8 +499,8 @@ export default function SettingsScreen() {
             iconName="zap"
             iconColor="#f97316"
             iconBgColor="rgba(249, 115, 22, 0.15)"
-            label="Oxu Seriyası & Çellenclər"
-            value="7 və 28 Günlük 🔥"
+            label={t('challenges_setting')}
+            value={`7 & 28 ${t('challenge_days_unit')} 🔥`}
             onPress={() => {
               setLeaguesInitialTab('challenges');
               setLeaguesModalVisible(true);

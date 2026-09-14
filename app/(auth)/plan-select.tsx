@@ -79,9 +79,9 @@ export default function PlanSelectScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={[styles.brandTitle, { color: colors.primary }]}>Litera</Text>
-          <Text style={[styles.title, { color: colors.text }]}>Planınızı Seçin 🎯</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('plan_select_title')}</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            Sizə ən uyğun olan planla oxumağa başlayın
+            {t('plan_select_sub')}
           </Text>
         </View>
 
@@ -101,8 +101,8 @@ export default function PlanSelectScreen() {
           >
             <View style={styles.planHeader}>
               <View>
-                <Text style={[styles.planTitle, { color: colors.text }]}>FREE PLAN 📖</Text>
-                <Text style={[styles.planPrice, { color: colors.textMuted }]}>$0 / ömürlük</Text>
+                <Text style={[styles.planTitle, { color: colors.text }]}>{t('plan_free_title')}</Text>
+                <Text style={[styles.planPrice, { color: colors.textMuted }]}>{t('plan_free_price')}</Text>
               </View>
               <View
                 style={[
@@ -118,22 +118,22 @@ export default function PlanSelectScreen() {
 
             <View style={styles.featureList}>
               <Text style={[styles.featureItem, { color: colors.textMuted }]}>
-                ⚡ 100 Başlanğıc Enerjisi + Gündəlik 70 ⚡
+                {t('plan_free_feat1')}
               </Text>
               <Text style={[styles.featureItem, { color: colors.textMuted }]}>
-                📖 İstənilən kitabı oxu (-10 ⚡)
+                {t('plan_free_feat2')}
               </Text>
               <Text style={[styles.featureItem, { color: colors.textMuted }]}>
-                🔤 Söz (-2 ⚡) və Cümlə (-6 ⚡) Tərcümələri
+                {t('plan_free_feat3')}
               </Text>
               <Text style={[styles.featureItem, { color: colors.textMuted }]}>
-                🎮 Bütün Lüğət Oyunları (Flashcard, Pairs, Quiz)
+                {t('plan_free_feat4')}
               </Text>
               <Text style={[styles.featureItem, { color: colors.textMuted }]}>
-                🎥 Qısa video ilə +30 ⚡ Enerji bərpa et
+                {t('plan_free_feat5')}
               </Text>
               <Text style={[styles.featureItem, { color: colors.textMuted }]}>
-                ☁️ Bulud Yaddaşı & Liqa Yarışları
+                {t('plan_free_feat6')}
               </Text>
             </View>
           </Pressable>
@@ -151,13 +151,13 @@ export default function PlanSelectScreen() {
             ]}
           >
             <View style={styles.recommendBadge}>
-              <Text style={styles.recommendBadgeText}>🔥 50% ENDİRİM + 7 GÜN SINAQ</Text>
+              <Text style={styles.recommendBadgeText}>{t('plan_discount_badge')}</Text>
             </View>
 
             <View style={styles.planHeader}>
               <View>
-                <Text style={[styles.planTitle, { color: colors.text }]}>PREMIUM İLLİK 🌟</Text>
-                <Text style={[styles.planPrice, { color: colors.primary }]}>$24.99 / il ($2.08/ay)</Text>
+                <Text style={[styles.planTitle, { color: colors.text }]}>{t('plan_yearly_title')}</Text>
+                <Text style={[styles.planPrice, { color: colors.primary }]}>$24.99 {t('plan_yearly_sub_period')}</Text>
               </View>
               <View
                 style={[
@@ -173,22 +173,22 @@ export default function PlanSelectScreen() {
 
             <View style={styles.featureList}>
               <Text style={[styles.featureItem, { color: colors.text }]}>
-                ⚡ Sonsuz Enerji & Limitsiz Tərcümə (⚡ ∞)
+                {t('feature_unlimited_energy_trans')}
               </Text>
               <Text style={[styles.featureItem, { color: colors.text }]}>
-                🚫 100% Reklamsız Kəsintisiz Oxu
+                {t('feature_no_ads')}
               </Text>
               <Text style={[styles.featureItem, { color: colors.text }]}>
-                📚 Sərhədsiz Oflayn Kitab Yükləmə
+                {t('feature_unlimited_downloads')}
               </Text>
               <Text style={[styles.featureItem, { color: colors.text }]}>
-                🏆 Liqa Yarışlarında 1.5x XP Üstünlüyü
+                {t('feature_league_xp_boost')}
               </Text>
               <Text style={[styles.featureItem, { color: colors.text }]}>
-                🎨 Bütün Xüsusi Şriftlər Və OLED Mövzular
+                {t('feature_all_fonts_themes')}
               </Text>
               <Text style={[styles.featureItem, { color: colors.text }]}>
-                ☁️ Cihazlararası Avtomatik Bulud Sinxronizasiyası
+                {t('plan_free_feat6')}
               </Text>
             </View>
           </Pressable>
@@ -207,8 +207,8 @@ export default function PlanSelectScreen() {
           >
             <View style={styles.planHeader}>
               <View>
-                <Text style={[styles.planTitle, { color: colors.text }]}>PREMIUM AYLIQ 🗓️</Text>
-                <Text style={[styles.planPrice, { color: colors.textMuted }]}>$2.99 / ay (ilk ay $1.99)</Text>
+                <Text style={[styles.planTitle, { color: colors.text }]}>{t('plan_monthly_title')}</Text>
+                <Text style={[styles.planPrice, { color: colors.textMuted }]}>$2.99 {t('per_month')}</Text>
               </View>
               <View
                 style={[
@@ -241,10 +241,10 @@ export default function PlanSelectScreen() {
             ]}
           >
             {loading
-              ? 'Gözləyin...'
+              ? t('connecting')
               : selectedPlan === 'free'
-              ? 'Pulsuz Planla Başla →'
-              : '🌟 Premium-u Seç & Başla'}
+              ? t('plan_select_free_cta')
+              : t('plan_select_pro_cta')}
           </Text>
         </Pressable>
 
@@ -255,26 +255,25 @@ export default function PlanSelectScreen() {
           style={({ pressed }) => [styles.restoreBtn, pressed && styles.pressed]}
         >
           <Text style={[styles.restoreBtnText, { color: colors.primary }]}>
-            {restoring ? 'Bərpa edilir...' : `🔄 ${t('restore_purchases') || 'Alışları Bərpa Et'}`}
+            {restoring ? (t('connecting') || '...') : `🔄 ${t('restore_purchases') || 'Alışları Bərpa Et'}`}
           </Text>
         </Pressable>
 
         <Pressable onPress={() => router.replace('/(tabs)')} style={styles.skipBtn}>
-          <Text style={[styles.skipBtnText, { color: colors.textMuted }]}>İndi Yox, Sonra Keçid Et</Text>
+          <Text style={[styles.skipBtnText, { color: colors.textMuted }]}>{t('plan_select_skip')}</Text>
         </Pressable>
 
         {/* Legal Disclosures (Google Play Policy Compliance) */}
         <View style={styles.legalFooter}>
           <Text style={[styles.legalText, { color: colors.textMuted }]}>
-            Abunə olmaqla siz{' '}
+            {t('subscription_disclaimer')}{'\n'}
             <Text style={[styles.legalLink, { color: colors.primary }]} onPress={() => setActiveLegal('terms')}>
               {t('terms_of_service')}
             </Text>
-            {' '}və{' '}
+            {'  •  '}
             <Text style={[styles.legalLink, { color: colors.primary }]} onPress={() => setActiveLegal('privacy')}>
               {t('privacy_policy')}
             </Text>
-            {' '}ilə razılaşırsınız. Abunəlik dövrün sonunda avtomatik yenilənir və istənilən vaxt Google Play ayarlarından ləğv edilə bilər.
           </Text>
         </View>
       </ScrollView>

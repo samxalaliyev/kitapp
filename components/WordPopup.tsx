@@ -300,7 +300,7 @@ export function WordPopup({
 
       const online = await checkIsOnline();
       if (!online) {
-        setSentenceTrans("🌐 Tərcümə üçün internet bağlantısı tələb olunur.");
+        setSentenceTrans(t('offline_network_required'));
         return;
       }
 
@@ -511,7 +511,7 @@ export function WordPopup({
               {!isOffline && transState === "ready" && translation ? (
                 <View style={styles.energySpentBadge}>
                   <Text style={styles.energySpentText}>
-                    {isPremium ? '⚡ PRO: Sonsuz' : '-2 ⚡ Enerji'}
+                    {isPremium ? t('energy_badge_pro') : t('energy_badge_cost').replace('{amount}', '2')}
                   </Text>
                 </View>
               ) : null}
@@ -522,11 +522,11 @@ export function WordPopup({
                 <View style={styles.offlineNoticeRow}>
                   <Feather name="wifi-off" size={15} color="#ef4444" style={{ marginRight: 6 }} />
                   <Text style={[styles.offlineNoticeText, { color: colors.text }]}>
-                    Tərcümə üçün internet bağlantısı tələb olunur.
+                    {t('offline_network_required')}
                   </Text>
                 </View>
                 <Pressable onPress={retryTranslation} style={styles.retryBtn}>
-                  <Text style={styles.retryBtnText}>Yenidən yoxla</Text>
+                  <Text style={styles.retryBtnText}>{t('retry_btn')}</Text>
                 </Pressable>
               </View>
             ) : transState === "loading" ? (
@@ -566,8 +566,8 @@ export function WordPopup({
                     <Feather name={isPremium ? "file-text" : "lock"} size={14} color="#d4af7a" />
                     <Text style={styles.sentenceBtnText}>
                       {isPremium
-                        ? t('translate_sentence_btn')
-                        : `${t('translate_sentence_btn')} (5 ⚡ / 🎬 Reklam)`}
+                        ? t('translate_sentence_pro')
+                        : t('translate_sentence_energy_or_ad')}
                     </Text>
                   </>
                 )}

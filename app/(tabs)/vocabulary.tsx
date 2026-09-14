@@ -236,10 +236,10 @@ export default function VocabularyScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.guestBannerTitle, { color: colors.text }]}>
-                  Tərəqqini Buludda Qoru ☁️
+                  {t('guest_banner_title')}
                 </Text>
                 <Text style={[styles.guestBannerSub, { color: colors.textMuted }]}>
-                  Qazandığın XP və lüğətini itirməmək üçün pulsuz qeydiyyatdan keç.
+                  {t('guest_banner_sub')}
                 </Text>
               </View>
             </View>
@@ -251,7 +251,7 @@ export default function VocabularyScreen() {
                 pressed && styles.pressed,
               ]}
             >
-              <Text style={styles.guestRegisterBtnText}>Qeydiyyat</Text>
+              <Text style={styles.guestRegisterBtnText}>{t('guest_register_btn')}</Text>
             </Pressable>
           </View>
         ) : null}
@@ -538,16 +538,16 @@ export default function VocabularyScreen() {
         }}
         actionTitle={
           pendingGameType === 'flashcard'
-            ? 'Flashcard Təkrarlaması 🃏'
+            ? t('study_flashcard_title')
             : pendingGameType === 'pair'
-            ? 'Cüt Yarat Oyunu 🧩'
-            : 'Söz Viktorinası ❓'
+            ? t('game_pair_title')
+            : t('game_quiz_title')
         }
-        actionSubtitle="Oyun raundu üçün enerji istifadə olunacaq."
+        actionSubtitle={t('game_round_energy_desc')}
         energyCost={ENERGY_COSTS.VOCAB_GAME_ROUND}
         currentEnergy={energy}
         isPremium={isPremium}
-        confirmText="Oyuna Başla"
+        confirmText={t('start_game_btn')}
         iconName="play-circle"
       />
 

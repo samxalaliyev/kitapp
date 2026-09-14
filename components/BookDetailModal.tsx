@@ -334,12 +334,12 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
           visible={energyModalVisible}
           onClose={() => setEnergyModalVisible(false)}
           onConfirm={handleStartReading}
-          actionTitle="Kitab Oxu"
-          actionSubtitle={`"${book.title}" oxumağa başlamaq üçün enerji istifadə olunacaq.`}
+          actionTitle={t('action_read_book')}
+          actionSubtitle={`"${book.title}" ${t('action_read_book_desc')}`}
           energyCost={ENERGY_COSTS.BOOK_READING_SESSION}
           currentEnergy={energy}
           isPremium={isPremium}
-          confirmText="Kitabı Aç"
+          confirmText={t('action_open_book')}
           iconName="book-open"
         />
       </View>
