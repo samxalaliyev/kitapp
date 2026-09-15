@@ -27,6 +27,7 @@ import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { watchRewardedAd } from '@/lib/monetization/rewarded-ads';
 import { purchasesService } from '@/lib/monetization/purchases';
 import { purgeUserLocalCache, syncCloudData } from '@/lib/sync/sync-service';
+import { markLanguageOnboarded } from '@/lib/i18n/settings';
 
 import {
   getEnergyBalance,
@@ -245,7 +246,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.session && !unmounted) {
           setSession(data.session);
           setUser(data.session.user);
-          await fetchProfile(data.session.user.id, data.session.user.email);
+          await markLanguageOnboarded().catch(() => {});
+          await fetchProfile(data.session.user.id, data.session.user.email, data.session.user);
         }
       } finally {
         if (!unmounted) setLoading(false);
@@ -260,7 +262,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(newSession);
         setUser(newSession?.user ?? null);
         if (newSession?.user) {
-          await fetchProfile(newSession.user.id, newSession.user.email);
+          await markLanguageOnboarded().catch(() => {});
+          await fetchProfile(newSession.user.id, newSession.user.email, newSession.user);
         } else {
           setProfile(null);
         }
@@ -273,116 +276,126 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const fetchProfile = async (userId: string, fallbackEmail?: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      const currentEmail = (data?.email || fallbackEmail || '').toLowerCase();
-      const isSystemAdmin =
-        currentEmail === 'admin@litera.app' ||
-        data?.role === 'admin' ||
-        (user?.app_metadata as any)?.role === 'admin' ||
-        (user?.user_metadata as any)?.role === 'admin';
-
-      if (!error && data) {
-        const profRole: UserRole = isSystemAdmin ? 'admin' : (data.role || 'free');
-        const profPlan: SubscriptionPlan = isSystemAdmin ? 'premium_yearly' : (data.subscription_plan || 'free');
-
-        // Extract cloud account name (overrides any stale guest name)
-        const resolvedName =
-          data.display_name ||
-          (user?.user_metadata as any)?.full_name ||
-          (user?.user_metadata as any)?.name ||
-          currentEmail.split('@')[0];
-
-        const prof: UserProfile = {
-          id: data.id,
-          email: currentEmail,
-          displayName: resolvedName,
-          avatarUrl: data.avatar_url,
-          role: profRole,
-          subscriptionPlan: profPlan,
-          subscriptionStatus: data.subscription_status || 'active',
-          subscriptionExpiresAt: data.subscription_expires_at,
-          createdAt: data.created_at || new Date().toISOString(),
-        };
-        setProfile(prof);
-
-        // Immediately update local display name state & storage so it overrides guest name everywhere
-        if (resolvedName) {
-          setDisplayNameState(resolvedName);
-          await AsyncStorage.setItem(STORAGE_KEYS.DISPLAY_NAME, resolvedName).catch(() => {});
-        }
-
-        // Sync XP from cloud with local storage (instant merge)
-        const localXpData = await getUserXp();
-        const cloudTotalXp = data.xp || 0;
-        const cloudWeeklyXp = data.weekly_xp || 0;
-        const mergedTotalXp = Math.max(cloudTotalXp, localXpData.totalXp);
-        const mergedWeeklyXp = Math.max(cloudWeeklyXp, localXpData.weeklyXp);
-
-        await updateUserXpDirectly(mergedTotalXp, mergedWeeklyXp);
-        invalidateLeaderboardCache();
-
-        // If local guest had higher XP, sync it up to the cloud account
-        if (localXpData.totalXp > cloudTotalXp || localXpData.weeklyXp > cloudWeeklyXp) {
-          pendingXpSyncRef.current = { totalXp: mergedTotalXp, weeklyXp: mergedWeeklyXp };
-          flushXpSync();
-        }
-
-        if (isSystemAdmin && (data.role !== 'admin' || data.subscription_plan !== 'premium_yearly')) {
-          try {
-            await supabase
-              .from('profiles')
-              .update({ role: 'admin', subscription_plan: 'premium_yearly' })
-              .eq('id', userId);
-          } catch {}
-        }
-      } else {
-        const profRole: UserRole = isSystemAdmin ? 'admin' : 'free';
-        const profPlan: SubscriptionPlan = isSystemAdmin ? 'premium_yearly' : 'free';
-        const resolvedName =
-          (user?.user_metadata as any)?.full_name ||
-          (user?.user_metadata as any)?.name ||
-          (currentEmail || 'user@litera.app').split('@')[0];
-
-        const { data: newProfData } = await supabase
+  const fetchProfile = useCallback(
+    async (userId: string, fallbackEmail?: string, rawUser?: User | null) => {
+      try {
+        const currentUser = rawUser || user;
+        const { data, error } = await supabase
           .from('profiles')
-          .upsert({
-            id: userId,
-            email: currentEmail || 'user@litera.app',
-            display_name: resolvedName,
-            role: profRole,
-            subscription_plan: profPlan,
-          })
           .select('*')
+          .eq('id', userId)
           .maybeSingle();
 
-        if (newProfData) {
-          setProfile({
-            id: newProfData.id,
-            email: newProfData.email,
-            displayName: newProfData.display_name,
-            role: isSystemAdmin ? 'admin' : (newProfData.role || 'free'),
-            subscriptionPlan: isSystemAdmin ? 'premium_yearly' : (newProfData.subscription_plan || 'free'),
-            subscriptionStatus: newProfData.subscription_status || 'active',
-            createdAt: newProfData.created_at,
-          });
+        const currentEmail = (data?.email || fallbackEmail || currentUser?.email || '').toLowerCase();
+        const isSystemAdmin =
+          currentEmail === 'admin@litera.app' ||
+          data?.role === 'admin' ||
+          (currentUser?.app_metadata as any)?.role === 'admin' ||
+          (currentUser?.user_metadata as any)?.role === 'admin';
+
+        // Extract cloud account name (strictly from backend profiles, auth user_metadata, or email username)
+        const resolvedName =
+          (data?.display_name && data.display_name.trim()) ||
+          (currentUser?.user_metadata as any)?.full_name ||
+          (currentUser?.user_metadata as any)?.name ||
+          (currentUser?.user_metadata as any)?.display_name ||
+          (currentEmail ? currentEmail.split('@')[0] : 'Oxucu');
+
+        if (!error && data) {
+          const profRole: UserRole = isSystemAdmin ? 'admin' : (data.role || 'free');
+          const profPlan: SubscriptionPlan = isSystemAdmin ? 'premium_yearly' : (data.subscription_plan || 'free');
+
+          const prof: UserProfile = {
+            id: data.id,
+            email: currentEmail,
+            displayName: resolvedName,
+            avatarUrl: data.avatar_url,
+            role: profRole,
+            subscriptionPlan: profPlan,
+            subscriptionStatus: data.subscription_status || 'active',
+            subscriptionExpiresAt: data.subscription_expires_at,
+            createdAt: data.created_at || new Date().toISOString(),
+          };
+          setProfile(prof);
+
+          // Immediately update local display name state & storage so it overrides any stale guest name
+          if (resolvedName) {
+            setDisplayNameState(resolvedName);
+            await AsyncStorage.setItem(STORAGE_KEYS.DISPLAY_NAME, resolvedName).catch(() => {});
+          }
+
+          // If profiles.display_name was empty in Supabase, update it now
+          if ((!data.display_name || !data.display_name.trim()) && resolvedName) {
+            try {
+              await supabase
+                .from('profiles')
+                .update({ display_name: resolvedName })
+                .eq('id', userId);
+            } catch {}
+          }
+
+          // Sync XP from cloud with local storage (instant merge)
+          const localXpData = await getUserXp();
+          const cloudTotalXp = data.xp || 0;
+          const cloudWeeklyXp = data.weekly_xp || 0;
+          const mergedTotalXp = Math.max(cloudTotalXp, localXpData.totalXp);
+          const mergedWeeklyXp = Math.max(cloudWeeklyXp, localXpData.weeklyXp);
+
+          await updateUserXpDirectly(mergedTotalXp, mergedWeeklyXp);
+          invalidateLeaderboardCache();
+
+          // If local guest had higher XP, sync it up to the cloud account
+          if (localXpData.totalXp > cloudTotalXp || localXpData.weeklyXp > cloudWeeklyXp) {
+            pendingXpSyncRef.current = { totalXp: mergedTotalXp, weeklyXp: mergedWeeklyXp };
+            flushXpSync();
+          }
+
+          if (isSystemAdmin && (data.role !== 'admin' || data.subscription_plan !== 'premium_yearly')) {
+            try {
+              await supabase
+                .from('profiles')
+                .update({ role: 'admin', subscription_plan: 'premium_yearly' })
+                .eq('id', userId);
+            } catch {}
+          }
+        } else {
+          const profRole: UserRole = isSystemAdmin ? 'admin' : 'free';
+          const profPlan: SubscriptionPlan = isSystemAdmin ? 'premium_yearly' : 'free';
+
+          const fallbackProf: UserProfile = {
+            id: userId,
+            email: currentEmail || 'user@litera.app',
+            displayName: resolvedName,
+            role: profRole,
+            subscriptionPlan: profPlan,
+            subscriptionStatus: 'active',
+            createdAt: new Date().toISOString(),
+          };
+          setProfile(fallbackProf);
 
           if (resolvedName) {
             setDisplayNameState(resolvedName);
             await AsyncStorage.setItem(STORAGE_KEYS.DISPLAY_NAME, resolvedName).catch(() => {});
           }
+
+          try {
+            await supabase
+              .from('profiles')
+              .upsert({
+                id: userId,
+                email: currentEmail || 'user@litera.app',
+                display_name: resolvedName,
+                role: profRole,
+                subscription_plan: profPlan,
+              });
+          } catch {}
         }
+      } catch {
+        // Failed to fetch live profile from Supabase
       }
-    } catch {
-      // Failed to fetch live profile from Supabase
-    }
-  };
+    },
+    [user, flushXpSync],
+  );
 
   const isEmailAdmin = user?.email?.toLowerCase() === 'admin@litera.app';
   const isUserAdmin =
@@ -446,7 +459,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!error && data?.user) {
       setUser(data.user);
       setSession(data.session);
-      await fetchProfile(data.user.id, data.user.email);
+
+      // Instant override of display name from account before network fetch
+      const immediateName =
+        (data.user.user_metadata as any)?.full_name ||
+        (data.user.user_metadata as any)?.name ||
+        (data.user.user_metadata as any)?.display_name ||
+        (data.user.email ? data.user.email.split('@')[0] : '');
+      if (immediateName) {
+        setDisplayNameState(immediateName);
+        await AsyncStorage.setItem(STORAGE_KEYS.DISPLAY_NAME, immediateName).catch(() => {});
+      }
+
+      await markLanguageOnboarded().catch(() => {});
+      await fetchProfile(data.user.id, data.user.email, data.user);
       await syncCloudData(data.user.id).catch(() => {});
     }
     return { error: error?.message };
@@ -536,7 +562,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!sessionErr && sessionData.user) {
             setUser(sessionData.user);
             setSession(sessionData.session);
-            await fetchProfile(sessionData.user.id, sessionData.user.email);
+
+            const immediateName =
+              (sessionData.user.user_metadata as any)?.full_name ||
+              (sessionData.user.user_metadata as any)?.name ||
+              (sessionData.user.user_metadata as any)?.display_name ||
+              (sessionData.user.email ? sessionData.user.email.split('@')[0] : '');
+            if (immediateName) {
+              setDisplayNameState(immediateName);
+              await AsyncStorage.setItem(STORAGE_KEYS.DISPLAY_NAME, immediateName).catch(() => {});
+            }
+
+            await markLanguageOnboarded().catch(() => {});
+            await fetchProfile(sessionData.user.id, sessionData.user.email, sessionData.user);
             await syncCloudData(sessionData.user.id).catch(() => {});
             return {};
           }
@@ -621,7 +659,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           })
           .eq('id', user.id);
 
-        await fetchProfile(user.id, user.email);
+        await fetchProfile(user.id, user.email, user);
       } catch {
         setProfile((prev) => (prev ? { ...prev, role: nextRole, subscriptionPlan: plan } : null));
       }

@@ -297,12 +297,23 @@ export default function HomeScreen() {
     return unsubscribe;
   }, [navigation, clearSearch]);
 
-  // Dynamic Greeting: logged-in user profile name takes top priority
+  // Dynamic Greeting: logged-in user profile name strictly takes top priority over any guest name
   const greetingText = useMemo(() => {
     const prefix = getGreetingPrefix(uiLang);
-    const displayName = user
-      ? (profile?.displayName || (user?.user_metadata as any)?.full_name || authDisplayName || (user?.email ? user.email.split('@')[0] : ''))
-      : (authDisplayName || '');
+    let displayName = '';
+    if (user) {
+      // Authenticated user: strictly use account name from profile or metadata or email
+      displayName =
+        (profile?.displayName && profile.displayName.trim()) ||
+        (user.user_metadata as any)?.full_name ||
+        (user.user_metadata as any)?.name ||
+        (user.user_metadata as any)?.display_name ||
+        (user.email ? user.email.split('@')[0] : '') ||
+        '';
+    } else {
+      // Guest user: use guest name entered in onboarding
+      displayName = authDisplayName || '';
+    }
 
     if (displayName && displayName.trim()) {
       const capName =
