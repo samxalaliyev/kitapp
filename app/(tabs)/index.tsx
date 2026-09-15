@@ -23,13 +23,17 @@ import {
 } from '@/components/AuthorBooksModal';
 import { BookCard } from '@/components/BookCard';
 import { BookDetailModal } from '@/components/BookDetailModal';
-import { LeaguesChallengesModal } from '@/components/gamification/LeaguesChallengesModal';
+import {
+  LeaderboardModal,
+  ReadingChallengesModal,
+} from '@/components/gamification/LeaguesChallengesModal';
 import { OutOfEnergyModal } from '@/components/OutOfEnergyModal';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SubscriptionPaywallModal } from '@/components/SubscriptionPaywallModal';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { getAllReadingProgress, getBook } from '@/lib/db';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
+import { getStreakInfo } from '@/lib/gamification/streaks';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
 import type { ApiBook } from '@/types/book';
@@ -264,7 +268,9 @@ export default function HomeScreen() {
   // Modal states for Energy & Paywall
   const [outOfEnergyVisible, setOutOfEnergyVisible] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
-  const [leaguesModalVisible, setLeaguesModalVisible] = useState(false);
+  const [leaderboardVisible, setLeaderboardVisible] = useState(false);
+  const [challengesVisible, setChallengesVisible] = useState(false);
+  const [streakCount, setStreakCount] = useState(0);
 
   // Author Modal State
   const [selectedAuthor, setSelectedAuthor] = useState<AuthorItem | null>(null);
@@ -383,6 +389,9 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       loadActiveReadingBook();
+      getStreakInfo()
+        .then((info) => setStreakCount(info.streak))
+        .catch(() => {});
     }, [loadActiveReadingBook]),
   );
 
@@ -413,7 +422,7 @@ export default function HomeScreen() {
 
             <View style={styles.headerRightActions}>
               <Pressable
-                onPress={() => setLeaguesModalVisible(true)}
+                onPress={() => setLeaderboardVisible(true)}
                 style={({ pressed }) => [
                   styles.leaguePill,
                   {
@@ -423,9 +432,35 @@ export default function HomeScreen() {
                   pressed && styles.pressed,
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Həftəlik Liqa və Seriya"
+                accessibilityLabel="Həftəlik Liqa"
               >
                 <Text style={styles.leagueIcon}>🏆</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setChallengesVisible(true)}
+                style={({ pressed }) => [
+                  styles.streakPill,
+                  {
+                    backgroundColor: colors.isDark ? 'rgba(239, 68, 68, 0.15)' : '#fee2e2',
+                    borderColor: '#ef4444',
+                  },
+                  pressed && styles.pressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Oxu Seriyası və Çellenclər"
+              >
+                <Text style={styles.streakIcon}>🔥</Text>
+                {streakCount > 0 && (
+                  <Text
+                    style={[
+                      styles.streakValue,
+                      { color: colors.isDark ? '#fca5a5' : '#dc2626' },
+                    ]}
+                  >
+                    {streakCount}
+                  </Text>
+                )}
               </Pressable>
 
               <Pressable
@@ -667,12 +702,22 @@ export default function HomeScreen() {
         onClose={() => setPaywallVisible(false)}
       />
 
-      {/* Leagues & Daily Challenges Modal */}
-      <LeaguesChallengesModal
-        visible={leaguesModalVisible}
-        onClose={() => setLeaguesModalVisible(false)}
+      {/* Weekly League Leaderboard Modal */}
+      <LeaderboardModal
+        visible={leaderboardVisible}
+        onClose={() => setLeaderboardVisible(false)}
         onOpenPaywall={() => {
-          setLeaguesModalVisible(false);
+          setLeaderboardVisible(false);
+          setPaywallVisible(true);
+        }}
+      />
+
+      {/* Reading Habit & Challenges Modal */}
+      <ReadingChallengesModal
+        visible={challengesVisible}
+        onClose={() => setChallengesVisible(false)}
+        onOpenPaywall={() => {
+          setChallengesVisible(false);
           setPaywallVisible(true);
         }}
       />
@@ -699,6 +744,23 @@ const styles = StyleSheet.create({
   },
   leagueIcon: {
     fontSize: 15,
+  },
+  streakPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+    borderWidth: 1.5,
+    gap: 3,
+  },
+  streakIcon: {
+    fontSize: 14,
+  },
+  streakValue: {
+    fontSize: 12,
+    fontWeight: FontWeight.bold,
   },
   scrollContent: {
     paddingBottom: 110,

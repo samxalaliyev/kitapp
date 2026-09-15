@@ -19,7 +19,7 @@ import { EnergyActionModal } from '@/components/EnergyActionModal';
 import { OutOfEnergyModal } from '@/components/OutOfEnergyModal';
 import { SubscriptionPaywallModal } from '@/components/SubscriptionPaywallModal';
 import { FlashcardStudyModal } from '@/components/vocabulary/FlashcardStudyModal';
-import { LeaguesChallengesModal } from '@/components/gamification/LeaguesChallengesModal';
+import { LeaderboardModal } from '@/components/gamification/LeaderboardModal';
 import { PairMatchingGame } from '@/components/vocabulary/PairMatchingGame';
 import { QuizGameModal } from '@/components/vocabulary/QuizGameModal';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -57,8 +57,7 @@ export default function VocabularyScreen() {
   const [outOfEnergyVisible, setOutOfEnergyVisible] = useState(false);
   const [energyActionModalVisible, setEnergyActionModalVisible] = useState(false);
   const [pendingGameType, setPendingGameType] = useState<'flashcard' | 'pair' | 'quiz' | null>(null);
-  const [leaguesModalVisible, setLeaguesModalVisible] = useState(false);
-  const [leaguesInitialTab, setLeaguesInitialTab] = useState<'league' | 'challenges'>('league');
+  const [leaderboardVisible, setLeaderboardVisible] = useState(false);
 
   // Load words, hearts, and game stats
   const loadData = useCallback(async () => {
@@ -265,10 +264,7 @@ export default function VocabularyScreen() {
         >
           <Pressable
             style={({ pressed }) => [styles.statItem, pressed && styles.pressed]}
-            onPress={() => {
-              setLeaguesInitialTab('league');
-              setLeaguesModalVisible(true);
-            }}
+            onPress={() => setLeaderboardVisible(true)}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Text style={[styles.statValue, { color: colors.primary }]}>{totalXp}</Text>
@@ -551,12 +547,11 @@ export default function VocabularyScreen() {
         iconName="play-circle"
       />
 
-      <LeaguesChallengesModal
-        visible={leaguesModalVisible}
-        initialTab={leaguesInitialTab}
-        onClose={() => setLeaguesModalVisible(false)}
+      <LeaderboardModal
+        visible={leaderboardVisible}
+        onClose={() => setLeaderboardVisible(false)}
         onOpenPaywall={() => {
-          setLeaguesModalVisible(false);
+          setLeaderboardVisible(false);
           setPaywallVisible(true);
         }}
       />

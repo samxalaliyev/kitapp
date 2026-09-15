@@ -24,7 +24,10 @@ import { useLanguage } from '@/lib/i18n/LanguageContext';
 import type { TranslationKey } from '@/lib/i18n/translations';
 import { getLanguage, SUPPORTED_LANGUAGES, type LanguageCode } from '@/lib/i18n/constants';
 import { clearTranslationCache } from '@/lib/i18n/cache';
-import { LeaguesChallengesModal } from '@/components/gamification/LeaguesChallengesModal';
+import {
+  LeaderboardModal,
+  ReadingChallengesModal,
+} from '@/components/gamification/LeaguesChallengesModal';
 import {
   FONT_SIZE_PX,
   getReaderSettings,
@@ -155,8 +158,8 @@ export default function SettingsScreen() {
   // Active Picker Modal State
   const [activePicker, setActivePicker] = useState<PickerType>(null);
   const [activeLegal, setActiveLegal] = useState<LegalType>(null);
-  const [leaguesModalVisible, setLeaguesModalVisible] = useState(false);
-  const [leaguesInitialTab, setLeaguesInitialTab] = useState<'league' | 'challenges'>('league');
+  const [leaderboardVisible, setLeaderboardVisible] = useState(false);
+  const [challengesVisible, setChallengesVisible] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -490,10 +493,7 @@ export default function SettingsScreen() {
             iconBgColor="rgba(251, 191, 36, 0.15)"
             label={t('weekly_league_setting')}
             value={t('top_10_rank')}
-            onPress={() => {
-              setLeaguesInitialTab('league');
-              setLeaguesModalVisible(true);
-            }}
+            onPress={() => setLeaderboardVisible(true)}
           />
           <SettingRow
             iconName="zap"
@@ -501,10 +501,7 @@ export default function SettingsScreen() {
             iconBgColor="rgba(249, 115, 22, 0.15)"
             label={t('challenges_setting')}
             value={`7 & 28 ${t('challenge_days_unit')} 🔥`}
-            onPress={() => {
-              setLeaguesInitialTab('challenges');
-              setLeaguesModalVisible(true);
-            }}
+            onPress={() => setChallengesVisible(true)}
             isLast
           />
         </SettingGroup>
@@ -705,13 +702,22 @@ export default function SettingsScreen() {
           onClose={() => setActiveLegal(null)}
         />
 
-        {/* Leagues & Daily Challenges Modal */}
-        <LeaguesChallengesModal
-          visible={leaguesModalVisible}
-          initialTab={leaguesInitialTab}
-          onClose={() => setLeaguesModalVisible(false)}
+        {/* Weekly League Leaderboard Modal */}
+        <LeaderboardModal
+          visible={leaderboardVisible}
+          onClose={() => setLeaderboardVisible(false)}
           onOpenPaywall={() => {
-            setLeaguesModalVisible(false);
+            setLeaderboardVisible(false);
+            setPaywallVisible(true);
+          }}
+        />
+
+        {/* Reading Habit & Challenges Modal */}
+        <ReadingChallengesModal
+          visible={challengesVisible}
+          onClose={() => setChallengesVisible(false)}
+          onOpenPaywall={() => {
+            setChallengesVisible(false);
             setPaywallVisible(true);
           }}
         />

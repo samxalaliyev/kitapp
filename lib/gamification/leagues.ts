@@ -218,34 +218,45 @@ export async function addXP(
   return { added, newTotal, newWeekly };
 }
 
-const SEED_COMPETITORS: LeaderboardUser[] = [
-  { id: 'bot_1', name: 'Nigar Q.', xp: 320, isCurrentUser: false, avatarBg: '#6366f1' },
-  { id: 'bot_2', name: 'Murad Ə.', xp: 270, isCurrentUser: false, avatarBg: '#ec4899' },
-  { id: 'bot_3', name: 'Aysel K.', xp: 210, isCurrentUser: false, avatarBg: '#10b981' },
-  { id: 'bot_4', name: 'Kamran M.', xp: 140, isCurrentUser: false, avatarBg: '#8b5cf6' },
-  { id: 'bot_5', name: 'Leyla S.', xp: 110, isCurrentUser: false, avatarBg: '#06b6d4' },
-  { id: 'bot_6', name: 'Elmir B.', xp: 85, isCurrentUser: false, avatarBg: '#14b8a6' },
-  { id: 'bot_7', name: 'Sevinc R.', xp: 60, isCurrentUser: false, avatarBg: '#f97316' },
-  { id: 'bot_8', name: 'Rauf H.', xp: 40, isCurrentUser: false, avatarBg: '#64748b' },
-  { id: 'bot_9', name: 'Günel V.', xp: 20, isCurrentUser: false, avatarBg: '#e11d48' },
+const AVATAR_COLORS = [
+  '#6366f1',
+  '#ec4899',
+  '#10b981',
+  '#8b5cf6',
+  '#06b6d4',
+  '#f59e0b',
+  '#f97316',
+  '#14b8a6',
+  '#e11d48',
+  '#3b82f6',
 ];
 
+function getAvatarColor(seed: string): string {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
 /**
- * Fetches the weekly leaderboard from Supabase (or fallback seeds)
- * merged seamlessly with the user's actual live XP and correctly ranked!
+ * Fetches the weekly leaderboard from Supabase for the user's specific league tier
+ * (Duolingo-style league partitioning). Only real users are returned.
  */
 export async function fetchLeaderboard(
   userWeeklyXp: number,
   userId?: string,
   userName?: string,
 ): Promise<LeaderboardUser[]> {
+  const currentTier = getLeagueForXp(userWeeklyXp);
   const now = Date.now();
+
   if (cachedLeaderboard && now - lastLeaderboardFetchTime < LEADERBOARD_CACHE_TTL) {
     // Return cached list with updated current user XP & re-sort
     const updated = cachedLeaderboard.map((u) =>
       u.isCurrentUser ? { ...u, xp: userWeeklyXp } : u,
     );
-    return updated.sort((a, b) => b.xp - a.xp).slice(0, 10);
+    return updated.sort((a, b) => b.xp - a.xp);
   }
 
   let users: LeaderboardUser[] = [];
@@ -253,56 +264,51 @@ export async function fetchLeaderboard(
   try {
     const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
     if (isSupabaseConfigured && supabase) {
+      // Query only users in the current league tier (Duolingo-style)
+      const maxLimit = currentTier.maxXp === Infinity ? 999999999 : currentTier.maxXp;
       const { data } = await supabase
         .from('profiles')
-        .select('id, display_name, weekly_xp')
+        .select('id, display_name, email, weekly_xp')
+        .gte('weekly_xp', currentTier.minXp)
+        .lte('weekly_xp', maxLimit)
         .order('weekly_xp', { ascending: false })
-        .limit(10);
+        .limit(30);
 
       if (data && data.length > 0) {
         users = data.map((d: any) => ({
           id: d.id,
-          name: d.display_name || 'Oxucu',
+          name: (d.display_name && d.display_name.trim()) || (d.email ? d.email.split('@')[0] : 'Oxucu'),
           xp: d.weekly_xp || 0,
           isCurrentUser: d.id === userId,
-          avatarBg: '#6366f1',
+          avatarBg: getAvatarColor(d.id || d.display_name || 'user'),
         }));
       }
     }
   } catch {}
 
-  // Merge with competitors to ensure 10 active players
-  const combined = [...users];
-  for (const s of SEED_COMPETITORS) {
-    if (combined.length >= 10) break;
-    if (!combined.some((u) => u.id === s.id)) {
-      combined.push(s);
-    }
-  }
-
-  // Ensure current user is in the list
-  const currentDisplayName = userName || 'Siz';
-  const hasUser = combined.some((u) => u.isCurrentUser || (userId && u.id === userId));
+  // Ensure current user is included in their league tier ranking
+  const currentDisplayName = userName || 'Oxucu';
+  const hasUser = users.some((u) => u.isCurrentUser || (userId && u.id === userId));
   if (!hasUser) {
-    combined.push({
+    users.push({
       id: userId || 'current_user',
-      name: `${currentDisplayName} (Siz)`,
+      name: currentDisplayName,
       xp: userWeeklyXp,
       isCurrentUser: true,
       avatarBg: '#f59e0b',
     });
   } else {
-    combined.forEach((u) => {
+    users.forEach((u) => {
       if (u.isCurrentUser || (userId && u.id === userId)) {
         u.isCurrentUser = true;
         u.xp = userWeeklyXp;
-        u.name = `${currentDisplayName} (Siz)`;
+        u.name = currentDisplayName;
       }
     });
   }
 
-  // Sort descending by XP and cap at 10
-  const sorted = combined.sort((a, b) => b.xp - a.xp).slice(0, 10);
+  // Sort descending by XP
+  const sorted = users.sort((a, b) => b.xp - a.xp);
   cachedLeaderboard = sorted;
   lastLeaderboardFetchTime = now;
 
