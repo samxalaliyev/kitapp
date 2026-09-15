@@ -148,14 +148,18 @@ export async function getGameStats(): Promise<{ xp: number; streak: number; game
 /**
  * Records a successful round completion.
  */
-export async function recordGameSuccess(xpGain: number, pairsMatched: number): Promise<void> {
+export async function recordGameSuccess(
+  xpGain: number,
+  pairsMatched: number,
+  isPremium: boolean = false,
+): Promise<void> {
   try {
     const stats = await getGameStats();
     const newPlayed = stats.gamesPlayed + 1;
     const newMatched = stats.matchedCount + pairsMatched;
 
     await Promise.all([
-      addXP(xpGain),
+      addXP(xpGain, isPremium),
       AsyncStorage.setItem(STORAGE_KEYS.GAMES_PLAYED, String(newPlayed)),
       AsyncStorage.setItem(STORAGE_KEYS.MATCHED_COUNT, String(newMatched)),
     ]);

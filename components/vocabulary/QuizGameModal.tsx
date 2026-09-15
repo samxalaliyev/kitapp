@@ -141,7 +141,7 @@ export function QuizGameModal({
           Speech.speak(deck[nextIdx].word, { language: 'en-US' });
         }
       } else {
-        await recordGameCompleted(score * 10, deck.length);
+        await recordGameCompleted(score * 10, deck.length, isPremium);
         setCompleted(true);
       }
     }, 1000);

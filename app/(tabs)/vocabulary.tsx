@@ -271,7 +271,7 @@ export default function VocabularyScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Text style={[styles.statValue, { color: colors.primary }]}>{totalXp || stats.xp}</Text>
+              <Text style={[styles.statValue, { color: colors.primary }]}>{totalXp}</Text>
               <Text style={{ fontSize: 13 }}>🏆</Text>
             </View>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>

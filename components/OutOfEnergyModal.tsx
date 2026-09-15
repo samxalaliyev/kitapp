@@ -9,6 +9,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useAuth } from '@/lib/auth/AuthContext';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
@@ -33,6 +34,7 @@ export function OutOfEnergyModal({
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
   const { t } = useLanguage();
+  const { isPremium } = useAuth();
 
   if (!visible) return null;
 
@@ -51,7 +53,7 @@ export function OutOfEnergyModal({
 
   const handleGoPro = () => {
     onClose();
-    if (onOpenPaywall) {
+    if (!isPremium && onOpenPaywall) {
       onOpenPaywall();
     }
   };

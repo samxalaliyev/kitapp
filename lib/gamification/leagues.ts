@@ -137,6 +137,51 @@ export function getLeagueForXp(weeklyXp: number): LeagueTier {
   return LEAGUE_TIERS[0];
 }
 
+export type XpChangeListener = (newTotal: number, newWeekly: number, added: number) => void;
+const xpListeners = new Set<XpChangeListener>();
+
+export function subscribeXpChange(listener: XpChangeListener): () => void {
+  xpListeners.add(listener);
+  return () => xpListeners.delete(listener);
+}
+
+export function notifyXpChange(newTotal: number, newWeekly: number, added: number) {
+  xpListeners.forEach((listener) => {
+    try {
+      listener(newTotal, newWeekly, added);
+    } catch {}
+  });
+}
+
+export function invalidateLeaderboardCache() {
+  cachedLeaderboard = null;
+  lastLeaderboardFetchTime = 0;
+}
+
+export async function updateUserXpDirectly(
+  newTotal: number,
+  newWeekly: number,
+): Promise<void> {
+  const currentWeek = getCurrentWeekId();
+  try {
+    await Promise.all([
+      AsyncStorage.setItem(STORAGE_KEYS.XP, String(newTotal)),
+      AsyncStorage.setItem(STORAGE_KEYS.WEEKLY_XP, String(newWeekly)),
+      AsyncStorage.setItem(STORAGE_KEYS.LEGACY_VOCAB_XP, String(newTotal)),
+      AsyncStorage.setItem(STORAGE_KEYS.WEEK_START, currentWeek),
+    ]);
+  } catch {}
+
+  // Update cached leaderboard immediately if user is in it
+  if (cachedLeaderboard) {
+    cachedLeaderboard = cachedLeaderboard.map((u) =>
+      u.isCurrentUser ? { ...u, xp: newWeekly } : u,
+    );
+  }
+
+  notifyXpChange(newTotal, newWeekly, 0);
+}
+
 /**
  * Adds XP with 1.5x multiplier for PRO members and keeps legacy keys synced
  */
@@ -159,6 +204,16 @@ export async function addXP(
       AsyncStorage.setItem(STORAGE_KEYS.WEEK_START, getCurrentWeekId()),
     ]);
   } catch {}
+
+  // Instantly update current user's entry in memory leaderboard cache
+  if (cachedLeaderboard) {
+    cachedLeaderboard = cachedLeaderboard.map((u) =>
+      u.isCurrentUser ? { ...u, xp: newWeekly } : u,
+    );
+  }
+
+  // Instantly broadcast to all active UI screens and AuthContext
+  notifyXpChange(newTotal, newWeekly, added);
 
   return { added, newTotal, newWeekly };
 }

@@ -14,10 +14,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 
+import { useAuth } from '@/lib/auth/AuthContext';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
-import { generatePairDeck, type GameWordPair } from '@/lib/vocabulary/game-service';
+import { generatePairDeck, recordGameCompleted, type GameWordPair } from '@/lib/vocabulary/game-service';
 import { incrementReviewCount, listSavedWords } from '@/lib/vocabulary/store';
 
 export interface FlashcardStudyModalProps {
@@ -35,6 +36,7 @@ export function FlashcardStudyModal({
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
   const { targetLang, t } = useLanguage();
+  const { isPremium } = useAuth();
 
   const [deck, setDeck] = useState<GameWordPair[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -162,6 +164,7 @@ export function FlashcardStudyModal({
       if (currentIndex + 1 >= deck.length) {
         setCompleted(true);
         setIsTransitioning(false);
+        recordGameCompleted(15, deck.length, isPremium).catch(() => {});
         return;
       }
 

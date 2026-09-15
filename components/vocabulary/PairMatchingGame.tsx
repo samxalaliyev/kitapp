@@ -143,7 +143,7 @@ export function PairMatchingGame({
         setSelectedRight(null);
 
         if (nextMatched.length >= pairs.length) {
-          await recordGameCompleted(25, pairs.length);
+          await recordGameCompleted(25, pairs.length, isPremium);
           setRoundStreak((s) => s + 1);
           setRoundCompleted(true);
         }

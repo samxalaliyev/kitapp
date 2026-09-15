@@ -33,7 +33,13 @@ import {
   consumeEnergy as consumeEnergyFromStore,
   refillEnergyWithAd,
 } from '@/lib/gamification/energy';
-import { getUserXp, addXP as addXpToStore } from '@/lib/gamification/leagues';
+import {
+  getUserXp,
+  addXP as addXpToStore,
+  subscribeXpChange,
+  updateUserXpDirectly,
+  invalidateLeaderboardCache,
+} from '@/lib/gamification/leagues';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -131,13 +137,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pendingXpSyncRef = useRef<{ totalXp: number; weeklyXp: number } | null>(null);
   const xpSyncTimerRef = useRef<any>(null);
 
-  // Load XP from storage on mount (includes auto-migration of legacy 220 XP)
+  const flushXpSync = useCallback(async () => {
+    if (xpSyncTimerRef.current) {
+      clearTimeout(xpSyncTimerRef.current);
+      xpSyncTimerRef.current = null;
+    }
+    const pending = pendingXpSyncRef.current;
+    if (!pending || !user?.id) return;
+    pendingXpSyncRef.current = null;
+    try {
+      if (isSupabaseConfigured && supabase) {
+        await supabase
+          .from('profiles')
+          .update({ xp: pending.totalXp, weekly_xp: pending.weeklyXp })
+          .eq('id', user.id);
+      }
+    } catch {}
+  }, [user?.id]);
+
+  // Load XP from storage on mount & subscribe to instant XP changes from anywhere (games, reader, etc.)
   useEffect(() => {
     getUserXp().then(({ totalXp: t, weeklyXp: w }) => {
       setTotalXp(t);
       setWeeklyXp(w);
     });
-  }, []);
+
+    const unsub = subscribeXpChange((newTotal, newWeekly) => {
+      setTotalXp(newTotal);
+      setWeeklyXp(newWeekly);
+
+      // Debounced background sync to Supabase (8 seconds)
+      if (user?.id) {
+        pendingXpSyncRef.current = { totalXp: newTotal, weeklyXp: newWeekly };
+        if (xpSyncTimerRef.current) clearTimeout(xpSyncTimerRef.current);
+        xpSyncTimerRef.current = setTimeout(() => {
+          flushXpSync();
+        }, 8000);
+      }
+    });
+
+    return unsub;
+  }, [user?.id, flushXpSync]);
 
   const todayKey = new Date().toISOString().split('T')[0];
 
@@ -242,16 +282,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       const currentEmail = (data?.email || fallbackEmail || '').toLowerCase();
-      const isSystemAdmin = currentEmail === 'admin@litera.app' || data?.role === 'admin';
+      const isSystemAdmin =
+        currentEmail === 'admin@litera.app' ||
+        data?.role === 'admin' ||
+        (user?.app_metadata as any)?.role === 'admin' ||
+        (user?.user_metadata as any)?.role === 'admin';
 
       if (!error && data) {
         const profRole: UserRole = isSystemAdmin ? 'admin' : (data.role || 'free');
         const profPlan: SubscriptionPlan = isSystemAdmin ? 'premium_yearly' : (data.subscription_plan || 'free');
 
+        // Extract cloud account name (overrides any stale guest name)
+        const resolvedName =
+          data.display_name ||
+          (user?.user_metadata as any)?.full_name ||
+          (user?.user_metadata as any)?.name ||
+          currentEmail.split('@')[0];
+
         const prof: UserProfile = {
           id: data.id,
           email: currentEmail,
-          displayName: data.display_name || currentEmail.split('@')[0],
+          displayName: resolvedName,
           avatarUrl: data.avatar_url,
           role: profRole,
           subscriptionPlan: profPlan,
@@ -260,6 +311,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           createdAt: data.created_at || new Date().toISOString(),
         };
         setProfile(prof);
+
+        // Immediately update local display name state & storage so it overrides guest name everywhere
+        if (resolvedName) {
+          setDisplayNameState(resolvedName);
+          await AsyncStorage.setItem(STORAGE_KEYS.DISPLAY_NAME, resolvedName).catch(() => {});
+        }
+
+        // Sync XP from cloud with local storage (instant merge)
+        const localXpData = await getUserXp();
+        const cloudTotalXp = data.xp || 0;
+        const cloudWeeklyXp = data.weekly_xp || 0;
+        const mergedTotalXp = Math.max(cloudTotalXp, localXpData.totalXp);
+        const mergedWeeklyXp = Math.max(cloudWeeklyXp, localXpData.weeklyXp);
+
+        await updateUserXpDirectly(mergedTotalXp, mergedWeeklyXp);
+        invalidateLeaderboardCache();
+
+        // If local guest had higher XP, sync it up to the cloud account
+        if (localXpData.totalXp > cloudTotalXp || localXpData.weeklyXp > cloudWeeklyXp) {
+          pendingXpSyncRef.current = { totalXp: mergedTotalXp, weeklyXp: mergedWeeklyXp };
+          flushXpSync();
+        }
 
         if (isSystemAdmin && (data.role !== 'admin' || data.subscription_plan !== 'premium_yearly')) {
           try {
@@ -272,13 +345,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         const profRole: UserRole = isSystemAdmin ? 'admin' : 'free';
         const profPlan: SubscriptionPlan = isSystemAdmin ? 'premium_yearly' : 'free';
+        const resolvedName =
+          (user?.user_metadata as any)?.full_name ||
+          (user?.user_metadata as any)?.name ||
+          (currentEmail || 'user@litera.app').split('@')[0];
 
         const { data: newProfData } = await supabase
           .from('profiles')
           .upsert({
             id: userId,
             email: currentEmail || 'user@litera.app',
-            display_name: (currentEmail || 'user@litera.app').split('@')[0],
+            display_name: resolvedName,
             role: profRole,
             subscription_plan: profPlan,
           })
@@ -295,6 +372,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             subscriptionStatus: newProfData.subscription_status || 'active',
             createdAt: newProfData.created_at,
           });
+
+          if (resolvedName) {
+            setDisplayNameState(resolvedName);
+            await AsyncStorage.setItem(STORAGE_KEYS.DISPLAY_NAME, resolvedName).catch(() => {});
+          }
         }
       }
     } catch {
@@ -303,10 +385,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const isEmailAdmin = user?.email?.toLowerCase() === 'admin@litera.app';
-  const role: UserRole = isEmailAdmin ? 'admin' : (profile?.role ?? 'free');
-  const subscriptionPlan: SubscriptionPlan = isEmailAdmin ? 'premium_yearly' : (profile?.subscriptionPlan ?? 'free');
-  const isPremium = isPremiumMember(role, subscriptionPlan);
-  const isAdmin = isAdminUser(role);
+  const isUserAdmin =
+    isEmailAdmin ||
+    profile?.role === 'admin' ||
+    (user?.app_metadata as any)?.role === 'admin' ||
+    (user?.user_metadata as any)?.role === 'admin';
+
+  // Security: Guests (user === null) are NEVER admin and NEVER premium. Permissions are strictly server-bound.
+  const role: UserRole = user ? (isUserAdmin ? 'admin' : (profile?.role ?? 'free')) : 'free';
+  const subscriptionPlan: SubscriptionPlan = user ? (isUserAdmin ? 'premium_yearly' : (profile?.subscriptionPlan ?? 'free')) : 'free';
+  const isPremium = user ? isPremiumMember(role, subscriptionPlan) : false;
+  const isAdmin = user ? isAdminUser(role) : false;
   const limits = useMemo(
     () => getFeatureLimits(role, subscriptionPlan, bonusTranslationsToday, 0),
     [role, subscriptionPlan, bonusTranslationsToday],
@@ -476,7 +565,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
     setUser(null);
     setSession(null);
+    setDisplayNameState('Oxucu');
     await AsyncStorage.removeItem(STORAGE_KEYS.PROFILE);
+    await AsyncStorage.removeItem(STORAGE_KEYS.DISPLAY_NAME);
+    invalidateLeaderboardCache();
   }, []);
 
   const deleteAccount = useCallback(async () => {
@@ -513,6 +605,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(purchaseResult.errorMessage || 'Purchase failed');
       }
     }
+
+    // Admin role cannot be downgraded or altered by subscription flows
+    if (isAdmin) return;
 
     const nextRole: UserRole = plan === 'free' ? 'free' : 'premium';
     if (isSupabaseConfigured && user) {
@@ -583,23 +678,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const flushXpSync = useCallback(async () => {
-    if (xpSyncTimerRef.current) {
-      clearTimeout(xpSyncTimerRef.current);
-      xpSyncTimerRef.current = null;
-    }
-    const pending = pendingXpSyncRef.current;
-    if (!pending || !user?.id) return;
-    pendingXpSyncRef.current = null;
-    try {
-      if (isSupabaseConfigured && supabase) {
-        await supabase
-          .from('profiles')
-          .update({ xp: pending.totalXp, weekly_xp: pending.weeklyXp })
-          .eq('id', user.id);
-      }
-    } catch {}
-  }, [user?.id]);
+
 
   // AppState flush: flush pending XP when app moves to background
   useEffect(() => {

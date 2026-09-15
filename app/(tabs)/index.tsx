@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Dimensions,
   FlatList,
   Pressable,
@@ -258,7 +259,7 @@ export default function HomeScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const { colors } = useAppTheme();
   const { t, uiLang } = useLanguage();
-  const { user, profile, displayName: authDisplayName, energy, isPremium } = useAuth();
+  const { user, profile, displayName: authDisplayName, energy, isPremium, isAdmin } = useAuth();
 
   // Modal states for Energy & Paywall
   const [outOfEnergyVisible, setOutOfEnergyVisible] = useState(false);
@@ -290,14 +291,12 @@ export default function HomeScreen() {
     return unsubscribe;
   }, [navigation, clearSearch]);
 
-  // Dynamic Greeting
+  // Dynamic Greeting: logged-in user profile name takes top priority
   const greetingText = useMemo(() => {
     const prefix = getGreetingPrefix(uiLang);
-    const displayName =
-      authDisplayName ||
-      profile?.displayName ||
-      user?.user_metadata?.full_name ||
-      (user?.email ? user.email.split('@')[0] : '');
+    const displayName = user
+      ? (profile?.displayName || (user?.user_metadata as any)?.full_name || authDisplayName || (user?.email ? user.email.split('@')[0] : ''))
+      : (authDisplayName || '');
 
     if (displayName && displayName.trim()) {
       const capName =
@@ -432,7 +431,10 @@ export default function HomeScreen() {
               <Pressable
                 onPress={() => {
                   if (isPremium) {
-                    setPaywallVisible(true);
+                    Alert.alert(
+                      isAdmin ? '👑 Litera Admin' : '👑 Litera PRO',
+                      t('energy_modal_pro_unlimited') || 'Sizin enerji balansınız limitsizdir (⚡ ∞).',
+                    );
                   } else {
                     setOutOfEnergyVisible(true);
                   }
@@ -457,7 +459,7 @@ export default function HomeScreen() {
                     { color: isPremium ? (colors.isDark ? '#a5b4fc' : '#4f46e5') : (colors.isDark ? '#fbbf24' : '#d97706') },
                   ]}
                 >
-                  {isPremium ? 'PRO' : energy}
+                  {isAdmin ? 'ADMIN' : isPremium ? 'PRO' : energy}
                 </Text>
               </Pressable>
             </View>

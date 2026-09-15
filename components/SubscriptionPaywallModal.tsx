@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -30,13 +30,25 @@ export function SubscriptionPaywallModal({
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
   const { uiLang, t } = useLanguage();
-  const { upgradeSubscription, restorePurchases, subscriptionPlan } = useAuth();
+  const { upgradeSubscription, restorePurchases, subscriptionPlan, isPremium, isAdmin } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>('premium_yearly');
   const [loading, setLoading] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [activeLegal, setActiveLegal] = useState<LegalType>(null);
 
-  if (!visible) return null;
+  useEffect(() => {
+    if (visible && isPremium) {
+      Alert.alert(
+        isAdmin ? '👑 Litera Admin' : '👑 Litera PRO',
+        isAdmin
+          ? (t('energy_modal_pro_unlimited') || 'Siz Admin hesabındasınız. Bütün funksiyalar ömürlük limitsizdir.')
+          : (t('restore_success') || 'Sizin Litera PRO abunəliyiniz aktivdir.'),
+      );
+      onClose();
+    }
+  }, [visible, isPremium, isAdmin, onClose, t]);
+
+  if (!visible || isPremium) return null;
 
   const handleSubscribe = async () => {
     setLoading(true);

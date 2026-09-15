@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
+import { Appearance, useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
@@ -87,25 +87,39 @@ interface ThemeContextType {
 
 const THEME_STORAGE_KEY = '@kitab_oxu_theme_mode';
 
+const initialSystemDark = Appearance.getColorScheme() === 'dark';
+
 const ThemeContext = createContext<ThemeContextType>({
   mode: 'system',
   setMode: () => {},
-  colors: LIGHT_COLORS,
+  colors: initialSystemDark ? DARK_COLORS : LIGHT_COLORS,
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useColorScheme();
   const [mode, setModeState] = useState<ThemeMode>('system');
+  const [appThemeState, setAppThemeState] = useState<'light' | 'dark'>(() => {
+    return Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
+  });
 
   useEffect(() => {
+    // Listen for live system appearance changes (e.g. quick settings toggle)
+    const listener = Appearance.addChangeListener(({ colorScheme }) => {
+      if (colorScheme) {
+        setAppThemeState(colorScheme === 'dark' ? 'dark' : 'light');
+      }
+    });
+
     AsyncStorage.getItem(THEME_STORAGE_KEY).then((saved) => {
       if (saved === 'light' || saved === 'dark' || saved === 'system') {
         setModeState(saved as ThemeMode);
       } else {
-        // Default to system theme
+        // Default on first launch: seamlessly follow phone's system theme
         setModeState('system');
       }
     });
+
+    return () => listener.remove();
   }, []);
 
   const setMode = (newMode: ThemeMode) => {
@@ -113,7 +127,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(THEME_STORAGE_KEY, newMode).catch(() => {});
   };
 
-  const isDark = mode === 'dark' || (mode === 'system' && systemScheme === 'dark');
+  const currentSystemDark = (systemScheme ?? appThemeState ?? Appearance.getColorScheme()) === 'dark';
+  const isDark = mode === 'dark' || (mode === 'system' && currentSystemDark);
 
   const colors = isDark ? DARK_COLORS : LIGHT_COLORS;
 
