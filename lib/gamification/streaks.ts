@@ -93,3 +93,16 @@ export async function repairStreak(): Promise<void> {
   const yesterday = getYesterdayStr();
   await AsyncStorage.setItem(STORAGE_KEYS.LAST_READ_DATE, yesterday);
 }
+
+/**
+ * Resets local streak data on account logout.
+ */
+export async function resetStreakStatsLocal(): Promise<void> {
+  try {
+    await Promise.all([
+      AsyncStorage.removeItem(STORAGE_KEYS.STREAK),
+      AsyncStorage.removeItem(STORAGE_KEYS.LAST_READ_DATE),
+      AsyncStorage.removeItem(STORAGE_KEYS.STREAK_FROZEN),
+    ]);
+  } catch {}
+}

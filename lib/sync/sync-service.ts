@@ -10,13 +10,22 @@ export interface SyncResult {
   error?: string;
 }
 
+import { resetUserXpLocal } from '@/lib/gamification/leagues';
+import { resetVocabGameStatsLocal } from '@/lib/vocabulary/game-service';
+import { resetStreakStatsLocal } from '@/lib/gamification/streaks';
+
 /**
- * Purges all local user SQLite data upon logout or account switch.
+ * Purges all local user SQLite data, XP, game stats, and streaks upon logout or account switch.
  */
 export async function purgeUserLocalCache(): Promise<void> {
   try {
-    await clearAllUserLocalData();
-    await clearAllSavedWordsDb();
+    await Promise.all([
+      clearAllUserLocalData(),
+      clearAllSavedWordsDb(),
+      resetUserXpLocal(),
+      resetVocabGameStatsLocal(),
+      resetStreakStatsLocal(),
+    ]);
   } catch (err) {
     console.warn('[Sync] Failed to purge local user cache:', err);
   }

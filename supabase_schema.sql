@@ -118,12 +118,22 @@ ALTER TABLE public.books ENABLE ROW LEVEL SECURITY;
 -- Books Public Read Policy
 CREATE POLICY "Public read access on books" ON public.books FOR SELECT USING (true);
 
+-- Safe admin check function (SECURITY DEFINER prevents infinite recursion in RLS)
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Profiles Policies
 CREATE POLICY "Public read leaderboard profile info" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Users can delete own profile" ON public.profiles FOR DELETE USING (auth.uid() = id);
 CREATE POLICY "Admins full access profiles" ON public.profiles FOR ALL USING (
-  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+  public.is_admin()
 );
 
 -- Daily Usage Policies
@@ -141,7 +151,7 @@ CREATE POLICY "Users access own vocabulary" ON public.user_vocabulary FOR ALL US
 -- Subscription Logs Policies
 CREATE POLICY "Users read own subscription logs" ON public.subscription_logs FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Admins full access subscription logs" ON public.subscription_logs FOR ALL USING (
-  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+  public.is_admin()
 );
 
 -- ====================================================================

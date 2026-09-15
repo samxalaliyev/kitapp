@@ -183,6 +183,22 @@ export async function updateUserXpDirectly(
 }
 
 /**
+ * Completely purges all local user XP and resets cache on account logout.
+ */
+export async function resetUserXpLocal(): Promise<void> {
+  try {
+    await Promise.all([
+      AsyncStorage.removeItem(STORAGE_KEYS.XP),
+      AsyncStorage.removeItem(STORAGE_KEYS.WEEKLY_XP),
+      AsyncStorage.removeItem(STORAGE_KEYS.LEGACY_VOCAB_XP),
+      AsyncStorage.removeItem(STORAGE_KEYS.WEEK_START),
+    ]);
+  } catch {}
+  notifyXpChange(0, 0, 0);
+  invalidateLeaderboardCache();
+}
+
+/**
  * Adds XP with 1.5x multiplier for PRO members and keeps legacy keys synced
  */
 export async function addXP(
@@ -264,24 +280,35 @@ export async function fetchLeaderboard(
   try {
     const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
     if (isSupabaseConfigured && supabase) {
-      // Query only users in the current league tier (Duolingo-style)
-      const maxLimit = currentTier.maxXp === Infinity ? 999999999 : currentTier.maxXp;
-      const { data } = await supabase
+      // 1. Query all users from Supabase profiles (try weekly_xp first)
+      let queryRes: any = await supabase
         .from('profiles')
         .select('id, display_name, email, weekly_xp')
-        .gte('weekly_xp', currentTier.minXp)
-        .lte('weekly_xp', maxLimit)
         .order('weekly_xp', { ascending: false })
-        .limit(30);
+        .limit(60);
 
-      if (data && data.length > 0) {
-        users = data.map((d: any) => ({
-          id: d.id,
-          name: (d.display_name && d.display_name.trim()) || (d.email ? d.email.split('@')[0] : 'Oxucu'),
-          xp: d.weekly_xp || 0,
-          isCurrentUser: d.id === userId,
-          avatarBg: getAvatarColor(d.id || d.display_name || 'user'),
-        }));
+      // 2. Graceful fallback if weekly_xp column does not exist or errors
+      if (queryRes.error) {
+        queryRes = await supabase
+          .from('profiles')
+          .select('id, display_name, email, xp')
+          .order('xp', { ascending: false })
+          .limit(60);
+      }
+
+      if (queryRes.data && queryRes.data.length > 0) {
+        users = queryRes.data
+          .map((d: any) => ({
+            id: d.id,
+            name: (d.display_name && d.display_name.trim()) || (d.email ? d.email.split('@')[0] : 'Oxucu'),
+            xp: Number(d.weekly_xp ?? d.xp ?? 0),
+            isCurrentUser: d.id === userId,
+            avatarBg: getAvatarColor(d.id || d.display_name || 'user'),
+          }))
+          .filter((u: LeaderboardUser) => {
+            const tier = getLeagueForXp(u.xp);
+            return tier.id === currentTier.id || u.isCurrentUser;
+          });
       }
     }
   } catch {}

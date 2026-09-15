@@ -243,3 +243,17 @@ export function buildMatchingColumns(pairs: GameWordPair[]): {
 
   return { leftCards, rightCards };
 }
+
+/**
+ * Resets local vocabulary game stats (XP, matched count, streak, games played) on account logout.
+ */
+export async function resetVocabGameStatsLocal(): Promise<void> {
+  try {
+    await Promise.all([
+      AsyncStorage.removeItem(STORAGE_KEYS.XP),
+      AsyncStorage.removeItem(STORAGE_KEYS.MATCHED_COUNT),
+      AsyncStorage.removeItem(STORAGE_KEYS.GAMES_PLAYED),
+      AsyncStorage.removeItem(STORAGE_KEYS.STREAK),
+    ]);
+  } catch {}
+}

@@ -334,21 +334,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } catch {}
           }
 
-          // Sync XP from cloud with local storage (instant merge)
-          const localXpData = await getUserXp();
-          const cloudTotalXp = data.xp || 0;
-          const cloudWeeklyXp = data.weekly_xp || 0;
-          const mergedTotalXp = Math.max(cloudTotalXp, localXpData.totalXp);
-          const mergedWeeklyXp = Math.max(cloudWeeklyXp, localXpData.weeklyXp);
+          // Sync XP strictly from this user's cloud account (do not inherit previous account's XP)
+          const cloudTotalXp = Number(data.xp || 0);
+          const cloudWeeklyXp = Number(data.weekly_xp || 0);
 
-          await updateUserXpDirectly(mergedTotalXp, mergedWeeklyXp);
+          await updateUserXpDirectly(cloudTotalXp, cloudWeeklyXp);
+          setTotalXp(cloudTotalXp);
+          setWeeklyXp(cloudWeeklyXp);
           invalidateLeaderboardCache();
-
-          // If local guest had higher XP, sync it up to the cloud account
-          if (localXpData.totalXp > cloudTotalXp || localXpData.weeklyXp > cloudWeeklyXp) {
-            pendingXpSyncRef.current = { totalXp: mergedTotalXp, weeklyXp: mergedWeeklyXp };
-            flushXpSync();
-          }
 
           if (isSystemAdmin && (data.role !== 'admin' || data.subscription_plan !== 'premium_yearly')) {
             try {
@@ -596,18 +589,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchProfile]);
 
   const logout = useCallback(async () => {
+    // 1. Immediately flush pending XP to Supabase for the current account BEFORE logging out!
+    if (user?.id) {
+      await flushXpSync().catch(() => {});
+    }
+
     if (isSupabaseConfigured) {
       await supabase.auth.signOut().catch(() => {});
     }
+
+    // 2. Completely wipe all local caches, XP, game stats, and streak
     await purgeUserLocalCache();
+
     setProfile(null);
     setUser(null);
     setSession(null);
     setDisplayNameState('Oxucu');
+    setTotalXp(0);
+    setWeeklyXp(0);
     await AsyncStorage.removeItem(STORAGE_KEYS.PROFILE);
     await AsyncStorage.removeItem(STORAGE_KEYS.DISPLAY_NAME);
     invalidateLeaderboardCache();
-  }, []);
+  }, [user?.id, flushXpSync]);
 
   const deleteAccount = useCallback(async () => {
     if (isSupabaseConfigured && user) {
