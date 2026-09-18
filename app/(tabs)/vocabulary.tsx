@@ -46,6 +46,7 @@ export default function VocabularyScreen() {
   const [items, setItems] = useState<SavedWord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [vocabFilter, setVocabFilter] = useState<'all' | 'words' | 'phrases'>('all');
 
   // Game & Stats State
   const [hearts, setHearts] = useState(MAX_HEARTS);
@@ -105,14 +106,21 @@ export default function VocabularyScreen() {
   );
 
   const filteredWords = useMemo(() => {
-    if (!searchQuery.trim()) return items;
+    let list = items;
+    if (vocabFilter === 'words') {
+      list = list.filter((w) => !w.word.trim().includes(' '));
+    } else if (vocabFilter === 'phrases') {
+      list = list.filter((w) => w.word.trim().includes(' '));
+    }
+
+    if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase();
-    return items.filter(
+    return list.filter(
       (w) =>
         w.word.toLowerCase().includes(q) ||
         (w.translation && w.translation.toLowerCase().includes(q)),
     );
-  }, [items, searchQuery]);
+  }, [items, vocabFilter, searchQuery]);
 
   const handleGameCardPress = (gameType: 'flashcard' | 'pair' | 'quiz') => {
     if (!isPremium) {
@@ -389,6 +397,48 @@ export default function VocabularyScreen() {
           ) : null}
         </View>
 
+        {/* Filter Pills: All | Words | Phrases */}
+        <View style={styles.filterPillsRow}>
+          <Pressable
+            onPress={() => setVocabFilter('all')}
+            style={[
+              styles.filterPill,
+              { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+              vocabFilter === 'all' && [styles.filterPillActive, { borderColor: colors.primary, backgroundColor: colors.isDark ? 'rgba(212, 175, 122, 0.15)' : '#fef3c7' }],
+            ]}
+          >
+            <Text style={[styles.filterPillText, { color: colors.textMuted }, vocabFilter === 'all' && { color: colors.primary, fontWeight: FontWeight.bold }]}>
+              {t('filter_all') || 'Hamısı'} ({items.length})
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setVocabFilter('words')}
+            style={[
+              styles.filterPill,
+              { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+              vocabFilter === 'words' && [styles.filterPillActive, { borderColor: colors.primary, backgroundColor: colors.isDark ? 'rgba(212, 175, 122, 0.15)' : '#fef3c7' }],
+            ]}
+          >
+            <Text style={[styles.filterPillText, { color: colors.textMuted }, vocabFilter === 'words' && { color: colors.primary, fontWeight: FontWeight.bold }]}>
+              Sözlər ({items.filter((w) => !w.word.trim().includes(' ')).length})
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setVocabFilter('phrases')}
+            style={[
+              styles.filterPill,
+              { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+              vocabFilter === 'phrases' && [styles.filterPillActive, { borderColor: colors.primary, backgroundColor: colors.isDark ? 'rgba(212, 175, 122, 0.15)' : '#fef3c7' }],
+            ]}
+          >
+            <Text style={[styles.filterPillText, { color: colors.textMuted }, vocabFilter === 'phrases' && { color: colors.primary, fontWeight: FontWeight.bold }]}>
+              İfadələr 👑 ({items.filter((w) => w.word.trim().includes(' ')).length})
+            </Text>
+          </Pressable>
+        </View>
+
         {/* Search Bar */}
         <View
           style={[
@@ -435,7 +485,11 @@ export default function VocabularyScreen() {
                 <View style={{ flex: 1 }}>
                   <View style={styles.wordTitleRow}>
                     <Text style={[styles.wordText, { color: colors.text }]}>{item.word}</Text>
-                    {item.phonetic ? (
+                    {item.word.includes(' ') ? (
+                      <View style={styles.phraseBadge}>
+                        <Text style={styles.phraseBadgeText}>İFADƏ</Text>
+                      </View>
+                    ) : item.phonetic ? (
                       <Text style={[styles.phoneticText, { color: colors.primary }]}>
                         {item.phonetic}
                       </Text>
@@ -839,6 +893,39 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  filterPillsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginVertical: Spacing.sm,
+  },
+  filterPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+  },
+  filterPillActive: {
+    borderWidth: 1.5,
+  },
+  filterPillText: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.medium,
+  },
+  phraseBadge: {
+    backgroundColor: 'rgba(212, 175, 122, 0.2)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 0.8,
+    borderColor: 'rgba(212, 175, 122, 0.4)',
+  },
+  phraseBadgeText: {
+    color: '#d4af7a',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   emptyContainer: {
     alignItems: 'center',

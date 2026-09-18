@@ -117,6 +117,10 @@ export function QuizGameModal({
 
   const handleSelectOption = async (option: string) => {
     if (selectedOption !== null || !currentPair) return;
+    if (hearts <= 0 && !isPremium) {
+      setOutOfHeartsVisible(true);
+      return;
+    }
     setSelectedOption(option);
 
     const isCorrect = option === currentPair.translation;
@@ -128,6 +132,7 @@ export function QuizGameModal({
       setHearts(nextHearts);
       if (nextHearts <= 0 && !isPremium) {
         setTimeout(() => setOutOfHeartsVisible(true), 500);
+        return; // Halt: Do not advance to next question when out of hearts
       }
     }
 
@@ -232,7 +237,7 @@ export function QuizGameModal({
                 return (
                   <Pressable
                     key={opt + i}
-                    disabled={selectedOption !== null}
+                    disabled={selectedOption !== null || (hearts <= 0 && !isPremium)}
                     onPress={() => handleSelectOption(opt)}
                     style={({ pressed }) => [
                       styles.optionCard,
@@ -264,7 +269,12 @@ export function QuizGameModal({
         {/* Out of hearts modal */}
         <OutOfHeartsModal
           visible={outOfHeartsVisible}
-          onClose={() => setOutOfHeartsVisible(false)}
+          onClose={() => {
+            setOutOfHeartsVisible(false);
+            if (hearts <= 0 && !isPremium) {
+              onClose(); // Exit the quiz completely if dismissed without refilling
+            }
+          }}
           onHeartsRefilled={(newCount) => setHearts(newCount)}
           onUpgradePremium={onUpgradePremium}
         />

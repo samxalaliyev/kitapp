@@ -18,6 +18,7 @@ import { AdBannerContainer } from '@/components/AdBannerContainer';
 import { IOSOptionPickerModal, type OptionItem } from '@/components/iOSOptionPickerModal';
 import { LegalModal, type LegalType } from '@/components/LegalModal';
 import { SubscriptionPaywallModal } from '@/components/SubscriptionPaywallModal';
+import { FullscreenAdModal } from '@/components/FullscreenAdModal';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
@@ -141,17 +142,17 @@ export default function SettingsScreen() {
     subscriptionPlan,
     isPremium,
     isAdmin,
-    usedTranslationsToday,
-    limits,
+    energy,
+    refillEnergy,
     logout,
     deleteAccount,
-    watchAdForWords,
     restorePurchases,
   } = useAuth();
 
   const [fontSize, setFontSizeState] = useState<FontSizeLevel>('normal');
   const [fontFamily, setFontFamilyState] = useState<FontFamilyChoice>('sans');
   const [paywallVisible, setPaywallVisible] = useState(false);
+  const [rewardAdVisible, setRewardAdVisible] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [restoringPurchases, setRestoringPurchases] = useState(false);
 
@@ -330,9 +331,6 @@ export default function SettingsScreen() {
     subLabel: l.label,
   }));
 
-  const dailyLimitNum = typeof limits.dailyTranslationLimit === 'number' ? limits.dailyTranslationLimit : 40;
-  const usagePercent = Math.min(100, Math.round((usedTranslationsToday / dailyLimitNum) * 100));
-
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <ScrollView
@@ -421,15 +419,18 @@ export default function SettingsScreen() {
               </View>
             </View>
 
-            {/* Daily Usage Progress Bar for Free Users */}
+            {/* Daily Energy Progress Bar for Free Users */}
             {!isPremium ? (
               <View style={styles.usageBarSection}>
                 <View style={styles.usageLabelRow}>
-                  <Text style={[styles.usageTitle, { color: colors.textMuted }]}>
-                    {t('daily_translation_label')}
-                  </Text>
-                  <Text style={[styles.usageCount, { color: colors.text }]}>
-                    {usedTranslationsToday} / {dailyLimitNum} {t('words_unit')}
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Feather name="zap" size={13} color="#f59e0b" style={{ marginRight: 5 }} />
+                    <Text style={[styles.usageTitle, { color: colors.textMuted }]}>
+                      Gündəlik Enerji Balansı
+                    </Text>
+                  </View>
+                  <Text style={[styles.usageCount, { color: '#f59e0b', fontWeight: FontWeight.bold }]}>
+                    {energy} / 60 ⚡
                   </Text>
                 </View>
 
@@ -438,23 +439,23 @@ export default function SettingsScreen() {
                     style={[
                       styles.progressFill,
                       {
-                        width: `${usagePercent}%`,
-                        backgroundColor: usagePercent >= 90 ? colors.danger : colors.primary,
+                        width: `${Math.min(100, Math.max(5, Math.round((energy / 60) * 100)))}%`,
+                        backgroundColor: energy <= 10 ? colors.danger : '#f59e0b',
                       },
                     ]}
                   />
                 </View>
 
                 <Pressable
-                  onPress={watchAdForWords}
+                  onPress={() => setRewardAdVisible(true)}
                   style={({ pressed }) => [
                     styles.watchAdSubRow,
                     pressed && styles.pressed,
                   ]}
                 >
-                  <Feather name="play-circle" size={14} color={colors.primary} />
-                  <Text style={[styles.watchAdSubText, { color: colors.primary }]}>
-                    {t('watch_ad_words_btn')?.replace('🎥', '')?.trim()}
+                  <Feather name="play-circle" size={14} color="#f59e0b" />
+                  <Text style={[styles.watchAdSubText, { color: '#f59e0b' }]}>
+                    Reklam izlə (+10 ⚡ Enerji)
                   </Text>
                 </Pressable>
               </View>
@@ -718,6 +719,23 @@ export default function SettingsScreen() {
           onClose={() => setChallengesVisible(false)}
           onOpenPaywall={() => {
             setChallengesVisible(false);
+            setPaywallVisible(true);
+          }}
+        />
+
+        {/* Rewarded Video Ad Modal (+10 Energy) */}
+        <FullscreenAdModal
+          visible={rewardAdVisible}
+          onClose={async () => {
+            setRewardAdVisible(false);
+            const next = await refillEnergy();
+            Alert.alert(
+              '🎉 Təbriklər!',
+              `+10 ⚡ Enerji balansınıza əlavə olundu! Cari balansınız: ${next} ⚡`
+            );
+          }}
+          onUpgradePremium={() => {
+            setRewardAdVisible(false);
             setPaywallVisible(true);
           }}
         />

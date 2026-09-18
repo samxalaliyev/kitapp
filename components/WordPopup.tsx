@@ -33,6 +33,11 @@ import { ENERGY_COSTS } from "@/lib/gamification/energy";
 import { addXP } from "@/lib/gamification/leagues";
 import { getCachedTranslationSync } from "@/lib/i18n/cache";
 import { getOfflineTranslation } from "@/lib/dictionary/offline-dict";
+import {
+  detectIdiomInContext,
+  getPhrasalVerbCandidate,
+  type DetectedIdiom,
+} from "@/lib/dictionary/idioms";
 
 export interface WordPopupProps {
   visible: boolean;
@@ -116,7 +121,7 @@ export function WordPopup({
   onClose,
 }: WordPopupProps) {
   const { colors } = useAppTheme();
-  const { targetLang, t } = useLanguage();
+  const { targetLang, uiLang, t } = useLanguage();
   const { user, isPremium, energy, consumeEnergy } = useAuth();
 
   const [pronunciation, setPronunciation] = useState<PronunciationResult | null>(null);
@@ -139,6 +144,9 @@ export function WordPopup({
   const [loadingSentenceTrans, setLoadingSentenceTrans] = useState(false);
   const [adModalVisible, setAdModalVisible] = useState(false);
   const [paywallModalVisible, setPaywallModalVisible] = useState(false);
+
+  const [detectedIdiom, setDetectedIdiom] = useState<DetectedIdiom | null>(null);
+  const [isIdiomSaved, setIsIdiomSaved] = useState(false);
 
   const lastTranslatedKeyRef = useRef<string | null>(null);
 
@@ -170,31 +178,28 @@ export function WordPopup({
         return;
       }
 
-      // 3. Online network translation
-      const online = await checkIsOnline();
-      if (!online) {
+      // 3. Online network translation (starts immediately without blocking ping)
+      try {
+        const transRes = await translateWord(cleanWord, targetLang);
+        if (isMounted) {
+          if (transRes && transRes.translated) {
+            if (!isPremium) {
+              await consumeEnergy(ENERGY_COSTS.TRANSLATE_WORD);
+            }
+            addXP(2, isPremium).catch(() => {});
+            setTranslation(transRes);
+            setTransState("ready");
+            setIsOffline(false);
+          } else {
+            setTransState("error");
+          }
+        }
+      } catch {
         if (isMounted) {
           setIsOffline(true);
           setTransState("ready");
           setTranslation(null);
         }
-        return;
-      }
-
-      if (isMounted) setIsOffline(false);
-
-      try {
-        const transRes = await translateWord(cleanWord, targetLang);
-        if (isMounted && transRes) {
-          if (!isPremium) {
-            await consumeEnergy(ENERGY_COSTS.TRANSLATE_WORD);
-          }
-          addXP(2, isPremium).catch(() => {});
-          setTranslation(transRes);
-          setTransState("ready");
-        }
-      } catch {
-        if (isMounted) setTransState("error");
       }
     },
     [isPremium, consumeEnergy, targetLang],
@@ -216,11 +221,47 @@ export function WordPopup({
       setAudioError(false);
       setIsSpeaking(false);
       setAudioLoading(false);
+      setDetectedIdiom(null);
+      setIsIdiomSaved(false);
       return;
     }
 
     let isMounted = true;
     const cleanWord = word.trim().replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "");
+
+    // Contextual literary idiom / phrasal verb detection (0ms offline or dynamic candidate)
+    const idiom = detectIdiomInContext(cleanWord, sentenceContext, targetLang);
+    if (idiom) {
+      setDetectedIdiom(idiom);
+      isWordSaved(idiom.phrase, targetLang)
+        .then((savedRes) => {
+          if (isMounted) setIsIdiomSaved(savedRes);
+        })
+        .catch(() => {});
+    } else {
+      setIsIdiomSaved(false);
+      const dyn = getPhrasalVerbCandidate(cleanWord, sentenceContext);
+      if (dyn) {
+        translateWord(dyn.canonical, targetLang)
+          .then((transRes) => {
+            if (isMounted && transRes && transRes.translated) {
+              const dynamicIdiom: DetectedIdiom = {
+                phrase: dyn.canonical,
+                matchedText: dyn.matchedText,
+                translation: transRes.translated,
+              };
+              setDetectedIdiom(dynamicIdiom);
+              isWordSaved(dynamicIdiom.phrase, targetLang)
+                .then((s) => isMounted && setIsIdiomSaved(s))
+                .catch(() => {});
+            }
+          })
+          .catch(() => {});
+      } else {
+        setDetectedIdiom(null);
+      }
+    }
+
     const translationKey = `${cleanWord}_${targetLang}`;
 
     if (lastTranslatedKeyRef.current === translationKey) {
@@ -327,16 +368,33 @@ export function WordPopup({
 
   const handleSentenceTranslateClick = useCallback(() => {
     if (isPremium) {
-      executeSentenceTranslation(false);
+      executeSentenceTranslation(true);
     } else {
-      if (energy >= ENERGY_COSTS.TRANSLATE_SENTENCE) {
-        executeSentenceTranslation(false);
-      } else {
-        // Not enough energy: open rewarded ad for free translation!
-        setAdModalVisible(true);
-      }
+      // Free users must watch a short rewarded ad to unlock sentence translation
+      setAdModalVisible(true);
     }
-  }, [isPremium, energy, executeSentenceTranslation]);
+  }, [isPremium, executeSentenceTranslation]);
+
+  const handleSaveIdiom = useCallback(async () => {
+    if (!detectedIdiom || isIdiomSaved) return;
+    try {
+      await saveWord({
+        word: detectedIdiom.phrase,
+        translation: detectedIdiom.translation,
+        phonetic: null,
+        language: targetLang,
+      });
+      setIsIdiomSaved(true);
+      if (user?.id) {
+        syncWordToCloud(user.id, {
+          word: detectedIdiom.phrase,
+          translation: detectedIdiom.translation,
+          phonetic: null,
+          language: targetLang,
+        }).catch(() => {});
+      }
+    } catch {}
+  }, [detectedIdiom, isIdiomSaved, targetLang, user?.id]);
 
   const onPlayPress = useCallback(() => {
     if (audioDataUrl && !audioError) {
@@ -543,6 +601,78 @@ export function WordPopup({
             )}
           </View>
 
+          {/* Contextual Phrasal Verb & Idiom Card */}
+          {detectedIdiom ? (
+            <View
+              style={[
+                styles.idiomCard,
+                {
+                  backgroundColor: colors.isDark ? 'rgba(212, 175, 122, 0.08)' : '#fef9ee',
+                  borderColor: colors.isDark ? 'rgba(212, 175, 122, 0.35)' : 'rgba(212, 175, 122, 0.6)',
+                },
+              ]}
+            >
+              <View style={styles.idiomHeader}>
+                <View style={styles.idiomBadge}>
+                  <Feather name="zap" size={10} color="#0d0f17" style={{ marginRight: 4 }} />
+                  <Text style={styles.idiomBadgeText}>FRAZEOLOJİ İFADƏ / İDİOM</Text>
+                </View>
+              </View>
+
+              <Text style={[styles.idiomPhraseText, { color: colors.text }]}>
+                "{detectedIdiom.phrase}"
+              </Text>
+
+              {isPremium ? (
+                <View style={styles.idiomUnlockedContent}>
+                  <Text style={[styles.idiomTransText, { color: colors.primary }]}>
+                    = {detectedIdiom.translation}
+                  </Text>
+                  <Pressable
+                    onPress={handleSaveIdiom}
+                    disabled={isIdiomSaved}
+                    style={({ pressed }) => [
+                      styles.saveIdiomBtn,
+                      isIdiomSaved && styles.saveIdiomBtnSaved,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Feather
+                      name={isIdiomSaved ? "check" : "bookmark"}
+                      size={13}
+                      color={isIdiomSaved ? "#4ade80" : "#d4af7a"}
+                    />
+                    <Text
+                      style={[
+                        styles.saveIdiomBtnText,
+                        isIdiomSaved && { color: '#4ade80' },
+                      ]}
+                    >
+                      {isIdiomSaved ? (t('word_saved') || 'İfadə Yadda Saxlanıldı') : 'İfadəni Lüğətə Əlavə Et'}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <Pressable
+                  onPress={() => setPaywallModalVisible(true)}
+                  style={({ pressed }) => [styles.idiomLockedContent, pressed && styles.pressed]}
+                >
+                  <View style={styles.idiomLockRow}>
+                    <Feather name="lock" size={13} color="#d4af7a" />
+                    <Text style={styles.idiomLockText}>
+                      {uiLang === 'az'
+                        ? 'Bu ifadənin mənasını görmək üçün PRO-ya keçin 👑'
+                        : uiLang === 'ru'
+                        ? 'Оформите PRO, чтобы открыть значение идиомы 👑'
+                        : 'Unlock idiom meaning & save with PRO 👑'}
+                    </Text>
+                  </View>
+                  <Feather name="chevron-right" size={14} color="#d4af7a" />
+                </Pressable>
+              )}
+            </View>
+          ) : null}
+
           {/* Sentence Context (Gated Sentence Translation) */}
           {sentenceContext ? (
             <View style={styles.sentenceWrap}>
@@ -563,11 +693,15 @@ export function WordPopup({
                   </>
                 ) : (
                   <>
-                    <Feather name={isPremium ? "file-text" : "lock"} size={14} color="#d4af7a" />
+                    <Feather name={isPremium ? "file-text" : "video"} size={14} color="#d4af7a" />
                     <Text style={styles.sentenceBtnText}>
                       {isPremium
-                        ? t('translate_sentence_pro')
-                        : t('translate_sentence_energy_or_ad')}
+                        ? (t('translate_sentence_pro') || 'Cümləni Tərcümə Et (👑 PRO Limitsiz)')
+                        : (uiLang === 'az'
+                          ? '📺 Video İzlə -> Cümləni Tərcümə Et'
+                          : uiLang === 'ru'
+                          ? '📺 Смотреть видео -> Перевести'
+                          : '📺 Watch Ad -> Translate Sentence')}
                     </Text>
                   </>
                 )}
@@ -912,6 +1046,87 @@ const styles = StyleSheet.create({
     height: 0,
     opacity: 0,
     position: "absolute",
+  },
+  idiomCard: {
+    marginTop: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: Spacing.md,
+    gap: 8,
+  },
+  idiomHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  idiomBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#d4af7a',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radius.pill,
+  },
+  idiomBadgeText: {
+    color: '#0d0f17',
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  idiomPhraseText: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+    fontStyle: 'italic',
+  },
+  idiomUnlockedContent: {
+    gap: 8,
+  },
+  idiomTransText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+  saveIdiomBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(212, 175, 122, 0.15)',
+    borderRadius: Radius.md,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 122, 0.3)',
+  },
+  saveIdiomBtnSaved: {
+    backgroundColor: 'rgba(74, 222, 128, 0.12)',
+    borderColor: '#4ade80',
+  },
+  saveIdiomBtnText: {
+    color: '#d4af7a',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+  },
+  idiomLockedContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: 'rgba(212, 175, 122, 0.1)',
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 122, 0.25)',
+  },
+  idiomLockRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  idiomLockText: {
+    color: '#d4af7a',
+    fontSize: 11.5,
+    fontWeight: FontWeight.medium,
+    flex: 1,
   },
   pressed: {
     opacity: 0.85,

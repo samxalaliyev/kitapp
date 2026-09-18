@@ -428,11 +428,41 @@ export default function BookReaderScreen() {
   const [currentPage, setCurrentPage] = useState(0);
   const currentPageRef = useRef(0);
   const initialPageRef = useRef(0);
+  const lastRecordedPageRef = useRef(0);
   const flatListRef = useRef<FlatList<ReaderPage>>(null);
+
+  const roleRef = useRef(role);
+  const planRef = useRef(subscriptionPlan);
+  const isPremiumRef = useRef(isPremium);
+
+  useEffect(() => {
+    roleRef.current = role;
+    planRef.current = subscriptionPlan;
+    isPremiumRef.current = isPremium;
+  }, [role, subscriptionPlan, isPremium]);
 
   useEffect(() => {
     currentPageRef.current = currentPage;
   }, [currentPage]);
+
+  // Centralized forward page advancement recorder for XP and monetization
+  const recordPageAdvance = useCallback((newPageIndex: number) => {
+    if (typeof newPageIndex !== 'number' || isNaN(newPageIndex) || newPageIndex < 0) return;
+    if (newPageIndex <= lastRecordedPageRef.current) {
+      lastRecordedPageRef.current = newPageIndex;
+      return;
+    }
+
+    lastRecordedPageRef.current = newPageIndex;
+
+    // Award gamification XP
+    addXP(5, isPremiumRef.current).catch(() => {});
+
+    // Reliable forward page turn tracking for monetization
+    trackPageTurn(roleRef.current, planRef.current, () => {
+      setFullscreenAdVisible(true);
+    });
+  }, []);
 
   // Vocabulary Popup
   const [popupWord, setPopupWord] = useState<string | null>(null);
@@ -611,6 +641,7 @@ export default function BookReaderScreen() {
               setCurrentPage(savedPageIndex);
               currentPageRef.current = savedPageIndex;
               initialPageRef.current = savedPageIndex;
+              lastRecordedPageRef.current = savedPageIndex;
             }
           }
         } catch {
@@ -678,6 +709,7 @@ export default function BookReaderScreen() {
 
       currentPageRef.current = clampedPage;
       setCurrentPage(clampedPage);
+      recordPageAdvance(clampedPage);
       if (isSpeaking) {
         stopSpeech();
       }
@@ -691,7 +723,7 @@ export default function BookReaderScreen() {
         flatListRef.current?.scrollToOffset({ offset, animated: false });
       }
     },
-    [bookData, windowWidth, isSpeaking, stopSpeech],
+    [bookData, windowWidth, isSpeaking, stopSpeech, recordPageAdvance],
   );
 
   // Real-time horizontal paging scroll handler
@@ -733,21 +765,33 @@ export default function BookReaderScreen() {
       }
 
       if (targetIndex >= 0 && (!bookData || targetIndex < bookData.pages.length)) {
-        if (targetIndex !== currentPageRef.current) {
-          const oldIndex = currentPageRef.current;
-          currentPageRef.current = targetIndex;
-          setCurrentPage(targetIndex);
-          if (targetIndex > oldIndex) {
-            addXP(5, isPremium).catch(() => {});
-            trackPageTurn(role, subscriptionPlan, () => setFullscreenAdVisible(true));
-          }
-          if (isSpeaking) {
-            stopSpeech();
-          }
+        currentPageRef.current = targetIndex;
+        setCurrentPage(targetIndex);
+        recordPageAdvance(targetIndex);
+        if (isSpeaking) {
+          stopSpeech();
         }
       }
     },
-    [windowWidth, isSpeaking, stopSpeech, bookData, isPremium, role, subscriptionPlan],
+    [windowWidth, isSpeaking, stopSpeech, bookData, recordPageAdvance],
+  );
+
+  // Momentum scroll end callback: ensures page landing is accurately tracked
+  const handleMomentumScrollEnd = useCallback(
+    (e: any) => {
+      const width = windowWidth || 1;
+      const offsetX = e.nativeEvent.contentOffset.x;
+      const pageIndex = Math.round(offsetX / width);
+      if (pageIndex >= 0 && (!bookData || pageIndex < bookData.pages.length)) {
+        currentPageRef.current = pageIndex;
+        setCurrentPage(pageIndex);
+        recordPageAdvance(pageIndex);
+        if (isSpeaking) {
+          stopSpeech();
+        }
+      }
+    },
+    [windowWidth, isSpeaking, stopSpeech, bookData, recordPageAdvance],
   );
 
   // Native viewability callback: triggers the instant the new page is 40% visible
@@ -756,15 +800,9 @@ export default function BookReaderScreen() {
       const firstVisible = viewableItems[0];
       if (firstVisible && typeof firstVisible.index === 'number') {
         const newIndex = firstVisible.index;
-        if (newIndex !== currentPageRef.current) {
-          const oldIndex = currentPageRef.current;
-          currentPageRef.current = newIndex;
-          setCurrentPage(newIndex);
-          if (newIndex > oldIndex) {
-            addXP(5, isPremium).catch(() => {});
-            trackPageTurn(role, subscriptionPlan, () => setFullscreenAdVisible(true));
-          }
-        }
+        currentPageRef.current = newIndex;
+        setCurrentPage(newIndex);
+        recordPageAdvance(newIndex);
       }
     }
   }).current;
@@ -1234,7 +1272,7 @@ export default function BookReaderScreen() {
         onScroll={handleScroll}
         scrollEventThrottle={16}
         onScrollEndDrag={handleScrollEndDrag}
-        onMomentumScrollEnd={handleScroll}
+        onMomentumScrollEnd={handleMomentumScrollEnd}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         initialNumToRender={3}
@@ -1295,8 +1333,34 @@ export default function BookReaderScreen() {
         </View>
       ) : null}
 
-      {/* Footer: Page Indicator */}
+      {/* Footer: Page Indicator & Non-intrusive Free Reader Sponsor Badge */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 8, backgroundColor: activeTheme.bg }]}>
+        {!isPremium ? (
+          <Pressable
+            onPress={() => setPaywallVisible(true)}
+            style={[
+              styles.readerSponsorPill,
+              {
+                backgroundColor: colors.isDark
+                  ? 'rgba(255, 255, 255, 0.05)'
+                  : 'rgba(0, 0, 0, 0.04)',
+                borderColor: colors.isDark
+                  ? 'rgba(212, 175, 122, 0.22)'
+                  : 'rgba(212, 175, 122, 0.35)',
+              },
+            ]}
+            hitSlop={6}
+          >
+            <View style={styles.readerSponsorBadge}>
+              <Text style={styles.readerSponsorBadgeText}>AD</Text>
+            </View>
+            <Text style={[styles.readerSponsorText, { color: activeTheme.text }]}>
+              {t('remove_ads_upgrade')?.replace('👑', '')?.trim() || 'Litera Premium ilə Reklamsız Oxu'}
+            </Text>
+            <Feather name="chevron-right" size={11} color="#d4af7a" />
+          </Pressable>
+        ) : null}
+
         <Text style={[styles.pageIndicatorText, { color: activeTheme.text }]}>
           {currentPage + 1} {t('page_indicator_of')} {totalPages}
         </Text>
@@ -1627,6 +1691,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 6,
+  },
+  readerSponsorPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    marginBottom: 6,
+  },
+  readerSponsorBadge: {
+    backgroundColor: 'rgba(212, 175, 122, 0.25)',
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+  },
+  readerSponsorBadgeText: {
+    color: '#d4af7a',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  readerSponsorText: {
+    fontSize: 11,
+    fontWeight: FontWeight.medium,
   },
   pageIndicatorText: {
     fontSize: 12.5,

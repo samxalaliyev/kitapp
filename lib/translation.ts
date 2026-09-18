@@ -27,7 +27,70 @@ export interface TranslationResult {
 }
 
 const MAX_QUERY_LENGTH = 1000;
-const FAST_TIMEOUT_MS = 2500;
+const FAST_TIMEOUT_MS = 1500;
+
+const VERIFIED_LOAN_WORDS = new Set([
+  'pilot',
+  'alibi',
+  'hotel',
+  'radio',
+  'taxi',
+  'metro',
+  'bank',
+  'park',
+  'virus',
+  'tennis',
+  'plan',
+  'doctor',
+  'doktor',
+  'restaurant',
+  'restoran',
+  'sport',
+  'internet',
+  'film',
+  'kino',
+  'cafe',
+  'kafe',
+  'museum',
+  'muzey',
+  'theater',
+  'teatr',
+  'bus',
+  'avtobus',
+  'golf',
+  'qolf',
+  'boxing',
+  'boks',
+  'football',
+  'futbol',
+  'basketball',
+  'basketbol',
+  'volleyball',
+  'voleybol',
+  'stadium',
+  'stadion',
+  'olympics',
+  'olimpiada',
+  'energy',
+  'enerji',
+  'information',
+  'informasiya',
+  'technology',
+  'texnologiya',
+]);
+
+function isValidTranslation(text: string, translated: string): boolean {
+  if (!translated) return false;
+  const cleanSource = text.trim().toLowerCase();
+  const cleanTarget = translated.trim().toLowerCase();
+  if (looksLikeError(translated)) return false;
+
+  // Genuine translation into a different word
+  if (cleanSource !== cleanTarget) return true;
+
+  // If identical, only accept if verified loan word! Prepositions like "in" must NOT be accepted if identical!
+  return VERIFIED_LOAN_WORDS.has(cleanSource);
+}
 
 const MYMEMORY_ENDPOINT = 'https://api.mymemory.translated.net/get';
 
@@ -198,30 +261,35 @@ async function tryTranslatePipeline(
 ): Promise<TranslationResult | null> {
   const isWord = !text.includes(' ');
 
-  // 1. Google Chrome CDN Client - Həm sözlər, həm cümlələr üçün ən sürətli və dayanıqlı (150-200ms)
-  const chromeRes = await tryGoogleChromeDict(text, sourceLang, targetLang);
-  if (chromeRes && (!isWord || chromeRes.translated.toLowerCase() !== text.toLowerCase())) {
+  // 1. Run Google Chrome and Google AT engines concurrently to get the fastest sub-200ms response
+  const [chromeRes, atRes] = await Promise.all([
+    tryGoogleChromeDict(text, sourceLang, targetLang),
+    tryGoogleAtSingle(text, sourceLang, targetLang),
+  ]);
+
+  if (chromeRes && isValidTranslation(text, chromeRes.translated)) {
     return chromeRes;
   }
-
-  // 2. Google Translate Mobile Client Engine - Ehtiyat sürətli qat (150-250ms)
-  const atRes = await tryGoogleAtSingle(text, sourceLang, targetLang);
-  if (atRes && (!isWord || atRes.translated.toLowerCase() !== text.toLowerCase())) {
+  if (atRes && isValidTranslation(text, atRes.translated)) {
     return atRes;
   }
 
-  // 3. MyMemory Pro (50,000 words/day) - 3-cü dərəcəli ehtiyat
-  const myMemory = await tryMyMemory(text, sourceLang, targetLang);
-  if (myMemory && (!isWord || myMemory.translated.toLowerCase() !== text.toLowerCase())) {
-    return myMemory;
-  }
-
-  // Əgər tək sözdürsə və birbaşa tərcümə tapılmadısa, lemmatizasiya edirik (kök sözü yoxlayırıq)
+  // 2. If it's a word and direct translation wasn't valid, check root lemmas
   if (isWord && text.length > 2) {
     const lemmas = getWordCandidateLemmas(text);
     for (const lemma of lemmas) {
+      if (lemma.toLowerCase() === text.toLowerCase()) continue;
+      // Fast check offline dictionary for lemma first!
+      const offlineLemma = getOfflineTranslation(lemma, targetLang as LanguageCode);
+      if (offlineLemma && isValidTranslation(text, offlineLemma)) {
+        return {
+          source: text,
+          translated: offlineLemma,
+          provider: 'offline_dict',
+        };
+      }
       const lemmaRes = await tryGoogleChromeDict(lemma, sourceLang, targetLang);
-      if (lemmaRes && lemmaRes.translated.toLowerCase() !== lemma.toLowerCase()) {
+      if (lemmaRes && isValidTranslation(text, lemmaRes.translated)) {
         return {
           source: text,
           translated: lemmaRes.translated,
@@ -231,9 +299,11 @@ async function tryTranslatePipeline(
     }
   }
 
-  if (chromeRes) return chromeRes;
-  if (atRes) return atRes;
-  if (myMemory) return myMemory;
+  // 3. Fallback: MyMemory (only if Google failed)
+  const myMemory = await tryMyMemory(text, sourceLang, targetLang);
+  if (myMemory && isValidTranslation(text, myMemory.translated)) {
+    return myMemory;
+  }
 
   return null;
 }
@@ -251,7 +321,7 @@ export async function translateWord(
   // 1. Check Offline Base Dictionary (0ms, 100% Offline, Zero Network)
   if (!cleaned.includes(' ')) {
     const offlineMatch = getOfflineTranslation(cleaned, targetLang);
-    if (offlineMatch && offlineMatch.trim().toLowerCase() !== cleaned.trim().toLowerCase()) {
+    if (offlineMatch) {
       return {
         source: cleaned,
         translated: offlineMatch,
@@ -272,14 +342,14 @@ export async function translateWord(
     }
   } else {
     const cachedWord = await getCachedTranslation<TranslationResult>(cleaned, targetLang);
-    if (cachedWord && cachedWord.translated.trim().toLowerCase() !== cleaned.trim().toLowerCase()) {
+    if (cachedWord && cachedWord.translated) {
       return cachedWord;
     }
   }
 
   // 3. Online Multilevel Pipeline
   const result = await tryTranslatePipeline(cleaned, sourceLang, targetLang);
-  if (result && (!cleaned.includes(' ') ? result.translated.trim().toLowerCase() !== cleaned.trim().toLowerCase() : true)) {
+  if (result && result.translated) {
     if (cleaned.includes(' ')) {
       await setCachedSentence(cleaned, targetLang, result.translated);
     } else {

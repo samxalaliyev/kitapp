@@ -387,7 +387,12 @@ export function PairMatchingGame({
       {/* Out of Hearts Modal */}
       <OutOfHeartsModal
         visible={outOfHeartsVisible}
-        onClose={() => setOutOfHeartsVisible(false)}
+        onClose={() => {
+          setOutOfHeartsVisible(false);
+          if (hearts <= 0 && !isPremium) {
+            onClose();
+          }
+        }}
         onWatchedAd={() => {
           setOutOfHeartsVisible(false);
           setHearts(3);

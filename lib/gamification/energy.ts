@@ -1,15 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const INITIAL_STARTER_ENERGY = 100;
-export const DAILY_GUEST_ENERGY = 50;
-export const DAILY_FREE_ENERGY = 70;
-export const REWARD_AD_ENERGY = 30;
+export const DAILY_GUEST_ENERGY = 40;
+export const DAILY_FREE_ENERGY = 60;
+export const REWARD_AD_ENERGY = 10;
 
 export const ENERGY_COSTS = {
-  BOOK_READING_SESSION: 10,
+  BOOK_READING_SESSION: 20,
   TRANSLATE_WORD: 2,
   TRANSLATE_SENTENCE: 6,
-  VOCAB_GAME_ROUND: 10,
+  VOCAB_GAME_ROUND: 5,
 } as const;
 
 const STORAGE_KEYS = {
