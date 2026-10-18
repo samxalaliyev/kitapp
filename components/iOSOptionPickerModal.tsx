@@ -1,5 +1,7 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
@@ -61,44 +63,53 @@ export function IOSOptionPickerModal<T extends string = string>({
 
           {/* Options List */}
           <View style={[styles.optionsGroup, { backgroundColor: colors.bg, borderColor: colors.surfaceBorder }]}>
-            {options.map((item: OptionItem<T>, index: number) => {
-              const isSelected = item.id === selectedId;
-              const isLast = index === options.length - 1;
+            <ScrollView
+              style={styles.optionsScrollView}
+              contentContainerStyle={styles.optionsScrollContent}
+              showsVerticalScrollIndicator={true}
+              nestedScrollEnabled={true}
+              bounces={true}
+              keyboardShouldPersistTaps="handled"
+            >
+              {options.map((item: OptionItem<T>, index: number) => {
+                const isSelected = item.id === selectedId;
+                const isLast = index === options.length - 1;
 
-              return (
-                <Pressable
-                  key={item.id}
-                  onPress={() => {
-                    onSelect(item.id);
-                    onClose();
-                  }}
-                  style={({ pressed }) => [
-                    styles.optionRow,
-                    pressed && styles.pressed,
-                    !isLast && { borderBottomWidth: 0.5, borderBottomColor: colors.surfaceBorder },
-                  ]}
-                >
-                  <View style={styles.optionInfo}>
-                    <Text
-                      style={[
-                        styles.optionLabel,
-                        { color: isSelected ? colors.primary : colors.text },
-                        isSelected && { fontWeight: FontWeight.bold },
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
-                    {item.subLabel ? (
-                      <Text style={[styles.optionSub, { color: colors.textMuted }]}>{item.subLabel}</Text>
+                return (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => {
+                      onSelect(item.id);
+                      onClose();
+                    }}
+                    style={({ pressed }) => [
+                      styles.optionRow,
+                      pressed && styles.pressed,
+                      !isLast && { borderBottomWidth: 0.5, borderBottomColor: colors.surfaceBorder },
+                    ]}
+                  >
+                    <View style={styles.optionInfo}>
+                      <Text
+                        style={[
+                          styles.optionLabel,
+                          { color: isSelected ? colors.primary : colors.text },
+                          isSelected && { fontWeight: FontWeight.bold },
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+                      {item.subLabel ? (
+                        <Text style={[styles.optionSub, { color: colors.textMuted }]}>{item.subLabel}</Text>
+                      ) : null}
+                    </View>
+
+                    {isSelected ? (
+                      <Text style={[styles.checkmark, { color: colors.primary }]}>✓</Text>
                     ) : null}
-                  </View>
-
-                  {isSelected ? (
-                    <Text style={[styles.checkmark, { color: colors.primary }]}>✓</Text>
-                  ) : null}
-                </Pressable>
-              );
-            })}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
           </View>
 
           {/* Close button */}
@@ -151,6 +162,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
     marginBottom: Spacing.lg,
+  },
+  optionsScrollView: {
+    maxHeight: Math.min(SCREEN_HEIGHT * 0.58, 460),
+  },
+  optionsScrollContent: {
+    flexGrow: 0,
   },
   optionRow: {
     flexDirection: 'row',

@@ -178,7 +178,7 @@ export default function LibraryScreen() {
       >
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>
-            {t('library_title') || 'Mənim Kitabxanam'}
+            {t('library_title')}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
             {t('library_subtitle')}
@@ -203,6 +203,9 @@ export default function LibraryScreen() {
                   styles.tabItemText,
                   { color: activeTab === 'all' ? '#0d0f17' : colors.textMuted },
                 ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
               >
                 {t('filter_all')} ({allBooksList.length})
               </Text>
@@ -219,6 +222,9 @@ export default function LibraryScreen() {
                   styles.tabItemText,
                   { color: activeTab === 'reading' ? '#0d0f17' : colors.textMuted },
                 ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
               >
                 {t('reading_status')} ({reading.length})
               </Text>
@@ -235,6 +241,9 @@ export default function LibraryScreen() {
                   styles.tabItemText,
                   { color: activeTab === 'authors' ? '#0d0f17' : colors.textMuted },
                 ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
               >
                 {t('sub_authors')} ({authorGroups.length})
               </Text>
@@ -420,7 +429,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   scrollContent: {
-    paddingBottom: 110,
+    paddingBottom: 130,
     paddingTop: Spacing.xl,
   },
   header: {
@@ -450,6 +459,7 @@ const styles = StyleSheet.create({
   tabItem: {
     flex: 1,
     paddingVertical: 8,
+    paddingHorizontal: 4,
     borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -457,6 +467,7 @@ const styles = StyleSheet.create({
   tabItemText: {
     fontSize: 11,
     fontWeight: FontWeight.semibold,
+    textAlign: 'center',
   },
   sectionWrap: {
     paddingHorizontal: Spacing.xl,

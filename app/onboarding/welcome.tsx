@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import {
+  Animated,
   FlatList,
   Image,
   NativeScrollEvent,
@@ -52,21 +53,22 @@ const SLIDES: SlideConfig[] = [
   },
 ];
 
-/* ─── Fixed 3-Segment Squircle Progress Next Button ────────── */
+/* ─── 3-Segment Squircle Progress Next Button ────────────── */
 interface ProgressSquircleButtonProps {
   currentIndex: number;
-  screenColor: string;
   onPress: () => void;
 }
 
 function ProgressSquircleButton({
   currentIndex,
-  screenColor,
   onPress,
 }: ProgressSquircleButtonProps) {
   const isSeg0Active = currentIndex >= 0;
   const isSeg1Active = currentIndex >= 1;
   const isSeg2Active = currentIndex >= 2;
+
+  const activeColor = '#ffffff';
+  const inactiveColor = 'rgba(255, 255, 255, 0.35)';
 
   return (
     <Pressable
@@ -85,57 +87,27 @@ function ProgressSquircleButton({
           style={[
             btnStyles.segBase,
             btnStyles.seg0,
-            { borderColor: '#ffffff' },
+            { borderColor: isSeg0Active ? activeColor : inactiveColor },
           ]}
-        >
-          {isSeg0Active && (
-            <View
-              style={[
-                btnStyles.segInner,
-                btnStyles.seg0Inner,
-                { borderColor: screenColor },
-              ]}
-            />
-          )}
-        </View>
+        />
 
         {/* Segment 1: Bottom & Bottom-Right Arc */}
         <View
           style={[
             btnStyles.segBase,
             btnStyles.seg1,
-            { borderColor: isSeg1Active ? '#ffffff' : 'rgba(255, 255, 255, 0.45)' },
+            { borderColor: isSeg1Active ? activeColor : inactiveColor },
           ]}
-        >
-          {isSeg1Active && (
-            <View
-              style={[
-                btnStyles.segInner,
-                btnStyles.seg1Inner,
-                { borderColor: screenColor },
-              ]}
-            />
-          )}
-        </View>
+        />
 
         {/* Segment 2: Left & Top-Left Arc */}
         <View
           style={[
             btnStyles.segBase,
             btnStyles.seg2,
-            { borderColor: isSeg2Active ? '#ffffff' : 'rgba(255, 255, 255, 0.45)' },
+            { borderColor: isSeg2Active ? activeColor : inactiveColor },
           ]}
-        >
-          {isSeg2Active && (
-            <View
-              style={[
-                btnStyles.segInner,
-                btnStyles.seg2Inner,
-                { borderColor: screenColor },
-              ]}
-            />
-          )}
-        </View>
+        />
 
         {/* Inner White Squircle Button */}
         <View style={btnStyles.innerButton}>
@@ -154,8 +126,15 @@ export default function WelcomeScreen() {
   const { t } = useLanguage();
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
-  const activeSlide = SLIDES[currentIndex] || SLIDES[0];
+  const flatListRef = useRef<FlatList<SlideConfig>>(null);
+  const scrollX = useRef(new Animated.Value(0)).current;
+
+  // Real-time 60fps smooth background color interpolation between slides
+  const animatedBgColor = scrollX.interpolate({
+    inputRange: SLIDES.map((_, i) => i * width),
+    outputRange: SLIDES.map((s) => s.bgColor),
+    extrapolate: 'clamp',
+  });
 
   // Advance to next slide or proceed to language setup
   const handleNext = useCallback(() => {
@@ -175,67 +154,66 @@ export default function WelcomeScreen() {
     router.push('/onboarding/language');
   }, [router]);
 
-  const updateIndexFromOffset = useCallback(
-    (offsetX: number) => {
-      const idx = Math.round(offsetX / width);
-      if (idx >= 0 && idx < SLIDES.length && idx !== currentIndex) {
-        setCurrentIndex(idx);
-      }
-    },
-    [width, currentIndex]
+  // Continuously track scroll position for index updating
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+    {
+      useNativeDriver: false,
+      listener: (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const offsetX = e.nativeEvent.contentOffset.x;
+        const idx = Math.round(offsetX / width);
+        if (idx >= 0 && idx < SLIDES.length && idx !== currentIndex) {
+          setCurrentIndex(idx);
+        }
+      },
+    }
   );
 
   const onMomentumScrollEnd = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      updateIndexFromOffset(e.nativeEvent.contentOffset.x);
+      const offsetX = e.nativeEvent.contentOffset.x;
+      const idx = Math.round(offsetX / width);
+      if (idx >= 0 && idx < SLIDES.length) {
+        setCurrentIndex(idx);
+      }
     },
-    [updateIndexFromOffset]
-  );
-
-  const onScrollEndDrag = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      updateIndexFromOffset(e.nativeEvent.contentOffset.x);
-    },
-    [updateIndexFromOffset]
+    [width]
   );
 
   const heroSize = Math.min(width * 0.74, height * 0.36, 290);
 
   return (
-    <View style={styles.root}>
+    <Animated.View style={[styles.root, { backgroundColor: animatedBgColor }]}>
       <StatusBar style="dark" />
 
       {/* ─── Background Full-Screen Slides Carousel ───────── */}
-      <FlatList
+      <Animated.FlatList
         ref={flatListRef}
         data={SLIDES}
         keyExtractor={(item) => item.id}
         horizontal
-        pagingEnabled={false}
+        pagingEnabled
         bounces={false}
         decelerationRate="fast"
-        snapToInterval={width}
-        snapToAlignment="center"
-        disableIntervalMomentum={true}
         showsHorizontalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         onMomentumScrollEnd={onMomentumScrollEnd}
-        onScrollEndDrag={onScrollEndDrag}
         getItemLayout={(_, index) => ({
           length: width,
           offset: width * index,
           index,
         })}
         style={styles.carousel}
+        contentContainerStyle={styles.carouselContent}
         renderItem={({ item }) => (
           <View
             style={[
               styles.slidePage,
               {
                 width,
-                height,
-                backgroundColor: item.bgColor,
                 paddingTop: insets.top + 60,
-                paddingBottom: insets.bottom + 100,
+                paddingBottom: Math.max(insets.bottom, 24) + 100,
               },
             ]}
           >
@@ -259,7 +237,7 @@ export default function WelcomeScreen() {
               </View>
             </View>
 
-            {/* Short, Concrete Typography (Cera Pro) */}
+            {/* Typography */}
             <View style={styles.textContainer}>
               <Text
                 style={styles.title}
@@ -309,15 +287,17 @@ export default function WelcomeScreen() {
 
       {/* ─── Fixed Bottom Right 3-Segment Progress Button ──── */}
       <View
-        style={[styles.fixedBottomRight, { bottom: insets.bottom + 14 }]}
+        style={[
+          styles.fixedBottomRight,
+          { bottom: Math.max(insets.bottom, 20) + 16 },
+        ]}
       >
         <ProgressSquircleButton
           currentIndex={currentIndex}
-          screenColor={activeSlide.bgColor}
           onPress={handleNext}
         />
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -329,15 +309,19 @@ const fontBlack = Platform.select({ default: 'CeraPro-Black', ios: 'CeraPro-Blac
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#f6c634',
   },
   carousel: {
     flex: 1,
   },
+  carouselContent: {
+    flexGrow: 1,
+  },
   slidePage: {
     flex: 1,
+    height: '100%',
     justifyContent: 'space-between',
     paddingHorizontal: 28,
+    backgroundColor: 'transparent',
   },
 
   // Hero Area
@@ -407,17 +391,16 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
   },
   skipButtonPressed: {
-    backgroundColor: 'rgba(0, 0, 0, 0.12)',
+    backgroundColor: 'rgba(0, 0, 0, 0.14)',
   },
   skipButtonText: {
     fontFamily: fontBold,
     fontSize: 14,
     color: '#0f172a',
   },
-
 
   fixedBottomRight: {
     position: 'absolute',
@@ -453,20 +436,15 @@ const btnStyles = StyleSheet.create({
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.14,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 5,
     zIndex: 5,
   },
 
   segBase: {
     position: 'absolute',
     borderWidth: 3.5,
-    backgroundColor: 'transparent',
-  },
-  segInner: {
-    position: 'absolute',
-    borderWidth: 2,
     backgroundColor: 'transparent',
   },
 
@@ -477,15 +455,6 @@ const btnStyles = StyleSheet.create({
     width: 30,
     height: 30,
     borderTopRightRadius: 21,
-    borderBottomWidth: 0,
-    borderLeftWidth: 0,
-  },
-  seg0Inner: {
-    top: 0.5,
-    right: 0.5,
-    width: 29,
-    height: 29,
-    borderTopRightRadius: 20,
     borderBottomWidth: 0,
     borderLeftWidth: 0,
   },
@@ -503,39 +472,14 @@ const btnStyles = StyleSheet.create({
     borderBottomRightRadius: 21,
     borderTopWidth: 0,
   },
-  seg1Inner: {
-    bottom: 0.5,
-    left: 0.5,
-    right: 0.5,
-    height: 27,
-    borderBottomWidth: 2,
-    borderLeftWidth: 2,
-    borderRightWidth: 2,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    borderTopWidth: 0,
-  },
 
   // Segment 2: Left & Top-Left Arc
   seg2: {
     top: 3,
     left: 3,
-    width: 27,
-    height: 28,
-    borderTopWidth: 3.5,
-    borderLeftWidth: 3.5,
+    width: 28,
+    height: 30,
     borderTopLeftRadius: 21,
-    borderBottomWidth: 0,
-    borderRightWidth: 0,
-  },
-  seg2Inner: {
-    top: 0.5,
-    left: 0.5,
-    width: 26,
-    height: 27,
-    borderTopWidth: 2,
-    borderLeftWidth: 2,
-    borderTopLeftRadius: 20,
     borderBottomWidth: 0,
     borderRightWidth: 0,
   },

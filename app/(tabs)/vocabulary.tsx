@@ -239,13 +239,21 @@ export default function VocabularyScreen() {
           >
             <View style={styles.guestBannerLeft}>
               <View style={[styles.guestBannerIcon, { backgroundColor: colors.primaryBg }]}>
-                <Feather name="cloud" size={18} color={colors.primary} />
+                <Feather name="cloud" size={17} color={colors.primary} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.guestBannerTitle, { color: colors.text }]}>
+              <View style={styles.guestBannerTextWrap}>
+                <Text
+                  style={[styles.guestBannerTitle, { color: colors.text }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {t('guest_banner_title')}
                 </Text>
-                <Text style={[styles.guestBannerSub, { color: colors.textMuted }]}>
+                <Text
+                  style={[styles.guestBannerSub, { color: colors.textMuted }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {t('guest_banner_sub')}
                 </Text>
               </View>
@@ -278,21 +286,36 @@ export default function VocabularyScreen() {
               <Text style={[styles.statValue, { color: colors.primary }]}>{totalXp}</Text>
               <Text style={{ fontSize: 13 }}>🏆</Text>
             </View>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            <Text
+              style={[styles.statLabel, { color: colors.textMuted }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
               {t('xp_gained')}
             </Text>
           </Pressable>
           <View style={[styles.statDivider, { backgroundColor: colors.surfaceBorder }]} />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: '#f8fafc' }]}>{items.length}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            <Text style={[styles.statValue, { color: colors.text }]}>{items.length}</Text>
+            <Text
+              style={[styles.statLabel, { color: colors.textMuted }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
               {t('stat_words')}
             </Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.surfaceBorder }]} />
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: colors.primary }]}>{stats.matchedCount}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            <Text
+              style={[styles.statLabel, { color: colors.textMuted }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
               {t('game_pair_title')}
             </Text>
           </View>
@@ -421,7 +444,7 @@ export default function VocabularyScreen() {
             ]}
           >
             <Text style={[styles.filterPillText, { color: colors.textMuted }, vocabFilter === 'words' && { color: colors.primary, fontWeight: FontWeight.bold }]}>
-              Sözlər ({items.filter((w) => !w.word.trim().includes(' ')).length})
+              {t('filter_words')} ({items.filter((w) => !w.word.trim().includes(' ')).length})
             </Text>
           </Pressable>
 
@@ -434,7 +457,7 @@ export default function VocabularyScreen() {
             ]}
           >
             <Text style={[styles.filterPillText, { color: colors.textMuted }, vocabFilter === 'phrases' && { color: colors.primary, fontWeight: FontWeight.bold }]}>
-              İfadələr 👑 ({items.filter((w) => w.word.trim().includes(' ')).length})
+              {t('filter_phrases')} ({items.filter((w) => w.word.trim().includes(' ')).length})
             </Text>
           </Pressable>
         </View>
@@ -487,7 +510,7 @@ export default function VocabularyScreen() {
                     <Text style={[styles.wordText, { color: colors.text }]}>{item.word}</Text>
                     {item.word.includes(' ') ? (
                       <View style={styles.phraseBadge}>
-                        <Text style={styles.phraseBadgeText}>İFADƏ</Text>
+                        <Text style={styles.phraseBadgeText}>{t('phrase_tag')}</Text>
                       </View>
                     ) : item.phonetic ? (
                       <Text style={[styles.phoneticText, { color: colors.primary }]}>
@@ -669,52 +692,61 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   guestBanner: {
-    borderRadius: Radius.xl,
+    borderRadius: Radius.lg,
     borderWidth: 1,
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
     marginBottom: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: Spacing.sm,
+    gap: 10,
   },
   guestBannerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     flex: 1,
+    minWidth: 0,
   },
   guestBannerIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
+  },
+  guestBannerTextWrap: {
+    flex: 1,
+    minWidth: 0,
   },
   guestBannerTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: FontWeight.bold,
-    marginBottom: 2,
+    lineHeight: 17,
   },
   guestBannerSub: {
     fontSize: 11,
     lineHeight: 15,
+    marginTop: 1,
   },
   guestRegisterBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: Radius.md,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   guestRegisterBtnText: {
-    color: '#ffffff',
-    fontSize: 12,
+    color: '#0d0f17',
+    fontSize: 11.5,
     fontWeight: FontWeight.bold,
   },
   scrollContainer: {
     paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xxl,
+    paddingBottom: 130,
   },
   statsRow: {
     flexDirection: 'row',
@@ -727,6 +759,7 @@ const styles = StyleSheet.create({
   statItem: {
     flex: 1,
     alignItems: 'center',
+    paddingHorizontal: 6,
   },
   statValue: {
     fontSize: FontSize.lg,
@@ -784,6 +817,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: 2,
+    flexWrap: 'wrap',
   },
   gameCardTitle: {
     fontSize: 16,

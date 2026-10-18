@@ -13,6 +13,8 @@ import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
 import { refillHeartsWithAd } from '@/lib/vocabulary/game-service';
+import { watchRewardedAd } from '@/lib/monetization/rewarded-ads';
+import { RewardedVideoPlayerModal } from '@/components/RewardedVideoPlayerModal';
 
 export interface OutOfHeartsModalProps {
   visible: boolean;
@@ -32,28 +34,42 @@ export function OutOfHeartsModal({
   const { colors } = useAppTheme();
   const { t } = useLanguage();
   const [adLoading, setAdLoading] = useState(false);
+  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
 
-  const handleWatchAd = async () => {
-    setAdLoading(true);
+  const handleClaimHearts = async () => {
     try {
-      // Simulate/Trigger Rewarded Ad
-      await new Promise((res) => setTimeout(res, 1200));
       const newHearts = await refillHeartsWithAd(3);
       onHeartsRefilled?.(newHearts);
       onWatchedAd?.();
+      setShowVideoPlayer(false);
       onClose();
     } finally {
       setAdLoading(false);
     }
   };
 
+  const handleWatchAd = () => {
+    setAdLoading(true);
+    watchRewardedAd({
+      type: 'refill_hearts',
+      onSuccess: async () => {
+        await handleClaimHearts();
+      },
+      onFallback: () => {
+        // Enforce 30s unskippable video even when offline / fallback
+        setShowVideoPlayer(true);
+      },
+    });
+  };
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <>
+      <Modal
+        visible={visible && !showVideoPlayer}
+        transparent
+        animationType="fade"
+        onRequestClose={onClose}
+      >
       <View style={styles.backdrop}>
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.primary }]}>
           {/* Close button */}
@@ -126,6 +142,19 @@ export function OutOfHeartsModal({
         </View>
       </View>
     </Modal>
+
+      <RewardedVideoPlayerModal
+        visible={showVideoPlayer}
+        onClose={() => {
+          setShowVideoPlayer(false);
+          setAdLoading(false);
+        }}
+        onRewardEarned={handleClaimHearts}
+        rewardTitle={t('rewarded_hearts_title')}
+        rewardClaimText={t('rewarded_hearts_claim')}
+        cancelWarning={t('rewarded_hearts_cancel_desc')}
+      />
+    </>
   );
 }
 

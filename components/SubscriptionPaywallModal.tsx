@@ -41,8 +41,8 @@ export function SubscriptionPaywallModal({
       Alert.alert(
         isAdmin ? '👑 Litera Admin' : '👑 Litera PRO',
         isAdmin
-          ? (t('energy_modal_pro_unlimited') || 'Siz Admin hesabındasınız. Bütün funksiyalar ömürlük limitsizdir.')
-          : (t('restore_success') || 'Sizin Litera PRO abunəliyiniz aktivdir.'),
+          ? t('energy_modal_pro_unlimited')
+          : t('restore_success'),
       );
       onClose();
     }
@@ -129,7 +129,7 @@ export function SubscriptionPaywallModal({
                 <View style={styles.iconCircle}>
                   <Feather name="shield" size={15} color="#d4af7a" />
                 </View>
-                <Text style={[styles.featureText, { color: colors.text }]}>{t('feature_no_ads') || '100% Reklamsız Kəsintisiz Oxu'}</Text>
+                <Text style={[styles.featureText, { color: colors.text }]}>{t('feature_no_ads')}</Text>
               </View>
 
               <View style={styles.featureRow}>
@@ -157,7 +157,7 @@ export function SubscriptionPaywallModal({
                 <View style={styles.iconCircle}>
                   <Feather name="type" size={15} color="#d4af7a" />
                 </View>
-                <Text style={[styles.featureText, { color: colors.text }]}>{t('feature_all_fonts_themes') || 'Bütün Şriftlər & OLED Mövzular'}</Text>
+                <Text style={[styles.featureText, { color: colors.text }]}>{t('feature_all_fonts_themes')}</Text>
               </View>
             </View>
 
@@ -258,8 +258,8 @@ export function SubscriptionPaywallModal({
             >
               <Text style={[styles.restoreBtnText, { color: colors.primary }]}>
                 {restoring
-                  ? (t('connecting') || 'Bərpa edilir...')
-                  : `🔄 ${t('restore_purchases') || 'Alışları Bərpa Et'}`}
+                  ? t('connecting')
+                  : `🔄 ${t('restore_purchases')}`}
               </Text>
             </Pressable>
 

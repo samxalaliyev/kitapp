@@ -38,36 +38,36 @@ const CURATED_VOCAB: Array<{
   phonetic: string;
   translations: Record<string, string>;
 }> = [
-  { en: 'ability', phonetic: '/əˈbɪləti/', translations: { az: 'qabiliyyət', ru: 'способность', tr: 'yetenek', es: 'habilidad', de: 'Fähigkeit', fr: 'capacité' } },
-  { en: 'engagement', phonetic: '/ɪnˈɡeɪdʒmənt/', translations: { az: 'nişan', ru: 'помолвка', tr: 'nişan', es: 'compromiso', de: 'Verlobung', fr: 'fiançailles' } },
-  { en: 'esteem', phonetic: '/ɪˈstiːm/', translations: { az: 'ehtiram', ru: 'уважение', tr: 'saygı', es: 'estima', de: 'Achtung', fr: 'estime' } },
-  { en: 'particularly', phonetic: '/pərˈtɪkjələrli/', translations: { az: 'xüsusən', ru: 'особенно', tr: 'özellikle', es: 'particularmente', de: 'besonders', fr: 'particulièrement' } },
-  { en: 'service', phonetic: '/ˈsɜːrvɪs/', translations: { az: 'xidmət', ru: 'служба', tr: 'hizmet', es: 'servicio', de: 'Dienst', fr: 'service' } },
-  { en: 'opportunity', phonetic: '/ˌɑːpərˈtuːnəti/', translations: { az: 'fürsət', ru: 'возможность', tr: 'fırsat', es: 'oportunidad', de: 'Gelegenheit', fr: 'opportunité' } },
-  { en: 'challenge', phonetic: '/ˈtʃælɪndʒ/', translations: { az: 'sınaq', ru: 'вызов', tr: 'meydan okuma', es: 'desafío', de: 'Herausforderung', fr: 'défi' } },
-  { en: 'knowledge', phonetic: '/ˈnɑːlɪdʒ/', translations: { az: 'bilik', ru: 'знание', tr: 'bilgi', es: 'conocimiento', de: 'Wissen', fr: 'connaissance' } },
-  { en: 'freedom', phonetic: '/ˈfriːdəm/', translations: { az: 'azadlıq', ru: 'свобода', tr: 'özgürlük', es: 'libertad', de: 'Freiheit', fr: 'liberté' } },
-  { en: 'courage', phonetic: '/ˈkɜːrɪdʒ/', translations: { az: 'cəsarət', ru: 'смелость', tr: 'cesaret', es: 'valentía', de: 'Mut', fr: 'courage' } },
-  { en: 'discover', phonetic: '/dɪˈskʌvər/', translations: { az: 'kəşf etmək', ru: 'открывать', tr: 'keşfetmek', es: 'descubrir', de: 'entdecken', fr: 'découvrir' } },
-  { en: 'inspire', phonetic: '/ɪnˈspaɪər/', translations: { az: 'ilham vermək', ru: 'вдохновлять', tr: 'ilham vermek', es: 'inspirar', de: 'inspirieren', fr: 'inspirer' } },
-  { en: 'patient', phonetic: '/ˈpeɪʃnt/', translations: { az: 'səbirli', ru: 'терпеливый', tr: 'sabırlı', es: 'paciente', de: 'geduldig', fr: 'patient' } },
-  { en: 'curious', phonetic: '/ˈkjʊriəs/', translations: { az: 'maraqlanan', ru: 'любопытный', tr: 'meraklı', es: 'curioso', de: 'neugierig', fr: 'curieux' } },
-  { en: 'strength', phonetic: '/streŋkθ/', translations: { az: 'güc', ru: 'сила', tr: 'güç', es: 'fuerza', de: 'Stärke', fr: 'force' } },
-  { en: 'wisdom', phonetic: '/ˈwɪzdəm/', translations: { az: 'müdriklik', ru: 'мудрость', tr: 'bilgelik', es: 'sabiduría', de: 'Weisheit', fr: 'sagesse' } },
-  { en: 'journey', phonetic: '/ˈdʒɜːrni/', translations: { az: 'səyahət', ru: 'путешествие', tr: 'yolculuk', es: 'viaje', de: 'Reise', fr: 'voyage' } },
-  { en: 'achieve', phonetic: '/əˈtʃiːv/', translations: { az: 'nail olmaq', ru: 'достигать', tr: 'başarmak', es: 'lograr', de: 'erreichen', fr: 'atteindre' } },
-  { en: 'grateful', phonetic: '/ˈɡreɪtfl/', translations: { az: 'minnətdar', ru: 'благодарный', tr: 'minnettar', es: 'agradecido', de: 'dankbar', fr: 'reconnaissant' } },
-  { en: 'silence', phonetic: '/ˈsaɪləns/', translations: { az: 'sükut', ru: 'тишина', tr: 'sessizlik', es: 'silencio', de: 'Stille', fr: 'silence' } },
-  { en: 'passion', phonetic: '/ˈpæʃn/', translations: { az: 'həvəs', ru: 'страсть', tr: 'tutku', es: 'pasión', de: 'Leidenschaft', fr: 'passion' } },
-  { en: 'generous', phonetic: '/ˈdʒenərəs/', translations: { az: 'səxavətli', ru: 'щедрый', tr: 'cömert', es: 'generoso', de: 'großzügig', fr: 'généreux' } },
-  { en: 'wonder', phonetic: '/ˈwʌndər/', translations: { az: 'möcüzə', ru: 'чудо', tr: 'mucize', es: 'maravilla', de: 'Wunder', fr: 'merveille' } },
-  { en: 'treasure', phonetic: '/ˈtreʒər/', translations: { az: 'xəzinə', ru: 'сокровище', tr: 'hazine', es: 'tesoro', de: 'Schatz', fr: 'trésor' } },
-  { en: 'harmony', phonetic: '/ˈhɑːrməni/', translations: { az: 'ahəngdarlıq', ru: 'гармония', tr: 'uyum', es: 'armonía', de: 'Harmonie', fr: 'harmonie' } },
-  { en: 'brilliant', phonetic: '/ˈbrɪliənt/', translations: { az: 'parlaq', ru: 'блестящий', tr: 'parlak', es: 'brillante', de: 'brillant', fr: 'brillant' } },
-  { en: 'horizon', phonetic: '/həˈraɪzn/', translations: { az: 'üfüq', ru: 'горизонт', tr: 'ufuk', es: 'horizonte', de: 'Horizont', fr: 'horizon' } },
-  { en: 'adventure', phonetic: '/ədˈventʃər/', translations: { az: 'macəra', ru: 'приключение', tr: 'macera', es: 'aventura', de: 'Abenteuer', fr: 'aventure' } },
-  { en: 'memory', phonetic: '/ˈmeməri/', translations: { az: 'xatirə', ru: 'память', tr: 'anı', es: 'memoria', de: 'Erinnerung', fr: 'mémoire' } },
-  { en: 'promise', phonetic: '/ˈprɑːmɪs/', translations: { az: 'vəd', ru: 'обещание', tr: 'söz', es: 'promesa', de: 'Versprechen', fr: 'promesse' } },
+  { en: 'ability', phonetic: '/əˈbɪləti/', translations: { az: 'qabiliyyət', ru: 'способность', tr: 'yetenek', es: 'habilidad', de: 'Fähigkeit', fr: 'capacité', it: 'abilità', pt: 'habilidade', pl: 'umiejętność', cs: 'schopnost', hu: 'képesség', uk: 'здібність', en: 'ability' } },
+  { en: 'engagement', phonetic: '/ɪnˈɡeɪdʒmənt/', translations: { az: 'nişan', ru: 'помолвка', tr: 'nişan', es: 'compromiso', de: 'Verlobung', fr: 'fiançailles', it: 'fidanzamento', pt: 'noivado', pl: 'zaręczyny', cs: 'zasnoubení', hu: 'eljegyzés', uk: 'заручини', en: 'engagement' } },
+  { en: 'esteem', phonetic: '/ɪˈstiːm/', translations: { az: 'ehtiram', ru: 'уважение', tr: 'saygı', es: 'estima', de: 'Achtung', fr: 'estime', it: 'stima', pt: 'estima', pl: 'szacunek', cs: 'úcta', hu: 'megbecsülés', uk: 'повага', en: 'esteem' } },
+  { en: 'particularly', phonetic: '/pərˈtɪkjələrli/', translations: { az: 'xüsusən', ru: 'особенно', tr: 'özellikle', es: 'particularmente', de: 'besonders', fr: 'particulièrement', it: 'particolarmente', pt: 'particularmente', pl: 'szczególnie', cs: 'zvláště', hu: 'különösen', uk: 'особливо', en: 'particularly' } },
+  { en: 'service', phonetic: '/ˈsɜːrvɪs/', translations: { az: 'xidmət', ru: 'служба', tr: 'hizmet', es: 'servicio', de: 'Dienst', fr: 'service', it: 'servizio', pt: 'serviço', pl: 'służba', cs: 'služba', hu: 'szolgálat', uk: 'служба', en: 'service' } },
+  { en: 'opportunity', phonetic: '/ˌɑːpərˈtuːnəti/', translations: { az: 'fürsət', ru: 'возможность', tr: 'fırsat', es: 'oportunidad', de: 'Gelegenheit', fr: 'opportunité', it: 'opportunità', pt: 'oportunidade', pl: 'szansa', cs: 'příležitost', hu: 'lehetőség', uk: 'можливість', en: 'opportunity' } },
+  { en: 'challenge', phonetic: '/ˈtʃælɪndʒ/', translations: { az: 'sınaq', ru: 'вызов', tr: 'meydan okuma', es: 'desafío', de: 'Herausforderung', fr: 'défi', it: 'sfida', pt: 'desafio', pl: 'wyzwanie', cs: 'výzva', hu: 'kihívás', uk: 'виклик', en: 'challenge' } },
+  { en: 'knowledge', phonetic: '/ˈnɑːlɪdʒ/', translations: { az: 'bilik', ru: 'знание', tr: 'bilgi', es: 'conocimiento', de: 'Wissen', fr: 'connaissance', it: 'conoscenza', pt: 'conhecimento', pl: 'wiedza', cs: 'znalost', hu: 'tudás', uk: 'знання', en: 'knowledge' } },
+  { en: 'freedom', phonetic: '/ˈfriːdəm/', translations: { az: 'azadlıq', ru: 'свобода', tr: 'özgürlük', es: 'libertad', de: 'Freiheit', fr: 'liberté', it: 'libertà', pt: 'liberdade', pl: 'wolność', cs: 'svoboda', hu: 'szabadság', uk: 'свобода', en: 'freedom' } },
+  { en: 'courage', phonetic: '/ˈkɜːrɪdʒ/', translations: { az: 'cəsarət', ru: 'смелость', tr: 'cesaret', es: 'valentía', de: 'Mut', fr: 'courage', it: 'coraggio', pt: 'coragem', pl: 'odwaga', cs: 'odvaha', hu: 'bátorság', uk: 'мужність', en: 'courage' } },
+  { en: 'discover', phonetic: '/dɪˈskʌvər/', translations: { az: 'kəşf etmək', ru: 'открывать', tr: 'keşfetmek', es: 'descubrir', de: 'entdecken', fr: 'découvrir', it: 'scoprire', pt: 'descobrir', pl: 'odkrywać', cs: 'objevovat', hu: 'felfedezni', uk: 'відкривати', en: 'discover' } },
+  { en: 'inspire', phonetic: '/ɪnˈspaɪər/', translations: { az: 'ilham vermək', ru: 'вдохновлять', tr: 'ilham vermek', es: 'inspirar', de: 'inspirieren', fr: 'inspirer', it: 'ispirare', pt: 'inspirar', pl: 'inspirować', cs: 'inspirovat', hu: 'inspirálni', uk: 'надихати', en: 'inspire' } },
+  { en: 'patient', phonetic: '/ˈpeɪʃnt/', translations: { az: 'səbirli', ru: 'терпеливый', tr: 'sabırlı', es: 'paciente', de: 'geduldig', fr: 'patient', it: 'paziente', pt: 'paciente', pl: 'cierpliwy', cs: 'trpělivý', hu: 'türelmes', uk: 'терплячий', en: 'patient' } },
+  { en: 'curious', phonetic: '/ˈkjʊriəs/', translations: { az: 'maraqlanan', ru: 'любопытный', tr: 'meraklı', es: 'curioso', de: 'neugierig', fr: 'curieux', it: 'curioso', pt: 'curioso', pl: 'ciekawy', cs: 'zvědavý', hu: 'kíváncsi', uk: 'допитливий', en: 'curious' } },
+  { en: 'strength', phonetic: '/streŋkθ/', translations: { az: 'güc', ru: 'сила', tr: 'güç', es: 'fuerza', de: 'Stärke', fr: 'force', it: 'forza', pt: 'força', pl: 'siła', cs: 'síla', hu: 'erő', uk: 'сила', en: 'strength' } },
+  { en: 'wisdom', phonetic: '/ˈwɪzdəm/', translations: { az: 'müdriklik', ru: 'мудрость', tr: 'bilgelik', es: 'sabiduría', de: 'Weisheit', fr: 'sagesse', it: 'saggezza', pt: 'sabedoria', pl: 'mądrość', cs: 'moudrost', hu: 'bölcsesség', uk: 'мудрість', en: 'wisdom' } },
+  { en: 'journey', phonetic: '/ˈdʒɜːrni/', translations: { az: 'səyahət', ru: 'путешествие', tr: 'yolculuk', es: 'viaje', de: 'Reise', fr: 'voyage', it: 'viaggio', pt: 'jornada', pl: 'podróż', cs: 'cesta', hu: 'utazás', uk: 'подорож', en: 'journey' } },
+  { en: 'achieve', phonetic: '/əˈtʃiːv/', translations: { az: 'nail olmaq', ru: 'достигать', tr: 'başarmak', es: 'lograr', de: 'erreichen', fr: 'atteindre', it: 'raggiungere', pt: 'alcançar', pl: 'osiągać', cs: 'dosáhnout', hu: 'elérni', uk: 'досягати', en: 'achieve' } },
+  { en: 'grateful', phonetic: '/ˈɡreɪtfl/', translations: { az: 'minnətdar', ru: 'благодарный', tr: 'minnettar', es: 'agradecido', de: 'dankbar', fr: 'reconnaissant', it: 'grato', pt: 'grato', pl: 'wdzięczny', cs: 'vděčný', hu: 'hálás', uk: 'вдячний', en: 'grateful' } },
+  { en: 'silence', phonetic: '/ˈsaɪləns/', translations: { az: 'sükut', ru: 'тишина', tr: 'sessizlik', es: 'silencio', de: 'Stille', fr: 'silence', it: 'silenzio', pt: 'silêncio', pl: 'cisza', cs: 'ticho', hu: 'csend', uk: 'тиша', en: 'silence' } },
+  { en: 'passion', phonetic: '/ˈpæʃn/', translations: { az: 'həvəs', ru: 'страсть', tr: 'tutku', es: 'pasión', de: 'Leidenschaft', fr: 'passion', it: 'passione', pt: 'paixão', pl: 'pasja', cs: 'vášeň', hu: 'szenvedély', uk: 'пристрасть', en: 'passion' } },
+  { en: 'generous', phonetic: '/ˈdʒenərəs/', translations: { az: 'səxavətli', ru: 'щедрый', tr: 'cömert', es: 'generoso', de: 'großzügig', fr: 'généreux', it: 'generoso', pt: 'generoso', pl: 'hojny', cs: 'štědrý', hu: 'bőkezű', uk: 'щедрий', en: 'generous' } },
+  { en: 'wonder', phonetic: '/ˈwʌndər/', translations: { az: 'möcüzə', ru: 'чудо', tr: 'mucize', es: 'maravilla', de: 'Wunder', fr: 'merveille', it: 'meraviglia', pt: 'maravilha', pl: 'cud', cs: 'zázrak', hu: 'csoda', uk: 'диво', en: 'wonder' } },
+  { en: 'treasure', phonetic: '/ˈtreʒər/', translations: { az: 'xəzinə', ru: 'сокровище', tr: 'hazine', es: 'tesoro', de: 'Schatz', fr: 'trésor', it: 'tesoro', pt: 'tesouro', pl: 'skarb', cs: 'poklad', hu: 'kincs', uk: 'скарб', en: 'treasure' } },
+  { en: 'harmony', phonetic: '/ˈhɑːrməni/', translations: { az: 'ahəngdarlıq', ru: 'гармония', tr: 'uyum', es: 'armonía', de: 'Harmonie', fr: 'harmonie', it: 'armonia', pt: 'harmonia', pl: 'harmonia', cs: 'harmonie', hu: 'harmónia', uk: 'гармонія', en: 'harmony' } },
+  { en: 'brilliant', phonetic: '/ˈbrɪliənt/', translations: { az: 'parlaq', ru: 'блестящий', tr: 'parlak', es: 'brillante', de: 'brillant', fr: 'brillant', it: 'brillante', pt: 'brilhante', pl: 'genialny', cs: 'skvělý', hu: 'ragyogó', uk: 'блискучий', en: 'brilliant' } },
+  { en: 'horizon', phonetic: '/həˈraɪzn/', translations: { az: 'üfüq', ru: 'горизонт', tr: 'ufuk', es: 'horizonte', de: 'Horizont', fr: 'horizon', it: 'orizzonte', pt: 'horizonte', pl: 'horyzont', cs: 'obzor', hu: 'horizont', uk: 'горизонт', en: 'horizon' } },
+  { en: 'adventure', phonetic: '/ədˈventʃər/', translations: { az: 'macəra', ru: 'приключение', tr: 'macera', es: 'aventura', de: 'Abenteuer', fr: 'aventure', it: 'avventura', pt: 'aventura', pl: 'przygoda', cs: 'dobrodružství', hu: 'kaland', uk: 'пригода', en: 'adventure' } },
+  { en: 'memory', phonetic: '/ˈmeməri/', translations: { az: 'xatirə', ru: 'память', tr: 'anı', es: 'memoria', de: 'Erinnerung', fr: 'mémoire', it: 'memoria', pt: 'memória', pl: 'wspomnienie', cs: 'vzpomínka', hu: 'emlék', uk: 'спогад', en: 'memory' } },
+  { en: 'promise', phonetic: '/ˈprɑːmɪs/', translations: { az: 'vəd', ru: 'обещание', tr: 'söz', es: 'promesa', de: 'Versprechen', fr: 'promesse', it: 'promessa', pt: 'promessa', pl: 'obietnica', cs: 'slib', hu: 'ígéret', uk: 'обіцянка', en: 'promise' } },
 ];
 
 /**
@@ -202,7 +202,11 @@ export async function generatePairDeck(targetLang: LanguageCode, count: number =
     // Don't duplicate if already in pairs
     if (pairs.some((p) => p.word.toLowerCase() === cv.en.toLowerCase())) continue;
 
-    const trans = cv.translations[langKey] || cv.translations['az'] || cv.translations['ru'] || cv.en;
+    const trans =
+      cv.translations[langKey] ||
+      cv.translations[targetLang] ||
+      cv.translations['en'] ||
+      cv.en;
     pairs.push({
       id: `curated_${cv.en}`,
       word: cv.en,

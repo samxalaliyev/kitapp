@@ -1,24 +1,56 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 
 import { useAuth } from '@/lib/auth/AuthContext';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
 
+import { isNativeAdMobAvailable } from '@/lib/monetization/ad-guard';
+
 interface AdBannerContainerProps {
   onUpgradePress?: () => void;
 }
+
+const AD_UNIT_ID = __DEV__
+  ? TestIds.BANNER
+  : (process.env.EXPO_PUBLIC_ADMOB_BANNER_ID || TestIds.BANNER);
 
 export function AdBannerContainer({ onUpgradePress }: AdBannerContainerProps) {
   const { limits, isPremium } = useAuth();
   const { colors } = useAppTheme();
   const { t } = useLanguage();
+  const [adFailed, setAdFailed] = useState(false);
 
   // Premium users see ZERO ads
   if (!limits.showAds || isPremium) {
     return null;
   }
 
+  // If native AdMob is available and hasn't failed, show real Google AdMob banner
+  if (isNativeAdMobAvailable() && !adFailed) {
+    return (
+      <View style={styles.adMobWrapper}>
+        <BannerAd
+          unitId={AD_UNIT_ID}
+          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+          requestOptions={{
+            requestNonPersonalizedAdsOnly: true,
+          }}
+          onAdLoaded={() => {
+            if (__DEV__) console.log('[AdMob] Banner loaded successfully');
+          }}
+          onAdFailedToLoad={(error) => {
+            if (__DEV__) console.warn('[AdMob] Banner failed to load, falling back to promo:', error);
+            setAdFailed(true);
+          }}
+        />
+      </View>
+    );
+  }
+
+  // Fallback to internal promo banner if offline or web
   return (
     <View
       style={[
@@ -58,6 +90,13 @@ export function AdBannerContainer({ onUpgradePress }: AdBannerContainerProps) {
 }
 
 const styles = StyleSheet.create({
+  adMobWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: Spacing.sm,
+    width: '100%',
+    minHeight: 50,
+  },
   container: {
     marginHorizontal: Spacing.xl,
     marginVertical: Spacing.md,

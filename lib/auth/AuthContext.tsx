@@ -28,6 +28,8 @@ import { watchRewardedAd } from '@/lib/monetization/rewarded-ads';
 import { purchasesService } from '@/lib/monetization/purchases';
 import { purgeUserLocalCache, syncCloudData } from '@/lib/sync/sync-service';
 import { markLanguageOnboarded } from '@/lib/i18n/settings';
+import { crashReporter } from '@/lib/crash-reporter';
+import { validateRegistrationEmail } from '@/lib/auth/email-validator';
 
 import {
   getEnergyBalance,
@@ -62,12 +64,14 @@ interface AuthContextValue {
   addXp: (amount: number) => Promise<{ added: number; newTotal: number; newWeekly: number }>;
   flushXpSync: () => Promise<void>;
   consumeEnergy: (amount: number) => Promise<boolean>;
-  refillEnergy: () => Promise<number>;
+  refillEnergy: (amount?: number) => Promise<number>;
   usedTranslationsToday: number;
   bonusTranslationsToday: number;
   downloadedBooksCount: number;
   login: (email: string, pass: string) => Promise<{ error?: string }>;
-  register: (email: string, pass: string, name?: string) => Promise<{ error?: string }>;
+  register: (email: string, pass: string, name?: string) => Promise<{ error?: string; needsOtp?: boolean; email?: string }>;
+  verifyOtp: (email: string, token: string) => Promise<{ error?: string }>;
+  resendOtp: (email: string) => Promise<{ error?: string }>;
   signInWithOAuth: (provider: 'google' | 'apple') => Promise<{ error?: string }>;
   deleteAccount: () => Promise<void>;
   logout: () => Promise<void>;
@@ -91,7 +95,7 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   session: null,
   profile: null,
-  displayName: 'Oxucu',
+  displayName: '',
   setDisplayName: async () => {},
   role: 'free',
   subscriptionPlan: 'free',
@@ -111,6 +115,8 @@ const AuthContext = createContext<AuthContextValue>({
   downloadedBooksCount: 0,
   login: async () => ({}),
   register: async () => ({}),
+  verifyOtp: async () => ({}),
+  resendOtp: async () => ({}),
   signInWithOAuth: async () => ({}),
   deleteAccount: async () => {},
   logout: async () => {},
@@ -130,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [usedTranslationsToday, setUsedTranslationsToday] = useState(0);
   const [bonusTranslationsToday, setBonusTranslationsToday] = useState(0);
   const [downloadedBooksCount, setDownloadedBooksCount] = useState(0);
-  const [displayName, setDisplayNameState] = useState<string>('Oxucu');
+  const [displayName, setDisplayNameState] = useState<string>('');
   const [energy, setEnergyState] = useState<number>(100);
   const [totalXp, setTotalXp] = useState<number>(0);
   const [weeklyXp, setWeeklyXp] = useState<number>(0);
@@ -190,8 +196,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!name) {
           name = await AsyncStorage.getItem(STORAGE_KEYS.LEGACY_DISPLAY_NAME);
         }
-        if (name) {
-          setDisplayNameState(name);
+        if (name && name.trim() && name !== 'Oxucu') {
+          setDisplayNameState(name.trim());
         }
       } catch {}
     };
@@ -294,12 +300,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           (currentUser?.user_metadata as any)?.role === 'admin';
 
         // Extract cloud account name (strictly from backend profiles, auth user_metadata, or email username)
-        const resolvedName =
+        const rawResolved =
           (data?.display_name && data.display_name.trim()) ||
           (currentUser?.user_metadata as any)?.full_name ||
           (currentUser?.user_metadata as any)?.name ||
           (currentUser?.user_metadata as any)?.display_name ||
-          (currentEmail ? currentEmail.split('@')[0] : 'Oxucu');
+          (currentEmail ? currentEmail.split('@')[0] : '');
+        const resolvedName = rawResolved === 'Oxucu' ? '' : rawResolved;
 
         if (!error && data) {
           const profRole: UserRole = isSystemAdmin ? 'admin' : (data.role || 'free');
@@ -422,8 +429,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return res.success;
   }, [isPremium, user]);
 
-  const refillEnergy = useCallback(async (): Promise<number> => {
-    const next = await refillEnergyWithAd(isPremium, !user);
+  const refillEnergy = useCallback(async (amount: number = 10): Promise<number> => {
+    const next = await refillEnergyWithAd(amount, isPremium, !user);
     setEnergyState(next);
     return next;
   }, [isPremium, user]);
@@ -472,10 +479,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchProfile]);
 
   const register = useCallback(async (email: string, pass: string, name?: string) => {
+    // 1. Client-side Disposable / Temporary Domain Guard
+    const validation = validateRegistrationEmail(email);
+    if (!validation.isValid) {
+      return { error: validation.error };
+    }
+
     if (!isSupabaseConfigured) {
       const demoProf: UserProfile = {
         id: 'demo-user-' + Date.now(),
-        email,
+        email: email.trim().toLowerCase(),
         displayName: name || email.split('@')[0],
         role: 'free',
         subscriptionPlan: 'free',
@@ -484,17 +497,108 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setProfile(demoProf);
       await AsyncStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(demoProf));
-      return {};
+      return { needsOtp: false };
     }
 
-    const { error } = await supabase.auth.signUp({
-      email,
+    const cleanEmail = email.trim().toLowerCase();
+    const { data, error } = await supabase.auth.signUp({
+      email: cleanEmail,
       password: pass,
       options: {
         data: { full_name: name },
       },
     });
-    return { error: error?.message };
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    // When Supabase email confirmations are active, data.session is null and data.user is created.
+    if (data?.user && !data?.session) {
+      return { needsOtp: true, email: cleanEmail };
+    }
+
+    // Auto-confirmed or session established immediately:
+    if (data?.user && data?.session) {
+      setUser(data.user);
+      setSession(data.session);
+      const immediateName = name || cleanEmail.split('@')[0];
+      setDisplayNameState(immediateName);
+      await AsyncStorage.setItem(STORAGE_KEYS.DISPLAY_NAME, immediateName).catch(() => {});
+      await markLanguageOnboarded().catch(() => {});
+      await fetchProfile(data.user.id, data.user.email, data.user);
+      await syncCloudData(data.user.id).catch(() => {});
+      return { needsOtp: false };
+    }
+
+    return { needsOtp: false };
+  }, [fetchProfile]);
+
+  const verifyOtp = useCallback(async (email: string, token: string) => {
+    if (!isSupabaseConfigured) {
+      return {};
+    }
+
+    const cleanToken = token.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    // 1. Try 'signup' verification type first
+    let { data, error } = await supabase.auth.verifyOtp({
+      email: cleanEmail,
+      token: cleanToken,
+      type: 'signup',
+    });
+
+    // 2. Fallback to 'email' confirmation type if needed
+    if (error) {
+      const retry = await supabase.auth.verifyOtp({
+        email: cleanEmail,
+        token: cleanToken,
+        type: 'email',
+      });
+      if (!retry.error) {
+        data = retry.data;
+        error = null;
+      }
+    }
+
+    if (error) {
+      return { error: error.message || 'Təsdiq kodu yalnışdır və ya vaxtı bitib.' };
+    }
+
+    if (data?.user && data?.session) {
+      setUser(data.user);
+      setSession(data.session);
+      const immediateName =
+        (data.user.user_metadata as any)?.full_name ||
+        (data.user.user_metadata as any)?.name ||
+        cleanEmail.split('@')[0];
+      setDisplayNameState(immediateName);
+      await AsyncStorage.setItem(STORAGE_KEYS.DISPLAY_NAME, immediateName).catch(() => {});
+      await markLanguageOnboarded().catch(() => {});
+      await fetchProfile(data.user.id, data.user.email, data.user);
+      await syncCloudData(data.user.id).catch(() => {});
+      return {};
+    }
+
+    return {};
+  }, [fetchProfile]);
+
+  const resendOtp = useCallback(async (email: string) => {
+    if (!isSupabaseConfigured) {
+      return {};
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: cleanEmail,
+    });
+
+    if (error) {
+      return { error: error.message };
+    }
+    return {};
   }, []);
 
   const signInWithOAuth = useCallback(async (provider: 'google' | 'apple') => {
@@ -604,7 +708,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
     setUser(null);
     setSession(null);
-    setDisplayNameState('Oxucu');
+    setDisplayNameState('');
     setTotalXp(0);
     setWeeklyXp(0);
     await AsyncStorage.removeItem(STORAGE_KEYS.PROFILE);
@@ -615,11 +719,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const deleteAccount = useCallback(async () => {
     if (isSupabaseConfigured && user) {
       try {
-        await supabase.from('user_vocabulary').delete().eq('user_id', user.id);
-        await supabase.from('user_saved_books').delete().eq('user_id', user.id);
-        await supabase.from('user_reading_progress').delete().eq('user_id', user.id);
-        await supabase.from('user_daily_usage').delete().eq('user_id', user.id);
-        await supabase.from('profiles').delete().eq('id', user.id);
+        // 1. First attempt full account wipe via backend RPC (deletes auth.users and profile)
+        const { data, error: rpcError } = await supabase.rpc('delete_user_account');
+        if (rpcError || (data && (data as any).success === false)) {
+          // Fallback to table deletions if RPC is not yet applied in production Supabase
+          await supabase.from('user_vocabulary').delete().eq('user_id', user.id);
+          await supabase.from('user_saved_books').delete().eq('user_id', user.id);
+          await supabase.from('user_reading_progress').delete().eq('user_id', user.id);
+          await supabase.from('user_daily_usage').delete().eq('user_id', user.id);
+          await supabase.from('profiles').delete().eq('id', user.id);
+        }
         await supabase.auth.signOut().catch(() => {});
       } catch (e) {
         console.warn('[Auth] deleteAccount cloud error:', e);
@@ -634,7 +743,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     purchasesService.init(user?.id).catch(() => {});
-  }, [user?.id]);
+    crashReporter.setUser(user ? { id: user.id, email: user.email } : null);
+  }, [user?.id, user?.email]);
 
   const upgradeSubscription = useCallback(async (plan: SubscriptionPlan) => {
     if (plan !== 'free') {
@@ -776,6 +886,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       downloadedBooksCount,
       login,
       register,
+      verifyOtp,
+      resendOtp,
       signInWithOAuth,
       deleteAccount,
       logout,
@@ -809,6 +921,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       downloadedBooksCount,
       login,
       register,
+      verifyOtp,
+      resendOtp,
       signInWithOAuth,
       deleteAccount,
       logout,

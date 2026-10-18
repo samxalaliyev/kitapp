@@ -168,7 +168,10 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data->>'full_name', SPLIT_PART(NEW.email, '@', 1)),
     'free',
     'free'
-  );
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET email = EXCLUDED.email,
+      display_name = COALESCE(EXCLUDED.display_name, public.profiles.display_name);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -224,4 +227,88 @@ CREATE TRIGGER trg_prevent_profile_privilege_escalation
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW
   EXECUTE FUNCTION public.prevent_profile_privilege_escalation();
+
+-- ====================================================================
+-- 9. USER ACCOUNT DELETION RPC (Google Play Policy Compliance)
+-- Allows an authenticated user to permanently delete their account
+-- from auth.users and all linked profile data.
+-- Hardened with explicit search_path and error handling.
+-- ====================================================================
+-- 9. USER ACCOUNT DELETION RPC (Google Play Policy & Security Compliant)
+-- Allows an authenticated user to permanently delete their account
+-- from auth.users and all linked profile/vocabulary data.
+-- Supports both client self-deletion (no params) and admin/SQL Editor
+-- deletion (with target_user_id param).
+-- ====================================================================
+
+CREATE OR REPLACE FUNCTION public.delete_user_account(target_user_id UUID DEFAULT NULL)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth, pg_temp
+AS $$
+DECLARE
+  v_target_id UUID;
+  v_caller_role TEXT;
+BEGIN
+  v_caller_role := auth.role();
+
+  -- 1. Determine target user ID securely
+  IF target_user_id IS NOT NULL THEN
+    -- If an explicit target user ID is provided:
+    -- Standard authenticated users can ONLY delete themselves.
+    IF v_caller_role = 'authenticated' AND target_user_id <> auth.uid() AND NOT public.is_admin() THEN
+      RETURN jsonb_build_object(
+        'success', false,
+        'error', 'Unauthorized. Users may only delete their own account.'
+      );
+    END IF;
+    v_target_id := target_user_id;
+  ELSE
+    -- Default invocation from mobile client without parameters
+    v_target_id := auth.uid();
+  END IF;
+
+  -- 2. Validate that we have a valid target ID
+  IF v_target_id IS NULL THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'error', 'No active user session and no target user ID specified. If testing in SQL Editor, call delete_user_account(''USER_UUID'').'
+    );
+  END IF;
+
+  -- 3. Delete application data explicitly to avoid FK lock conflicts
+  DELETE FROM public.user_vocabulary WHERE user_id = v_target_id;
+  DELETE FROM public.user_saved_books WHERE user_id = v_target_id;
+  DELETE FROM public.user_reading_progress WHERE user_id = v_target_id;
+  DELETE FROM public.user_daily_usage WHERE user_id = v_target_id;
+  DELETE FROM public.subscription_logs WHERE user_id = v_target_id;
+  DELETE FROM public.profiles WHERE id = v_target_id;
+
+  -- 4. Delete the authentication account (cascades to auth.identities, auth.sessions, auth.mfa_factors)
+  DELETE FROM auth.users WHERE id = v_target_id;
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'message', 'User account and all associated data permanently deleted.',
+    'deleted_user_id', v_target_id
+  );
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'error', SQLERRM,
+      'code', SQLSTATE
+    );
+END;
+$$;
+
+-- Security Hardening: Revoke public/anon, grant only to authenticated and service_role
+REVOKE EXECUTE ON FUNCTION public.delete_user_account(UUID) FROM public;
+REVOKE EXECUTE ON FUNCTION public.delete_user_account(UUID) FROM anon;
+GRANT EXECUTE ON FUNCTION public.delete_user_account(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.delete_user_account(UUID) TO service_role;
+
+
+
 

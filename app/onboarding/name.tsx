@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -26,6 +28,22 @@ export default function NameOnboardingScreen() {
 
   const [name, setName] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => setKeyboardHeight(e.endCoordinates.height)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardHeight(0)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const handleFinish = async (skipName = false) => {
     if (submitting) return;
@@ -55,12 +73,22 @@ export default function NameOnboardingScreen() {
         styles.root,
         {
           backgroundColor: colors.bg,
-          paddingTop: insets.top + Spacing.xl,
-          paddingBottom: insets.bottom + Spacing.lg,
         },
       ]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContainer,
+          {
+            paddingTop: insets.top + Spacing.lg,
+            paddingBottom: Math.max(keyboardHeight, insets.bottom + Spacing.lg) + 20,
+          },
+        ]}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+      >
       <View style={styles.content}>
         {/* Top Icon Badge */}
         <View style={styles.iconCircleWrap}>
@@ -171,6 +199,7 @@ export default function NameOnboardingScreen() {
           </Text>
         </Pressable>
       </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -178,6 +207,9 @@ export default function NameOnboardingScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
     paddingHorizontal: Spacing.xl,
     justifyContent: 'space-between',
   },

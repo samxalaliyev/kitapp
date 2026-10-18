@@ -14,6 +14,7 @@ import { Feather } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 
 import { OutOfHeartsModal } from '@/components/vocabulary/OutOfHeartsModal';
+import { AdBannerContainer } from '@/components/AdBannerContainer';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
@@ -382,6 +383,11 @@ export function PairMatchingGame({
             </Animated.View>
           </ScrollView>
         )}
+
+        {/* Bottom Ad Banner in Pair Matching Game */}
+        <View style={styles.bottomBanner}>
+          <AdBannerContainer />
+        </View>
       </View>
 
       {/* Out of Hearts Modal */}
@@ -410,6 +416,12 @@ export function PairMatchingGame({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  bottomBanner: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: Spacing.xs,
   },
   topHeader: {
     flexDirection: 'row',

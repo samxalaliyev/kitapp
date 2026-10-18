@@ -613,7 +613,7 @@ export default function BookReaderScreen() {
         }
 
         if (!filePath) {
-          throw new Error("EPUB faylı yüklənə bilmədi");
+          throw new Error(t('epub_load_error'));
         }
 
         const parsed = await parseEpubFile(filePath);
@@ -651,7 +651,7 @@ export default function BookReaderScreen() {
         setBookData(parsed);
       } catch (err: any) {
         if (!cancelled) {
-          setError(err?.message || "Kitab oxunarkən xəta baş verdi");
+          setError(err?.message || t('book_read_error'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -857,16 +857,10 @@ export default function BookReaderScreen() {
     });
   }, [isSpeaking, bookData, currentPage, stopSpeech]);
 
-  // Auto trigger speech if requested from book detail "Dinlə" button
-  const autoAudioStartedRef = useRef(false);
+  // Audio feature is safely dormant for future speech overhaul
   useEffect(() => {
-    if (!loading && bookData && autoAudio === '1' && !autoAudioStartedRef.current) {
-      autoAudioStartedRef.current = true;
-      setTimeout(() => {
-        toggleSpeech();
-      }, 400);
-    }
-  }, [loading, bookData, autoAudio, toggleSpeech]);
+    // Dormant
+  }, [autoAudio]);
 
   // Word Click / Selection
   const handleWordClick = useCallback(
@@ -1035,15 +1029,15 @@ export default function BookReaderScreen() {
   if (error || !bookData || bookData.pages.length === 0) {
     return (
       <View style={[styles.centerContainer, { backgroundColor: activeTheme.bg }]}>
-        <Text style={[styles.errorTitle, { color: colors.danger }]}>Xəta</Text>
+        <Text style={[styles.errorTitle, { color: colors.danger }]}>{t('error')}</Text>
         <Text style={[styles.errorSub, { color: activeTheme.text }]}>
-          {error || "Kitab məzmunu boşdur"}
+          {error || t('empty_book_content')}
         </Text>
         <Pressable
           style={[styles.backErrorBtn, { backgroundColor: colors.primary }]}
           onPress={() => router.back()}
         >
-          <Text style={styles.backErrorBtnText}>{t('cancel_search') || 'Geri'}</Text>
+          <Text style={styles.backErrorBtnText}>{t('cancel_search')}</Text>
         </Pressable>
       </View>
     );
@@ -1068,22 +1062,8 @@ export default function BookReaderScreen() {
           <Feather name="chevron-left" size={28} color={activeTheme.text} />
         </Pressable>
 
-        {/* Progress Bar Slider (Interactive Tap to Jump) */}
-        <Pressable
-          style={styles.progressContainer}
-          onLayout={(e) => {
-            progressTrackWidthRef.current = e.nativeEvent.layout.width;
-          }}
-          onPress={(e) => {
-            if (!bookData || bookData.pages.length <= 1) return;
-            const trackWidth = progressTrackWidthRef.current || Math.max(60, windowWidth * 0.36);
-            const clickX = e.nativeEvent.locationX;
-            const ratio = Math.max(0, Math.min(1, clickX / trackWidth));
-            const targetPage = Math.round(ratio * (bookData.pages.length - 1));
-            jumpToPage(targetPage);
-          }}
-          hitSlop={{ top: 15, bottom: 15, left: 10, right: 10 }}
-        >
+        {/* Reading Progress Indicator (Smooth, non-laggy visual progress) */}
+        <View style={styles.progressContainer}>
           <View style={[styles.progressBarTrack, { backgroundColor: activeTheme.panel }]}>
             <View
               style={[
@@ -1091,34 +1071,11 @@ export default function BookReaderScreen() {
                 { width: `${progressPercent}%`, backgroundColor: colors.primary },
               ]}
             />
-            <View
-              style={[
-                styles.progressThumb,
-                { left: `${Math.max(0, Math.min(94, progressPercent))}%`, backgroundColor: colors.primary },
-              ]}
-            />
           </View>
-        </Pressable>
+        </View>
 
         {/* Actions Row */}
         <View style={styles.headerActions}>
-          {/* Audio TTS Button */}
-          <Pressable
-            style={({ pressed }) => [
-              styles.iconBtn,
-              isSpeaking && { backgroundColor: '#fef08a' },
-              pressed && styles.pressed,
-            ]}
-            onPress={toggleSpeech}
-            hitSlop={10}
-          >
-            <Feather
-              name={isSpeaking ? "volume-x" : "volume-2"}
-              size={18}
-              color={isSpeaking ? '#854d0e' : activeTheme.text}
-            />
-          </Pressable>
-
           {/* Reader Settings Modal Trigger (Aa) */}
           <Pressable
             style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
@@ -1164,7 +1121,7 @@ export default function BookReaderScreen() {
               ]}
               onPress={() => {
                 stopSpeech();
-                if (readerTutorialStep === 2) {
+                if (readerTutorialStep) {
                   dismissTutorial();
                 }
                 setIsSelectionMode((prev) => !prev);
@@ -1203,7 +1160,7 @@ export default function BookReaderScreen() {
                 numberOfLines={1}
                 adjustsFontSizeToFit
               >
-                {t('story_mode_sentence_select') || 'Cümlə'}
+                {t('story_mode_sentence_select')}
               </Text>
             </Pressable>
 
@@ -1222,7 +1179,7 @@ export default function BookReaderScreen() {
                 numberOfLines={1}
                 adjustsFontSizeToFit
               >
-                {t('story_mode_word_select') || 'Sözlər'}
+                {t('story_mode_word_select')}
               </Text>
             </Pressable>
           </View>
@@ -1241,19 +1198,22 @@ export default function BookReaderScreen() {
 
                 <Pressable
                   style={styles.storyConfirmBtn}
-                  onPress={() => setStoryVisible(true)}
+                  onPress={() => {
+                    dismissTutorial();
+                    setStoryVisible(true);
+                  }}
                 >
                   <Feather name="camera" size={12} color="#0d0f17" style={{ marginRight: 4 }} />
                   <Text style={styles.storyConfirmBtnText} numberOfLines={1} adjustsFontSizeToFit>
-                    {t('story_mode_create_btn') || 'Story'} ({selectedWordIds.length})
+                    {t('story_mode_create_btn')} ({selectedWordIds.length})
                   </Text>
                 </Pressable>
               </>
             ) : (
               <Text style={styles.selectionHintText} numberOfLines={1} adjustsFontSizeToFit>
                 {selectModeType === 'sentence'
-                  ? (t('story_mode_tap_sentence_hint') || 'Cümləyə toxunun')
-                  : (t('story_mode_tap_words_hint') || 'Sözlərə toxunun')}
+                  ? t('story_mode_tap_sentence_hint')
+                  : t('story_mode_tap_words_hint')}
               </Text>
             )}
           </View>
@@ -1293,36 +1253,58 @@ export default function BookReaderScreen() {
       {/* Interactive In-Reader Mascot Tutorial Coachmarks */}
       {readerTutorialStep === 1 ? (
         <View style={[styles.tutorialBanner, { backgroundColor: '#0f172a', borderColor: '#f59e0b' }]}>
-          <Image source={MASCOT_READING} style={styles.tutorialMascotAvatar} />
-          <View style={styles.tutorialTextWrap}>
-            <View style={styles.mascotSpeechRow}>
+          <View style={styles.tutorialHeaderRow}>
+            <View style={styles.tutorialHeaderLeft}>
+              <Image source={MASCOT_READING} style={styles.tutorialMascotAvatar} />
               <View style={[styles.mascotNameBadge, { backgroundColor: '#f59e0b' }]}>
-                <Text style={styles.mascotNameBadgeText}>{t('reader_tut_mascot_guide') || 'Lumi (Bələdçi)'}</Text>
+                <Text style={styles.mascotNameBadgeText}>{t('reader_tut_mascot_guide')}</Text>
               </View>
             </View>
+            <Pressable
+              onPress={dismissTutorial}
+              style={styles.tutorialCloseBtn}
+              hitSlop={10}
+            >
+              <Feather name="x" size={14} color="#94a3b8" />
+            </Pressable>
+          </View>
+
+          <View style={styles.tutorialBody}>
             <Text style={styles.tutorialTitle}>{t('reader_tut_tap_word_title')}</Text>
             <Text style={styles.tutorialDesc}>{t('reader_tut_tap_word_desc')}</Text>
           </View>
+
           <Pressable
             onPress={() => setReaderTutorialStep(2)}
             style={[styles.tutorialNextBtn, { backgroundColor: '#f59e0b' }]}
           >
-            <Text style={styles.tutorialNextBtnText}>{t('tutorial_next') || 'Növbəti'}</Text>
+            <Text style={styles.tutorialNextBtnText}>{t('tutorial_next')}</Text>
             <Feather name="arrow-right" size={13} color="#0d0f17" />
           </Pressable>
         </View>
       ) : readerTutorialStep === 2 ? (
         <View style={[styles.tutorialBanner, { backgroundColor: '#18103a', borderColor: '#e1306c' }]}>
-          <Image source={MASCOT_STORY} style={styles.tutorialMascotAvatar} />
-          <View style={styles.tutorialTextWrap}>
-            <View style={styles.mascotSpeechRow}>
+          <View style={styles.tutorialHeaderRow}>
+            <View style={styles.tutorialHeaderLeft}>
+              <Image source={MASCOT_STORY} style={styles.tutorialMascotAvatar} />
               <View style={[styles.mascotNameBadge, { backgroundColor: '#e1306c' }]}>
-                <Text style={[styles.mascotNameBadgeText, { color: '#ffffff' }]}>{t('reader_tut_mascot_story') || 'Story Bələdçisi'}</Text>
+                <Text style={[styles.mascotNameBadgeText, { color: '#ffffff' }]}>{t('reader_tut_mascot_story')}</Text>
               </View>
             </View>
+            <Pressable
+              onPress={dismissTutorial}
+              style={styles.tutorialCloseBtn}
+              hitSlop={10}
+            >
+              <Feather name="x" size={14} color="#94a3b8" />
+            </Pressable>
+          </View>
+
+          <View style={styles.tutorialBody}>
             <Text style={styles.tutorialTitle}>{t('reader_tut_story_title')}</Text>
             <Text style={styles.tutorialDesc}>{t('reader_tut_story_desc')}</Text>
           </View>
+
           <Pressable
             onPress={dismissTutorial}
             style={[styles.tutorialNextBtn, { backgroundColor: '#e1306c' }]}
@@ -1355,7 +1337,7 @@ export default function BookReaderScreen() {
               <Text style={styles.readerSponsorBadgeText}>AD</Text>
             </View>
             <Text style={[styles.readerSponsorText, { color: activeTheme.text }]}>
-              {t('remove_ads_upgrade')?.replace('👑', '')?.trim() || 'Litera Premium ilə Reklamsız Oxu'}
+              {t('remove_ads_upgrade')?.replace('👑', '')?.trim() || t('feature_no_ads')}
             </Text>
             <Feather name="chevron-right" size={11} color="#d4af7a" />
           </Pressable>
@@ -1601,7 +1583,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    flexShrink: 1,
+    flexShrink: 0,
     justifyContent: "flex-end",
   },
   selectionHintText: {
@@ -1632,7 +1614,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: Radius.pill,
-    flexShrink: 1,
+    flexShrink: 0,
   },
   storyConfirmBtnText: {
     color: "#0d0f17",
@@ -1758,10 +1740,9 @@ const styles = StyleSheet.create({
     bottom: 36,
     left: Spacing.md,
     right: Spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingTop: 14,
+    paddingBottom: 16,
     borderRadius: 20,
     borderWidth: 1.5,
     shadowColor: '#000',
@@ -1769,20 +1750,33 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 16,
     elevation: 16,
-    gap: 12,
     zIndex: 99,
   },
-  tutorialMascotAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: '#fbbf24',
-  },
-  mascotSpeechRow: {
+  tutorialHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  tutorialHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  tutorialCloseBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tutorialMascotAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#fbbf24',
   },
   mascotNameBadge: {
     paddingHorizontal: 8,
@@ -1795,28 +1789,30 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.2,
   },
-  tutorialTextWrap: {
-    flex: 1,
+  tutorialBody: {
+    marginBottom: 12,
   },
   tutorialTitle: {
     color: '#ffffff',
-    fontSize: 14.5,
+    fontSize: 15,
     fontWeight: '800',
-    marginBottom: 3,
+    marginBottom: 4,
     letterSpacing: -0.2,
   },
   tutorialDesc: {
     color: '#cbd5e1',
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 12.5,
+    lineHeight: 18,
   },
   tutorialNextBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 14,
+    justifyContent: 'center',
+    gap: 6,
     paddingVertical: 10,
+    paddingHorizontal: 16,
     borderRadius: Radius.pill,
+    alignSelf: 'stretch',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -1825,7 +1821,7 @@ const styles = StyleSheet.create({
   },
   tutorialNextBtnText: {
     color: '#0d0f17',
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '800',
   },
   pressed: {

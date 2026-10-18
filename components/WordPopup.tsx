@@ -28,6 +28,7 @@ import { getAudioDataUrl } from "@/lib/audio";
 import { FullscreenAdModal } from "@/components/FullscreenAdModal";
 import { SubscriptionPaywallModal } from "@/components/SubscriptionPaywallModal";
 import { OutOfEnergyModal } from "@/components/OutOfEnergyModal";
+import { watchRewardedAd, watchShortSentenceAd } from "@/lib/monetization/rewarded-ads";
 import { checkIsOnline } from "@/lib/network";
 import { ENERGY_COSTS } from "@/lib/gamification/energy";
 import { addXP } from "@/lib/gamification/leagues";
@@ -370,8 +371,15 @@ export function WordPopup({
     if (isPremium) {
       executeSentenceTranslation(true);
     } else {
-      // Free users must watch a short rewarded ad to unlock sentence translation
-      setAdModalVisible(true);
+      // Free users: short AdMob ad (max 10s, skippable after 5s)
+      watchShortSentenceAd({
+        onSuccess: () => {
+          executeSentenceTranslation(true);
+        },
+        onFallback: () => {
+          setAdModalVisible(true);
+        },
+      });
     }
   }, [isPremium, executeSentenceTranslation]);
 
@@ -569,7 +577,7 @@ export function WordPopup({
               {!isOffline && transState === "ready" && translation ? (
                 <View style={styles.energySpentBadge}>
                   <Text style={styles.energySpentText}>
-                    {isPremium ? t('energy_badge_pro') : t('energy_badge_cost').replace('{amount}', '2')}
+                    {isPremium ? t('energy_badge_pro') : t('energy_badge_cost').replace('{amount}', '2').replace('{cost}', '2')}
                   </Text>
                 </View>
               ) : null}
@@ -615,7 +623,7 @@ export function WordPopup({
               <View style={styles.idiomHeader}>
                 <View style={styles.idiomBadge}>
                   <Feather name="zap" size={10} color="#0d0f17" style={{ marginRight: 4 }} />
-                  <Text style={styles.idiomBadgeText}>FRAZEOLOJİ İFADƏ / İDİOM</Text>
+                  <Text style={styles.idiomBadgeText}>{t('idiom_badge_title')}</Text>
                 </View>
               </View>
 
@@ -648,7 +656,7 @@ export function WordPopup({
                         isIdiomSaved && { color: '#4ade80' },
                       ]}
                     >
-                      {isIdiomSaved ? (t('word_saved') || 'İfadə Yadda Saxlanıldı') : 'İfadəni Lüğətə Əlavə Et'}
+                      {isIdiomSaved ? t('idiom_saved_btn') : t('idiom_save_btn')}
                     </Text>
                   </Pressable>
                 </View>
@@ -660,11 +668,7 @@ export function WordPopup({
                   <View style={styles.idiomLockRow}>
                     <Feather name="lock" size={13} color="#d4af7a" />
                     <Text style={styles.idiomLockText}>
-                      {uiLang === 'az'
-                        ? 'Bu ifadənin mənasını görmək üçün PRO-ya keçin 👑'
-                        : uiLang === 'ru'
-                        ? 'Оформите PRO, чтобы открыть значение идиомы 👑'
-                        : 'Unlock idiom meaning & save with PRO 👑'}
+                      {t('idiom_unlock_pro')}
                     </Text>
                   </View>
                   <Feather name="chevron-right" size={14} color="#d4af7a" />
@@ -696,12 +700,8 @@ export function WordPopup({
                     <Feather name={isPremium ? "file-text" : "video"} size={14} color="#d4af7a" />
                     <Text style={styles.sentenceBtnText}>
                       {isPremium
-                        ? (t('translate_sentence_pro') || 'Cümləni Tərcümə Et (👑 PRO Limitsiz)')
-                        : (uiLang === 'az'
-                          ? '📺 Video İzlə -> Cümləni Tərcümə Et'
-                          : uiLang === 'ru'
-                          ? '📺 Смотреть видео -> Перевести'
-                          : '📺 Watch Ad -> Translate Sentence')}
+                        ? t('translate_sentence_pro')
+                        : t('watch_ad_translate_sentence')}
                     </Text>
                   </>
                 )}

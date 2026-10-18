@@ -70,6 +70,42 @@ function getGreetingPrefix(lang: string): string {
     if (hour < 18) return 'Bon après-midi';
     return 'Bonsoir';
   }
+  if (lang === 'it') {
+    if (hour < 6) return 'Buona notte';
+    if (hour < 12) return 'Buongiorno';
+    if (hour < 18) return 'Buon pomeriggio';
+    return 'Buonasera';
+  }
+  if (lang === 'pt') {
+    if (hour < 6) return 'Boa noite';
+    if (hour < 12) return 'Bom dia';
+    if (hour < 18) return 'Boa tarde';
+    return 'Boa noite';
+  }
+  if (lang === 'pl') {
+    if (hour < 6) return 'Dobrej nocy';
+    if (hour < 12) return 'Dzień dobry';
+    if (hour < 18) return 'Dzień dobry';
+    return 'Dobry wieczór';
+  }
+  if (lang === 'cs') {
+    if (hour < 6) return 'Dobrou noc';
+    if (hour < 12) return 'Dobré ráno';
+    if (hour < 18) return 'Dobrý den';
+    return 'Dobrý večer';
+  }
+  if (lang === 'hu') {
+    if (hour < 6) return 'Jó éjszakát';
+    if (hour < 12) return 'Jó reggelt';
+    if (hour < 18) return 'Jó napot';
+    return 'Jó estét';
+  }
+  if (lang === 'uk') {
+    if (hour < 6) return 'Доброї ночі';
+    if (hour < 12) return 'Доброго ранку';
+    if (hour < 18) return 'Доброго дня';
+    return 'Доброго вечора';
+  }
   if (lang === 'en') {
     if (hour < 6) return 'Good night';
     if (hour < 12) return 'Good morning';
@@ -443,7 +479,7 @@ export default function HomeScreen() {
                   pressed && styles.pressed,
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Həftəlik Liqa"
+                accessibilityLabel={t('weekly_league')}
               >
                 <Text style={styles.leagueIcon}>🏆</Text>
               </Pressable>
@@ -459,7 +495,7 @@ export default function HomeScreen() {
                   pressed && styles.pressed,
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Oxu Seriyası və Çellenclər"
+                accessibilityLabel={t('reading_streak_challenges')}
               >
                 <Text style={styles.streakIcon}>🔥</Text>
                 {streakCount > 0 && (
@@ -616,7 +652,7 @@ export default function HomeScreen() {
             {/* SECTION: POPULAR AUTHORS CAROUSEL */}
             <View style={styles.authorsSection}>
               <View style={styles.sectionHeaderWrap}>
-                <SectionHeader title={t('popular_authors') || 'Məşhur Yazıçılar'} />
+                <SectionHeader title={t('popular_authors')} />
               </View>
               <FlatList
                 data={POPULAR_AUTHORS}
@@ -774,7 +810,7 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   scrollContent: {
-    paddingBottom: 110,
+    paddingBottom: 130,
     paddingTop: Spacing.xl,
   },
   header: {

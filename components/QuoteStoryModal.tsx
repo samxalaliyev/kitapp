@@ -186,7 +186,7 @@ export function QuoteStoryModal({
         try {
           const check = await RNShare.isPackageInstalled('com.instagram.android');
           if (check && check.isInstalled === false) {
-            setError(t('story_modal_instagram_not_installed') || 'Instagram tətbiqi tapılmadı');
+            setError(t('story_modal_instagram_not_installed'));
             return;
           }
         } catch {}
@@ -196,7 +196,7 @@ export function QuoteStoryModal({
           if (!canOpen) {
             const canOpenApp = await Linking.canOpenURL('instagram://');
             if (!canOpenApp) {
-              setError(t('story_modal_instagram_not_installed') || 'Instagram tətbiqi tapılmadı');
+              setError(t('story_modal_instagram_not_installed'));
               return;
             }
           }
@@ -206,7 +206,7 @@ export function QuoteStoryModal({
       // 2. High-speed Capture of the 9:16 Canvas
       const uri = await capture();
       if (!uri) {
-        setError(t('story_modal_capture_error') || 'Story şəkli hazırlana bilmədi');
+        setError(t('story_modal_capture_error'));
         return;
       }
 
@@ -238,19 +238,19 @@ export function QuoteStoryModal({
             igErr?.message?.includes('not installed') ||
             igErr?.message?.includes('ActivityNotFoundException')
           ) {
-            setError(t('story_modal_instagram_not_installed') || 'Instagram tətbiqi tapılmadı');
+            setError(t('story_modal_instagram_not_installed'));
             return;
           }
           console.log('Instagram story share error:', igErr);
-          setError(t('story_modal_share_error') || 'Instagram Story açıla bilmədi');
+          setError(t('story_modal_share_error'));
           return;
         }
       }
 
-      setError(t('story_modal_instagram_not_installed') || 'Instagram Story üçün native dəstək tələb olunur');
+      setError(t('story_modal_instagram_not_installed'));
     } catch (err: any) {
       if (err?.message !== 'User did not share') {
-        setError(t('story_modal_share_error') || 'Paylaşım xətası baş verdi');
+        setError(t('story_modal_share_error'));
       }
     } finally {
       setBusy(false);
@@ -264,7 +264,7 @@ export function QuoteStoryModal({
     try {
       const uri = await capture();
       if (!uri) {
-        setError(t('story_modal_capture_error') || 'Story şəkli hazırlana bilmədi');
+        setError(t('story_modal_capture_error'));
         return;
       }
 
@@ -272,12 +272,12 @@ export function QuoteStoryModal({
         await Sharing.shareAsync(uri, {
           mimeType: 'image/png',
           UTI: 'public.png',
-          dialogTitle: t('story_modal_quote_share_title') || 'Sitatı Paylaş',
+          dialogTitle: t('story_modal_quote_share_title'),
         });
       }
     } catch (err: any) {
       if (err?.message !== 'User did not share') {
-        setError(t('story_modal_share_error') || 'Paylaşım xətası baş verdi');
+        setError(t('story_modal_share_error'));
       }
     } finally {
       setBusy(false);
@@ -429,7 +429,7 @@ export function QuoteStoryModal({
             </View>
 
             {/* Theme Selector */}
-            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{t('story_modal_color_theme') || 'Rəng Teması'}</Text>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{t('story_modal_color_theme')}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}

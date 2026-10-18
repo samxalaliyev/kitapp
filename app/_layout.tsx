@@ -14,8 +14,24 @@ export {
   ErrorBoundary,
 } from 'expo-router';
 
+import { isNativeAdMobAvailable } from '@/lib/monetization/ad-guard';
+import mobileAds from 'react-native-google-mobile-ads';
+
 // Initialize global crash reporter
 crashReporter.init();
+
+// Initialize Google Mobile Ads SDK safely if native binary is available
+if (isNativeAdMobAvailable()) {
+  try {
+    mobileAds()
+      .initialize()
+      .catch((err) => {
+        if (__DEV__) console.warn('[AdMob] Init warning:', err);
+      });
+  } catch (e) {
+    // Safe fallback
+  }
+}
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync().catch(() => {});

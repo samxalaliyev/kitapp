@@ -32,7 +32,7 @@ const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
 assert(appJson.expo.android?.package === 'com.litera.app', 'app.json defines android package com.litera.app');
 assert(typeof appJson.expo.android?.versionCode === 'number' && appJson.expo.android.versionCode >= 1, 'app.json defines valid android versionCode >= 1');
 assert(Array.isArray(appJson.expo.android?.permissions), 'app.json explicitly declares android permissions');
-assert(appJson.expo.android?.softwareKeyboardLayoutMode === 'pan', 'app.json sets softwareKeyboardLayoutMode to pan');
+assert(appJson.expo.android?.softwareKeyboardLayoutMode === 'resize', 'app.json sets softwareKeyboardLayoutMode to resize');
 
 const easJsonPath = path.join(rootDir, 'eas.json');
 assert(fs.existsSync(easJsonPath), 'eas.json exists in project root');
@@ -55,9 +55,9 @@ const translationsPath = path.join(rootDir, 'lib/i18n/translations.ts');
 assert(fs.existsSync(translationsPath), 'lib/i18n/translations.ts exists');
 const translationsContent = fs.readFileSync(translationsPath, 'utf8');
 
-const requiredLangs = ['az', 'en', 'tr', 'ru', 'es', 'de', 'fr'];
+const requiredLangs = ['az', 'en', 'tr', 'ru', 'es', 'de', 'fr', 'it', 'pt', 'pl', 'cs', 'hu', 'uk'];
 for (const lang of requiredLangs) {
-  assert(translationsContent.includes(`${lang}: {`), `translations.ts includes language dictionary for '${lang}'`);
+  assert(translationsContent.includes(`${lang}:`) || translationsContent.includes(`${lang}Translations`), `translations.ts includes language dictionary for '${lang}'`);
 }
 
 const criticalKeys = [

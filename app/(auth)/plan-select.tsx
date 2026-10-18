@@ -38,10 +38,10 @@ export default function PlanSelectScreen() {
     setLoading(true);
     try {
       await upgradeSubscription(selectedPlan);
-      Alert.alert('🌟 Təbriklər!', 'Premium abunəliyiniz uğurla aktivləşdirildi.');
+      Alert.alert(t('subscription_success_title'), t('subscription_success_msg'));
       router.replace('/(tabs)');
     } catch (err: any) {
-      Alert.alert('Xəta', err?.message || 'Abunəlik tamamlana bilmədi. Zəhmət olmasa yenidən cəhd edin.');
+      Alert.alert(t('error'), err?.message || t('subscription_failed_msg'));
     } finally {
       setLoading(false);
     }
@@ -52,13 +52,13 @@ export default function PlanSelectScreen() {
     try {
       const res = await restorePurchases();
       if (res.hasActiveSubscription) {
-        Alert.alert('🌟 ' + (t('restore_purchases') || 'Bərpa edildi'), t('restore_success') || 'Alışlarınız uğurla bərpa edildi.');
+        Alert.alert('🌟 ' + t('restore_purchases'), t('restore_success'));
         router.replace('/(tabs)');
       } else {
-        Alert.alert(t('restore_purchases') || 'Alışların Bərpası', t('no_purchases_found') || 'Aktiv abunəlik tapılmadı.');
+        Alert.alert(t('restore_purchases'), t('no_purchases_found'));
       }
     } catch (err: any) {
-      Alert.alert('Xəta', err?.message || 'Bərpa zamanı xəta baş verdi.');
+      Alert.alert(t('error'), err?.message || t('clear_cache_error_msg'));
     } finally {
       setRestoring(false);
     }
@@ -255,7 +255,7 @@ export default function PlanSelectScreen() {
           style={({ pressed }) => [styles.restoreBtn, pressed && styles.pressed]}
         >
           <Text style={[styles.restoreBtnText, { color: colors.primary }]}>
-            {restoring ? (t('connecting') || '...') : `🔄 ${t('restore_purchases') || 'Alışları Bərpa Et'}`}
+            {restoring ? t('connecting') : `🔄 ${t('restore_purchases')}`}
           </Text>
         </Pressable>
 

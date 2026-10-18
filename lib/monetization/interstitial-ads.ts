@@ -1,10 +1,51 @@
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads';
 
 import { isPremiumMember, type SubscriptionPlan, type UserRole } from '@/lib/permissions/rbac';
 
+import { isNativeAdMobAvailable } from '@/lib/monetization/ad-guard';
+
 const STORAGE_KEY = '@litera_page_turn_count';
 const MIN_COOLDOWN_MS = 60 * 1000; // Minimum 60s between full-screen ads
+
+const INTERSTITIAL_ID = __DEV__
+  ? TestIds.INTERSTITIAL
+  : (process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID || TestIds.INTERSTITIAL);
+
+let interstitialInstance: InterstitialAd | null = null;
+let isAdLoaded = false;
+
+function loadInterstitial() {
+  if (!isNativeAdMobAvailable()) return;
+  try {
+    interstitialInstance = InterstitialAd.createForAdRequest(INTERSTITIAL_ID, {
+      requestNonPersonalizedAdsOnly: true,
+    });
+
+    interstitialInstance.addAdEventListener(AdEventType.LOADED, () => {
+      isAdLoaded = true;
+      if (__DEV__) console.log('[AdMob] Interstitial loaded');
+    });
+
+    interstitialInstance.addAdEventListener(AdEventType.CLOSED, () => {
+      isAdLoaded = false;
+      loadInterstitial(); // preload next
+    });
+
+    interstitialInstance.addAdEventListener(AdEventType.ERROR, (error) => {
+      isAdLoaded = false;
+      if (__DEV__) console.warn('[AdMob] Interstitial error:', error);
+    });
+
+    interstitialInstance.load();
+  } catch (e) {
+    if (__DEV__) console.warn('[AdMob] Interstitial creation error:', e);
+  }
+}
+
+// Preload on startup
+loadInterstitial();
 
 function getRandomAdInterval(): number {
   // Exactly every 15 pages forward
@@ -32,7 +73,7 @@ export interface InterstitialAdResult {
 
 /**
  * Tracks forward page turns while reading.
- * Triggers a full-screen interstitial ad after every 15-20 forward pages for Free / Guest users.
+ * Triggers a real Google AdMob full-screen interstitial ad after every 15 forward pages for Free / Guest users.
  * Automatically skipped for Premium subscribers (0 ads).
  */
 export function trackPageTurn(
@@ -55,6 +96,15 @@ export function trackPageTurn(
     lastAdTimestamp = now;
     nextAdThreshold = getRandomAdInterval();
     AsyncStorage.setItem(STORAGE_KEY, '0').catch(() => {});
+
+    if (isNativeAdMobAvailable() && isAdLoaded && interstitialInstance) {
+      try {
+        interstitialInstance.show();
+        return { shown: true, pageTurnCount: 0 };
+      } catch (e) {
+        if (__DEV__) console.warn('[AdMob] Interstitial show error:', e);
+      }
+    }
 
     if (onAdTrigger) {
       onAdTrigger();
@@ -79,12 +129,10 @@ export function getPageTurnStats(): { count: number; threshold: number } {
 
 function showDefaultInterstitialAdModal() {
   Alert.alert(
-    '📺 Reklam (5s)',
-    'Pulsuz versiyada hər 15-20 səhifədən bir qısa sponsor reklamı göstərilir.\n\nReklamsız dinc oxumaq üçün Premium-a keçin!',
+    '📖 Mütaliə Fasiləsi',
+    'Gözlərinizi qısa müddət dincəldin və növbəti fəslə davam edin.\n\nLitera ilə mütaliəniz uğurlu olsun!',
     [
-      { text: 'Davam et', style: 'cancel' },
-      { text: '🌟 Premium-a keç', style: 'default' },
+      { text: 'Davam et', style: 'default' },
     ],
   );
 }
-

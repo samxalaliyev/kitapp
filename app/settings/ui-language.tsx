@@ -18,14 +18,14 @@ export default function UILanguageSettings() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
-  const { uiLang, setUILang, t } = useLanguage();
+  const { uiLang, setLanguage, t } = useLanguage();
   const [saving, setSaving] = useState(false);
 
   const onPick = async (code: LanguageCode) => {
     if (saving || code === uiLang) return;
     setSaving(true);
     try {
-      await setUILang(code);
+      await setLanguage(code);
     } finally {
       setSaving(false);
     }

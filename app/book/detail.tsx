@@ -240,7 +240,7 @@ export default function BookDetailScreen() {
             </View>
           ) : null}
           <View style={styles.infoRow}>
-            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Mənbə</Text>
+            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{t('source')}</Text>
             <Text style={[styles.infoValue, { color: colors.text }]}>Project Gutenberg</Text>
           </View>
         </View>

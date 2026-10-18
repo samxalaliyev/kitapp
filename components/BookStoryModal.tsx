@@ -72,7 +72,7 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
         try {
           const check = await RNShare.isPackageInstalled('com.instagram.android');
           if (check && check.isInstalled === false) {
-            setError(t('book_story_ig_not_installed') || 'Instagram tətbiqi tapılmadı');
+            setError(t('book_story_ig_not_installed'));
             return;
           }
         } catch {}
@@ -82,7 +82,7 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
           if (!canOpen) {
             const canOpenApp = await Linking.canOpenURL('instagram://');
             if (!canOpenApp) {
-              setError(t('book_story_ig_not_installed') || 'Instagram tətbiqi tapılmadı');
+              setError(t('book_story_ig_not_installed'));
               return;
             }
           }
@@ -92,7 +92,7 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
       // 2. High-speed Capture of the 9:16 Canvas
       const uri = await capture();
       if (!uri) {
-        setError(t('book_story_capture_err') || 'Story şəkli hazırlana bilmədi');
+        setError(t('book_story_capture_err'));
         return;
       }
 
@@ -124,19 +124,19 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
             igErr?.message?.includes('not installed') ||
             igErr?.message?.includes('ActivityNotFoundException')
           ) {
-            setError(t('book_story_ig_not_installed') || 'Instagram tətbiqi tapılmadı');
+            setError(t('book_story_ig_not_installed'));
             return;
           }
           console.log('Book Instagram story share error:', igErr);
-          setError(t('book_story_share_err') || 'Instagram Story açıla bilmədi');
+          setError(t('book_story_share_err'));
           return;
         }
       }
 
-      setError(t('book_story_share_err') || 'Instagram Story üçün native dəstək tələb olunur');
+      setError(t('book_story_share_err'));
     } catch (err: any) {
       if (err?.message !== 'User did not share') {
-        setError(err instanceof Error ? err.message : (t('book_story_share_err') || 'Paylaşım xətası'));
+        setError(err instanceof Error ? err.message : t('book_story_share_err'));
       }
     } finally {
       setBusy(false);
@@ -151,7 +151,7 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
     try {
       const uri = await capture();
       if (!uri) {
-        setError(t('book_story_capture_err') || 'Story şəkli hazırlana bilmədi');
+        setError(t('book_story_capture_err'));
         return;
       }
 
@@ -160,13 +160,13 @@ export function BookStoryModal({ visible, book, onClose }: BookStoryModalProps) 
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(fileUri, {
           mimeType: 'image/png',
-          dialogTitle: t('book_story_share_dialog') || 'Kitabı paylaş',
+          dialogTitle: t('book_story_share_dialog'),
           UTI: 'public.png',
         });
       }
     } catch (err: any) {
       if (err?.message !== 'User did not share') {
-        setError(err instanceof Error ? err.message : (t('book_story_share_err') || 'Paylaşım xətası'));
+        setError(err instanceof Error ? err.message : t('book_story_share_err'));
       }
     } finally {
       setBusy(false);

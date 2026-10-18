@@ -30,7 +30,7 @@ export function LegalModal({ type, visible, onClose }: LegalModalProps) {
   if (!visible || !type) return null;
 
   const isPrivacy = type === 'privacy';
-  const title = isPrivacy ? t('privacy_policy') || 'Məxfilik Siyasəti' : t('terms_of_service') || 'İstifadə Şərtləri';
+  const title = isPrivacy ? t('privacy_policy') : t('terms_of_service');
 
   return (
     <Modal
@@ -60,150 +60,102 @@ export function LegalModal({ type, visible, onClose }: LegalModalProps) {
             /* ================= PRIVACY POLICY ================= */
             <View style={styles.contentWrap}>
               <View style={[styles.badgePill, { backgroundColor: 'rgba(212, 175, 122, 0.15)' }]}>
-                <Text style={[styles.badgeText, { color: '#d4af7a' }]}>Litera App • Rəsmi Məxfilik Bəyannaməsi</Text>
+                <Text style={[styles.badgeText, { color: '#d4af7a' }]}>
+                  Litera • Privacy Policy
+                </Text>
               </View>
 
               <Text style={[styles.lastUpdated, { color: colors.textMuted }]}>
-                Son Yenilənmə: 24 Avqust 2026
+                Last Updated: October 2026
               </Text>
 
               <Text style={[styles.paragraph, { color: colors.text }]}>
-                <Text style={styles.bold}>Litera</Text> ("biz", "tətbiqimiz") istifadəçilərin məxfiliyinə və şəxsi məlumatlarının təhlükəsizliyinə xüsusi önəm verir. Bu Məxfilik Siyasəti tətbiqimizdən istifadə edərkən hansı məlumatların toplandığını və necə qorunduğunu izah edir.
+                <Text style={styles.bold}>Litera</Text> ("we", "our", or "us") is committed to protecting your privacy and personal data. This Privacy Policy outlines the types of information we collect, how it is used, and the steps we take to safeguard your data.
               </Text>
 
-              {/* Content Render based on Language */}
-              {uiLang === 'az' ? (
-                <>
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>1. Toplanan Məlumatlar</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    • <Text style={styles.bold}>Lokal Məlumatlar:</Text> Yadda saxladığınız sözlər, oxuma tərəqqiniz, şrift və tema parametrləri cihazınızın daxili yaddaşında (SQLite & AsyncStorage) saxlanılır.
-                    {'\n'}• <Text style={styles.bold}>Hesab Məlumatları (Könüllü):</Text> Qeydiyyatdan keçdiyiniz halda e-poçt ünvanınız və istifadəçi adınız Supabase bulud bazasında cihazlararası sinxronizasiya üçün saxlanılır.
-                    {'\n'}• <Text style={styles.bold}>Anonim Texniki Loqlar:</Text> Tətbiqin sabitliyini artırmaq üçün yalnız texniki xəta loqları qeydə alına bilər.
-                  </Text>
+              <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>1. Information We Collect</Text>
+              <Text style={[styles.paragraph, { color: colors.text }]}>
+                • <Text style={styles.bold}>Account Information (Optional):</Text> If you choose to create an account, we collect your email address and display name to enable cross-device synchronization of your library and vocabulary.
+                {'\n'}• <Text style={styles.bold}>Reading & Learning Progress:</Text> Your saved vocabulary words, reading milestones, and practice statistics are stored securely on your device and synchronized with your private account if signed in.
+                {'\n'}• <Text style={styles.bold}>Device & Diagnostic Data:</Text> Non-identifying technical and diagnostic information may be processed solely to ensure application stability and performance.
+              </Text>
 
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>2. Məlumatların İstifadə Məqsədi</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    Toplanan məlumatlar yalnız aşağıdakı məqsədlər üçün istifadə olunur:
-                    {'\n'}• Oxuma prosesinizi və lüğətinizi cihazlarınız arasında sinxronlaşdırmaq;
-                    {'\n'}• Tərcümə və tələffüz xidmətlərini operativ təmin etmək;
-                    {'\n'}• Lüğət oyunları və test statistikalarınızı hesablamaq.
-                  </Text>
+              <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>2. How We Use Your Information</Text>
+              <Text style={[styles.paragraph, { color: colors.text }]}>
+                We use collected information strictly to:
+                {'\n'}• Provide digital reading, dictionary lookup, and vocabulary practice features;
+                {'\n'}• Synchronize your reading progress across your authenticated devices;
+                {'\n'}• Maintain application performance, security, and stability.
+              </Text>
 
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>3. Reklam və Tərəfdaşlıq</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    Tətbiq pulsuz versiyada tərcümə limitini artırmaq üçün mükafatlı video təqdim edə bilər. İstifadəçi istədiyi zaman Premium abunəlik ilə bütün sponsor məzmunlarını söndürə bilər.
-                  </Text>
+              <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>3. Third-Party Services</Text>
+              <Text style={[styles.paragraph, { color: colors.text }]}>
+                We partner with trusted third-party services conforming to industry privacy standards:
+                {'\n'}• <Text style={styles.bold}>Google Mobile Ads (AdMob):</Text> Serves non-personalized or contextual advertisements in compliance with Google Play Developer policies.
+                {'\n'}• <Text style={styles.bold}>Google Play Billing:</Text> Securely processes optional in-app subscriptions without sharing your financial details with us.
+              </Text>
 
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>4. Hesabın və Məlumatların Silinməsi Hüququ</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    İstifadəçi istənilən vaxt <Text style={styles.bold}>Ayarlar → Hesabı Sil</Text> bölməsindən öz hesabını, bütün bulud məlumatlarını və cihazdakı qeydlərini birdəfəlik və dərhal silmək hüququna malikdir.
-                  </Text>
+              <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>4. Data Security</Text>
+              <Text style={[styles.paragraph, { color: colors.text }]}>
+                We implement industry-standard encryption protocols (TLS/HTTPS) for all data in transit. Stored data is protected by strict access controls ensuring that only authenticated users can access their own information.
+              </Text>
 
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>5. Əlaqə</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    Məxfilik siyasəti ilə bağlı suallarınız üçün:
-                    {'\n'}📧 <Text style={styles.bold}>contact@litera.app</Text>
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>1. Information We Collect</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    • <Text style={styles.bold}>Local Data:</Text> Saved vocabulary words, reading progress, and reader preferences are stored securely on your device (SQLite & local storage).
-                    {'\n'}• <Text style={styles.bold}>Account Information (Optional):</Text> If you create an account, your email address and display name are stored in our secure cloud to sync your library across devices.
-                    {'\n'}• <Text style={styles.bold}>Technical Diagnostics:</Text> Anonymous diagnostics may be processed solely to ensure application reliability and performance.
-                  </Text>
+              <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>5. Account & Data Deletion</Text>
+              <Text style={[styles.paragraph, { color: colors.text }]}>
+                You retain complete control over your data. You may permanently delete your account and all associated cloud and local data at any time via <Text style={styles.bold}>Settings → Delete Account</Text>, or submit an online deletion request via our support channels.
+              </Text>
 
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>2. How We Use Information</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    We use your data solely to:
-                    {'\n'}• Synchronize your reading progress and vocabulary bank across your devices;
-                    {'\n'}• Deliver contextual word translations and audio pronunciations;
-                    {'\n'}• Calculate review intervals for flashcard and vocabulary practice.
-                  </Text>
+              <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>6. Children's Privacy</Text>
+              <Text style={[styles.paragraph, { color: colors.text }]}>
+                Litera does not knowingly collect personal information from children under 13. If you believe a child has provided us with personal information, please contact us for immediate deletion.
+              </Text>
 
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>3. Advertising & Rewards</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    Free tier users may access rewarded bonus opportunities to earn extra translations. Premium members enjoy a completely ad-free experience.
-                  </Text>
-
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>4. Right to Delete Your Account</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    In compliance with global data protection standards, you have the right to permanently delete your account and all associated cloud and local data at any time via <Text style={styles.bold}>Settings → Delete Account</Text>.
-                  </Text>
-
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>5. Contact Us</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    For questions regarding our Privacy Policy:
-                    {'\n'}📧 <Text style={styles.bold}>contact@litera.app</Text>
-                  </Text>
-                </>
-              )}
+              <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>7. Contact Us</Text>
+              <Text style={[styles.paragraph, { color: colors.text }]}>
+                If you have questions regarding this Privacy Policy, please contact us at:
+                {'\n'}📧 <Text style={styles.bold}>support@litera.app</Text>
+              </Text>
             </View>
           ) : (
             /* ================= TERMS OF SERVICE ================= */
             <View style={styles.contentWrap}>
               <View style={[styles.badgePill, { backgroundColor: 'rgba(212, 175, 122, 0.15)' }]}>
-                <Text style={[styles.badgeText, { color: '#d4af7a' }]}>Litera App • {uiLang === 'az' ? 'İstifadə Şərtləri' : 'Terms of Service'}</Text>
+                <Text style={[styles.badgeText, { color: '#d4af7a' }]}>Litera • Terms of Service</Text>
               </View>
 
               <Text style={[styles.lastUpdated, { color: colors.textMuted }]}>
-                {uiLang === 'az' ? 'Son Yenilənmə: 24 Avqust 2026' : 'Last Updated: August 24, 2026'}
+                Last Updated: October 2026
               </Text>
 
               <Text style={[styles.paragraph, { color: colors.text }]}>
-                {uiLang === 'az'
-                  ? 'Litera tətbiqini yükləyərək və istifadə edərək bu İstifadə Şərtlərini qəbul etmiş olursunuz.'
-                  : 'By downloading or using Litera, you agree to be bound by these Terms of Service.'}
+                By downloading, accessing, or using Litera, you agree to be bound by these Terms of Service. If you do not agree, please do not use the application.
               </Text>
 
-              {uiLang === 'az' ? (
-                <>
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>1. Xidmətin Təsviri və Məzmun</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    Litera klassik dünya ədəbiyyatı kitablarını oxumaq, daxili tərcümə və tələffüz vasitələrindən istifadə etmək üçün interaktiv platforma təqdim edir. Bütün kitablar ictimai mülkiyyətdə (Public Domain) olan əsərlərdir.
-                  </Text>
+              <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>1. Service Description</Text>
+              <Text style={[styles.paragraph, { color: colors.text }]}>
+                Litera is an interactive digital reading platform providing access to classic public-domain literature, contextual translation tools, and vocabulary exercises. All book texts provided are in the public domain.
+              </Text>
 
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>2. İstifadəçi Məsuliyyəti</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    İstifadəçi xidmətdən yalnız şəxsi təhsil və mütaliə məqsədilə istifadə etməyə və tətbiqin fəaliyyətinə qanunsuz müdaxilə etməməyə razılıq verir.
-                  </Text>
+              <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>2. User Conduct & Fair Use</Text>
+              <Text style={[styles.paragraph, { color: colors.text }]}>
+                You agree to use the service exclusively for personal, non-commercial reading and educational purposes. You agree not to reverse-engineer, disrupt, or misuse our services or networks.
+              </Text>
 
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>3. Abunəlik və Ödənişlər</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    Tətbiqdə limitsiz tərcümə və əlavə funksiyalar üçün Premium abunəliklər təklif oluna bilər. Ödənişlər rəsmi tətbiq mağazası vasitəsilə həyata keçirilir.
-                  </Text>
+              <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>3. Subscriptions & Billing</Text>
+              <Text style={[styles.paragraph, { color: colors.text }]}>
+                Litera provides free reading supported by optional rewarded videos. Optional Premium subscriptions provide unlimited translations and an ad-free experience. All purchases and subscriptions are handled securely through Google Play Billing and are subject to Google Play standard terms and refund policies.
+              </Text>
 
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>4. Əlaqə</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    Şərtlərlə bağlı suallarınız üçün:
-                    {'\n'}📧 <Text style={styles.bold}>support@litera.app</Text>
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>1. Service Description & Content</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    Litera provides an interactive reading platform for classical literature with integrated contextual translation and pronunciation tools. All books available in our catalog are in the Public Domain (e.g. Standard Ebooks, Project Gutenberg).
-                  </Text>
+              <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>4. Disclaimer of Warranties</Text>
+              <Text style={[styles.paragraph, { color: colors.text }]}>
+                The application and its content are provided on an "as-is" and "as-available" basis without warranties of any kind, whether express or implied.
+              </Text>
 
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>2. User Conduct</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    You agree to use Litera solely for personal, non-commercial reading and language-learning purposes, and refrain from attempting to reverse-engineer or disrupt the service.
-                  </Text>
-
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>3. Subscriptions & Billing</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    Premium subscriptions provide unlimited instant translations and offline features. Subscriptions are billed and managed securely through the official App Store or Google Play Store billing systems.
-                  </Text>
-
-                  <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>4. Contact Us</Text>
-                  <Text style={[styles.paragraph, { color: colors.text }]}>
-                    For questions regarding these Terms:
-                    {'\n'}📧 <Text style={styles.bold}>support@litera.app</Text>
-                  </Text>
-                </>
-              )}
+              <Text style={[styles.sectionHeading, { color: '#d4af7a' }]}>5. Contact Us</Text>
+              <Text style={[styles.paragraph, { color: colors.text }]}>
+                For questions regarding these Terms of Service:
+                {'\n'}📧 <Text style={styles.bold}>support@litera.app</Text>
+              </Text>
             </View>
           )}
         </ScrollView>

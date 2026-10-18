@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import type { SavedWord } from '@/lib/vocabulary/db';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
 
 export interface WordCardProps {
@@ -12,6 +13,7 @@ export interface WordCardProps {
 
 export function WordCard({ item, onDelete }: WordCardProps) {
   const { colors } = useAppTheme();
+  const { t } = useLanguage();
   const [flipped, setFlipped] = useState(false);
 
   return (
@@ -29,7 +31,7 @@ export function WordCard({ item, onDelete }: WordCardProps) {
           {item.language.toUpperCase()}
         </Text>
         <Text style={[styles.hint, { color: colors.textSubtle }]}>
-          {flipped ? 'Çevirmək üçün kliklə' : 'Tərcümə üçün kliklə'}
+          {flipped ? t('tap_to_flip') : t('tap_for_translation')}
         </Text>
       </View>
 
@@ -39,17 +41,17 @@ export function WordCard({ item, onDelete }: WordCardProps) {
           <Text style={[styles.phonetic, { color: colors.primary }]}>{item.phonetic}</Text>
         ) : null}
         <Text style={[styles.translation, { color: colors.textMuted }]}>
-          {item.translation ?? 'Tərcümə yoxdur'}
+          {item.translation ?? t('no_translation')}
         </Text>
       </View>
 
       <View style={styles.footerRow}>
         <Text style={[styles.meta, { color: colors.textSubtle }]}>
-          Təkrar: {item.reviewCount}
+          {t('reviews_count')}: {item.reviewCount}
         </Text>
         {onDelete ? (
           <Text style={[styles.deleteHint, { color: colors.textSubtle }]}>
-            Silmək üçün basılı saxlayın
+            {t('hold_to_delete')}
           </Text>
         ) : null}
       </View>

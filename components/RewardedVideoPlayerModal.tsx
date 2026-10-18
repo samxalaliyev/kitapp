@@ -9,17 +9,30 @@ export interface RewardedVideoPlayerModalProps {
   visible: boolean;
   onClose: () => void;
   onRewardEarned: () => void;
+  rewardTitle?: string;
+  rewardBadge?: string;
+  rewardClaimText?: string;
+  cancelWarning?: string;
 }
 
 export function RewardedVideoPlayerModal({
   visible,
   onClose,
   onRewardEarned,
+  rewardTitle,
+  rewardBadge,
+  rewardClaimText,
+  cancelWarning,
 }: RewardedVideoPlayerModalProps) {
   const { colors } = useAppTheme();
   const { t } = useLanguage();
   const [countdown, setCountdown] = useState(30);
   const [completed, setCompleted] = useState(false);
+
+  const effectiveRewardTitle = rewardTitle || t('rewarded_ad_sub');
+  const effectiveRewardBadge = rewardBadge || 'VIDEO (30S)';
+  const effectiveClaimText = rewardClaimText || t('rewarded_ad_claim_btn');
+  const effectiveCancelWarning = cancelWarning || t('rewarded_ad_cancel_desc');
 
   useEffect(() => {
     if (!visible) {
@@ -52,11 +65,11 @@ export function RewardedVideoPlayerModal({
       handleClaimReward();
     } else {
       Alert.alert(
-        t('cancel_search') || 'Reklamı bağlamaq istəyirsiniz?',
-        'Reklam bitməmiş bağlasanız, əlavə tərcümə balansı qazanılmayacaq.',
+        t('rewarded_ad_cancel_title'),
+        effectiveCancelWarning,
         [
-          { text: 'Davam et', style: 'cancel' },
-          { text: 'Çıx', style: 'destructive', onPress: onClose },
+          { text: t('continue_btn'), style: 'cancel' },
+          { text: t('close_btn'), style: 'destructive', onPress: onClose },
         ],
       );
     }
@@ -68,14 +81,14 @@ export function RewardedVideoPlayerModal({
         {/* Top Header with Ad Badge and Countdown */}
         <View style={styles.topBar}>
           <View style={styles.badgeAd}>
-            <Text style={styles.badgeAdText}>VIDEO REKLAM (30S)</Text>
+            <Text style={styles.badgeAdText}>{effectiveRewardBadge}</Text>
           </View>
 
           <View style={styles.timerBadge}>
             {countdown > 0 ? (
               <Text style={styles.timerText}>⏱️ {countdown}s</Text>
             ) : (
-              <Text style={styles.completedTag}>✓ TAMAMLANDI</Text>
+              <Text style={styles.completedTag}>✓ {t('finished_status')}</Text>
             )}
           </View>
         </View>
@@ -84,21 +97,19 @@ export function RewardedVideoPlayerModal({
         <View style={styles.adContent}>
           <View style={[styles.adVisualBox, { backgroundColor: '#1e1b4b', borderColor: '#4338ca' }]}>
             <Text style={styles.adVisualIcon}>🎬</Text>
-            <Text style={styles.adVisualTitle}>Mükafatlı Video Reklam</Text>
-            <Text style={styles.adVisualSub}>
-              +10 Əlavə Tərcümə Balansı Qazanmaq Üçün Videonu 30 Saniyə İzləyin
-            </Text>
+            <Text style={styles.adVisualTitle}>{t('rewarded_ad_title')}</Text>
+            <Text style={styles.adVisualSub}>{effectiveRewardTitle}</Text>
 
             {countdown > 0 ? (
               <View style={styles.lockBox}>
                 <Text style={styles.lockNotice}>
-                  🔒 Reklam {countdown} saniyə sonra tamamlanacaq...
+                  {t('rewarded_ad_lock_notice').replace('{countdown}', String(countdown))}
                 </Text>
               </View>
             ) : (
               <View style={styles.rewardBox}>
                 <Text style={styles.rewardSuccessText}>
-                  🎉 Təbriklər! 30 saniyəlik video izlənildi!
+                  {t('rewarded_ad_completed')}
                 </Text>
               </View>
             )}
@@ -116,12 +127,12 @@ export function RewardedVideoPlayerModal({
                 pressed && styles.pressed,
               ]}
             >
-              <Text style={styles.claimBtnText}>🎁 +10 Tərcümə Balansını Qəbul Et</Text>
+              <Text style={styles.claimBtnText}>{effectiveClaimText}</Text>
             </Pressable>
           ) : (
             <View style={[styles.disabledBtn, { backgroundColor: colors.surfaceBorder }]}>
               <Text style={[styles.disabledBtnText, { color: colors.textMuted }]}>
-                Videoya Baxılır ({countdown}s)...
+                {t('rewarded_ad_watching').replace('{countdown}', String(countdown))}
               </Text>
             </View>
           )}

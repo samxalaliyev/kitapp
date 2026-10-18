@@ -87,7 +87,11 @@ function SettingRow({
 
       <View style={styles.settingRight}>
         {value ? (
-          <Text style={[styles.settingValue, { color: colors.textMuted }]}>
+          <Text
+            style={[styles.settingValue, { color: colors.textMuted }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {value}
           </Text>
         ) : null}
@@ -135,7 +139,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { mode, setMode, colors } = useAppTheme();
-  const { targetLang, uiLang, setTargetLang, setUILang, t } = useLanguage();
+  const { targetLang, uiLang, setTargetLang, setUILang, setLanguage, t } = useLanguage();
   const {
     user,
     profile,
@@ -219,7 +223,7 @@ export default function SettingsScreen() {
       t('delete_account_confirm_title'),
       t('delete_account_confirm_msg'),
       [
-        { text: t('cancel_btn') || 'Ləğv et', style: 'cancel' },
+        { text: t('cancel_btn'), style: 'cancel' },
         {
           text: t('delete_account_confirm_yes'),
           style: 'destructive',
@@ -263,9 +267,9 @@ export default function SettingsScreen() {
     try {
       const res = await restorePurchases();
       if (res.hasActiveSubscription) {
-        Alert.alert('🌟 ' + (t('restore_purchases') || 'Bərpa edildi'), t('restore_success') || 'Alışlarınız uğurla bərpa edildi.');
+        Alert.alert('🌟 ' + t('restore_purchases'), t('restore_success'));
       } else {
-        Alert.alert(t('restore_purchases') || 'Alışların Bərpası', t('no_purchases_found') || 'Aktiv abunəlik tapılmadı.');
+        Alert.alert(t('restore_purchases'), t('no_purchases_found'));
       }
     } catch (err: any) {
       Alert.alert(t('error'), err?.message || t('clear_cache_error_msg'));
@@ -336,7 +340,7 @@ export default function SettingsScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: insets.top + Spacing.md, paddingBottom: insets.bottom + 85 },
+          { paddingTop: insets.top + Spacing.md, paddingBottom: insets.bottom + 120 },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -426,7 +430,7 @@ export default function SettingsScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Feather name="zap" size={13} color="#f59e0b" style={{ marginRight: 5 }} />
                     <Text style={[styles.usageTitle, { color: colors.textMuted }]}>
-                      Gündəlik Enerji Balansı
+                      {t('daily_energy_balance')}
                     </Text>
                   </View>
                   <Text style={[styles.usageCount, { color: '#f59e0b', fontWeight: FontWeight.bold }]}>
@@ -455,7 +459,7 @@ export default function SettingsScreen() {
                 >
                   <Feather name="play-circle" size={14} color="#f59e0b" />
                   <Text style={[styles.watchAdSubText, { color: '#f59e0b' }]}>
-                    Reklam izlə (+10 ⚡ Enerji)
+                    {t('watch_ad_energy_refill')}
                   </Text>
                 </Pressable>
               </View>
@@ -591,7 +595,7 @@ export default function SettingsScreen() {
             iconName="refresh-cw"
             iconColor="#818cf8"
             iconBgColor="rgba(129, 140, 248, 0.12)"
-            label={restoringPurchases ? (t('connecting') || 'Gözləyin...') : t('restore_purchases')}
+            label={restoringPurchases ? t('connecting') : t('restore_purchases')}
             onPress={handleRestorePurchases}
           />
           <SettingRow
@@ -686,7 +690,7 @@ export default function SettingsScreen() {
           title={t('ui_language')}
           options={languageOptions}
           selectedId={uiLang}
-          onSelect={(id: LanguageCode) => setUILang(id)}
+          onSelect={(id: LanguageCode) => setLanguage(id)}
           onClose={() => setActivePicker(null)}
         />
 
@@ -730,8 +734,8 @@ export default function SettingsScreen() {
             setRewardAdVisible(false);
             const next = await refillEnergy();
             Alert.alert(
-              '🎉 Təbriklər!',
-              `+10 ⚡ Enerji balansınıza əlavə olundu! Cari balansınız: ${next} ⚡`
+              t('rewarded_ad_completed'),
+              `+30 ⚡ ${t('energy_added_msg')} ${next} ⚡`
             );
           }}
           onUpgradePremium={() => {
@@ -891,6 +895,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    minWidth: 0,
+    marginRight: Spacing.sm,
   },
   iconBadge: {
     width: 32,
@@ -899,8 +905,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.md,
+    flexShrink: 0,
   },
   settingLabel: {
+    flex: 1,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
@@ -908,10 +916,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
+    flexShrink: 0,
   },
   settingValue: {
     fontSize: FontSize.xs,
     marginRight: Spacing.xs,
+    maxWidth: 130,
   },
   pressed: {
     opacity: 0.7,

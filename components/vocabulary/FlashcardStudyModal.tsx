@@ -18,6 +18,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
+import { AdBannerContainer } from '@/components/AdBannerContainer';
 import { generatePairDeck, recordGameCompleted, type GameWordPair } from '@/lib/vocabulary/game-service';
 import { incrementReviewCount, listSavedWords } from '@/lib/vocabulary/store';
 
@@ -431,6 +432,11 @@ export function FlashcardStudyModal({
             </View>
           </ScrollView>
         ) : null}
+
+        {/* Bottom Ad Banner in Flashcard Game */}
+        <View style={styles.bottomBanner}>
+          <AdBannerContainer />
+        </View>
       </View>
     </Modal>
   );
@@ -439,6 +445,12 @@ export function FlashcardStudyModal({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  bottomBanner: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: Spacing.xs,
   },
   centered: {
     flex: 1,

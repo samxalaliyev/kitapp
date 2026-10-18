@@ -29,6 +29,12 @@ const MESSAGES: Record<string, string> = {
   es: 'Preparando libro para leer...',
   de: 'Buch wird vorbereitet...',
   fr: 'Préparation du livre...',
+  it: 'Preparazione del libro...',
+  pt: 'Preparando livro para leitura...',
+  pl: 'Przygotowywanie książki...',
+  cs: 'Příprava knihy ke čtení...',
+  hu: 'Könyv előkészítése az olvasáshoz...',
+  uk: 'Підготовка книги до читання...',
 };
 
 export function BookPrepareModal({
@@ -84,7 +90,7 @@ export function BookPrepareModal({
               onPress={onCancel}
             >
               <Text style={[styles.cancelText, { color: colors.textMuted }]}>
-                {t('cancel_search') || (uiLang === 'az' ? 'Ləğv et' : uiLang === 'ru' ? 'Отмена' : uiLang === 'tr' ? 'İptal' : 'Cancel')}
+                {t('cancel_btn')}
               </Text>
             </Pressable>
           ) : null}

@@ -58,6 +58,36 @@ const LITERARY_QUOTES: Record<string, string[]> = {
     '“Un livre est un ami qui ne vous déçoit jamais.”',
     '“Lire, c’est voyager sans bouger.”',
   ],
+  it: [
+    '“Un lettore vive mille vite prima di morire.”',
+    '“I libri sono le api che portano il polline da una mente all’altra.”',
+    '“Leggere è viaggiare senza la fatica di fare i bagagli.”',
+  ],
+  pt: [
+    '“Um leitor vive mil vidas antes de morrer.”',
+    '“Ler é sonhar pela mão de outrem.”',
+    '“Os livros são asas para o pensamento.”',
+  ],
+  pl: [
+    '„Czytanie książek to najpiękniejsza zabawa, jaką wymyśliła ludzkość.”',
+    '„Kto czyta książki, żyje podwójnie.”',
+    '„Książka to przyjaciel, który nigdy nie zawodzi.”',
+  ],
+  cs: [
+    '„Čtenář prožije tisíc životů, než zemře.”',
+    '„Knihy jsou pro člověka tím, čím jsou pro ptáka křídla.”',
+    '„Čtení je pro mysl tím, čím je cvičení pro tělo.”',
+  ],
+  hu: [
+    '„Az olvasás az elme számára az, ami a testnek a testmozgás.”',
+    '„Egy jó könyv a legigazibb barát.”',
+    '„Aki olvas, ezer életet él meg, mielőtt meghal.”',
+  ],
+  uk: [
+    '«Книги — морська глибина: хто в них пірне, той диво-перли винесе.»',
+    '«Читач проживає тисячу життів до того, як помре.»',
+    '«Читання — це подорож у часі та просторі.»',
+  ],
 };
 
 export function BookLoader({ size = 80, message, style }: BookLoaderProps) {

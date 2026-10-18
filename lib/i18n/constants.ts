@@ -1,4 +1,17 @@
-export type LanguageCode = 'az' | 'en' | 'tr' | 'ru' | 'es' | 'de' | 'fr';
+export type LanguageCode =
+  | 'az'
+  | 'en'
+  | 'tr'
+  | 'ru'
+  | 'es'
+  | 'de'
+  | 'fr'
+  | 'it'
+  | 'pt'
+  | 'pl'
+  | 'cs'
+  | 'hu'
+  | 'uk';
 
 export interface LanguageOption {
   code: LanguageCode;
@@ -15,6 +28,12 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'es', label: 'Spanish', nativeLabel: 'Español', flag: 'ES' },
   { code: 'de', label: 'German', nativeLabel: 'Deutsch', flag: 'DE' },
   { code: 'fr', label: 'French', nativeLabel: 'Français', flag: 'FR' },
+  { code: 'it', label: 'Italian', nativeLabel: 'Italiano', flag: 'IT' },
+  { code: 'pt', label: 'Portuguese', nativeLabel: 'Português', flag: 'PT' },
+  { code: 'pl', label: 'Polish', nativeLabel: 'Polski', flag: 'PL' },
+  { code: 'cs', label: 'Czech', nativeLabel: 'Čeština', flag: 'CZ' },
+  { code: 'hu', label: 'Hungarian', nativeLabel: 'Magyar', flag: 'HU' },
+  { code: 'uk', label: 'Ukrainian', nativeLabel: 'Українська', flag: 'UA' },
 ];
 
 export const DEFAULT_LANGUAGE: LanguageCode = 'en';

@@ -300,7 +300,7 @@ export async function fetchLeaderboard(
         users = queryRes.data
           .map((d: any) => ({
             id: d.id,
-            name: (d.display_name && d.display_name.trim()) || (d.email ? d.email.split('@')[0] : 'Oxucu'),
+            name: (d.display_name && d.display_name.trim()) || (d.email ? d.email.split('@')[0] : 'Guest'),
             xp: Number(d.weekly_xp ?? d.xp ?? 0),
             isCurrentUser: d.id === userId,
             avatarBg: getAvatarColor(d.id || d.display_name || 'user'),
@@ -314,7 +314,7 @@ export async function fetchLeaderboard(
   } catch {}
 
   // Ensure current user is included in their league tier ranking
-  const currentDisplayName = userName || 'Oxucu';
+  const currentDisplayName = userName || 'Guest';
   const hasUser = users.some((u) => u.isCurrentUser || (userId && u.id === userId));
   if (!hasUser) {
     users.push({

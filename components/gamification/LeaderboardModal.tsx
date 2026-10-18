@@ -228,7 +228,7 @@ export function LeaderboardModal({
                     {getTierName(currentTier.id)}
                   </Text>
                   <Text style={[styles.emptySub, { color: colors.textMuted }]}>
-                    {displayName || 'Oxucu'}, bu liqanın ilk iştirakçısısan!
+                    {displayName ? `${displayName}, ` : ''}{displayName ? 'bu liqanın ilk iştirakçısısan!' : 'Bu liqanın ilk iştirakçısısan!'}
                   </Text>
                 </View>
               ) : (

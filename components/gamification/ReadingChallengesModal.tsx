@@ -235,10 +235,10 @@ export function ReadingChallengesModal({
               >
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.proUpsellTitle, { color: colors.text }]}>
-                    👑 Litera PRO ilə seriyanı qoru
+                    {t('league_pro_bonus')}
                   </Text>
                   <Text style={[styles.proUpsellSub, { color: colors.textMuted }]}>
-                    Limitsiz dondurma haqqı və 1.5x liqa xalı qazan
+                    {t('league_pro_cta')}
                   </Text>
                 </View>
                 <Feather name="chevron-right" size={20} color="#d4af7a" />

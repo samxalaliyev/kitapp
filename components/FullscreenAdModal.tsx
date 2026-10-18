@@ -22,9 +22,64 @@ const SKIP_LABELS: Record<string, string> = {
   es: 'Saltar',
   de: 'Überspringen',
   fr: 'Passer',
+  it: 'Salta',
+  pt: 'Pular',
+  pl: 'Pomiń',
+  cs: 'Přeskočit',
+  hu: 'Kihagyás',
+  uk: 'Пропустити',
 };
 
-const COUNTDOWN_INITIAL = 10; // 10-second skippable interstitial ad
+const SKIPPABLE_NOTICES: Record<string, (sec: number) => string> = {
+  az: (s) => `Reklam ${s} saniyə sonra keçilə bilər`,
+  en: (s) => `Ad can be skipped in ${s}s`,
+  ru: (s) => `Рекламу можно пропустить через ${s} сек`,
+  tr: (s) => `Reklam ${s} saniye sonra atlanabilir`,
+  es: (s) => `El anuncio se puede saltar en ${s}s`,
+  de: (s) => `Werbung kann in ${s}s übersprungen werden`,
+  fr: (s) => `L'annonce peut être ignorée dans ${s}s`,
+  it: (s) => `L'annuncio può essere saltato in ${s}s`,
+  pt: (s) => `O anúncio pode ser pulado em ${s}s`,
+  pl: (s) => `Reklamę można pominąć za ${s}s`,
+  cs: (s) => `Reklamu lze přeskočit za ${s}s`,
+  hu: (s) => `A hirdetés átugorható ${s} mp múlva`,
+  uk: (s) => `Рекламу можна пропустити через ${s} сек`,
+};
+
+const CONTINUE_READING_HINTS: Record<string, string> = {
+  az: 'Oxumağa davam edə bilərsiniz',
+  en: 'You can now continue reading',
+  ru: 'Можете продолжить чтение',
+  tr: 'Okumaya devam edebilirsiniz',
+  es: 'Ahora puedes continuar leyendo',
+  de: 'Sie können jetzt weiterlesen',
+  fr: 'Vous pouvez maintenant continuer à lire',
+  it: 'Ora puoi continuare a leggere',
+  pt: 'Agora você pode continuar lendo',
+  pl: 'Możesz teraz kontynuować czytanie',
+  cs: 'Nyní můžete pokračovat ve čtení',
+  hu: 'Most már folytathatja az olvasást',
+  uk: 'Тепер ви можете продовжити читання',
+};
+
+const PLEASE_WAIT_NOTICES: Record<string, (sec: number) => string> = {
+  az: (s) => `Zəhmət olmasa ${s} saniyə gözləyin...`,
+  en: (s) => `Please wait ${s}s...`,
+  ru: (s) => `Пожалуйста, подождите ${s} сек...`,
+  tr: (s) => `Lütfen ${s} saniye bekleyin...`,
+  es: (s) => `Por favor, espera ${s}s...`,
+  de: (s) => `Bitte warten Sie ${s}s...`,
+  fr: (s) => `Veuillez patienter ${s}s...`,
+  it: (s) => `Attendere ${s}s...`,
+  pt: (s) => `Por favor, aguarde ${s}s...`,
+  pl: (s) => `Proszę czekać ${s}s...`,
+  cs: (s) => `Počkejte prosím ${s}s...`,
+  hu: (s) => `Kérjük, várjon ${s} mp-et...`,
+  uk: (s) => `Будь ласка, зачекайте ${s} сек...`,
+};
+
+const COUNTDOWN_INITIAL = 10; // Max 10-second ad
+const SKIPPABLE_AFTER = 5; // User can close/skip after 5 seconds
 
 interface SponsorAdVariant {
   id: string;
@@ -46,18 +101,36 @@ const AD_VARIANTS: SponsorAdVariant[] = [
       en: 'Read Ad-Free with Litera Premium',
       ru: 'Читайте без рекламы с Litera Premium',
       tr: 'Litera Premium ile Reklamsız Oku',
+      it: 'Leggi senza pubblicità con Litera Premium',
+      pt: 'Leia sem anúncios com Litera Premium',
+      pl: 'Czytaj bez reklam z Litera Premium',
+      cs: 'Čtěte bez reklam s Litera Premium',
+      hu: 'Olvass hirdetésmentesen a Litera Premiummal',
+      uk: 'Читайте без реклами з Litera Premium',
     },
     sub: {
       az: 'Bütün reklamları dərhal silin, limitsiz tərcümə və audio səsləndirmədən zövq alın.',
       en: 'Instantly remove all ads, unlock unlimited translations and professional audio.',
       ru: 'Мгновенно отключите всю рекламу, получите безлимитный перевод и аудио.',
       tr: 'Tüm reklamları kaldırın, sınırsız çeviri ve sesli kitap deneyiminin tadını çıkarın.',
+      it: 'Rimuovi tutti gli annunci, sblocca traduzioni illimitate e audio professionale.',
+      pt: 'Remova todos os anúncios, desbloqueie traduções ilimitadas e áudio profissional.',
+      pl: 'Usuń wszystkie reklamy, odblokuj nielimitowane tłumaczenia i profesjonalne audio.',
+      cs: 'Odstraňte všechny reklamy, odemkněte neomezené překlady a profesionální zvuk.',
+      hu: 'Távolítsd el az összes hirdetést, korlátlan fordítással és hangoskönyvvel.',
+      uk: 'Миттєво вимкніть рекламу, отримайте необмежений переклад та аудіо.',
     },
     ctaText: {
       az: '👑 Reklamları Ləğv Et (Premium)',
       en: '👑 Remove Ads (Go Premium)',
       ru: '👑 Убрать рекламу (Премиум)',
       tr: '👑 Reklamları Kaldır (Premium)',
+      it: '👑 Rimuovi Annunci (Premium)',
+      pt: '👑 Remover Anúncios (Premium)',
+      pl: '👑 Usuń Reklamy (Premium)',
+      cs: '👑 Odstranit Reklamy (Premium)',
+      hu: '👑 Hirdetések eltávolítása (Premium)',
+      uk: '👑 Прибрати рекламу (Преміум)',
     },
     isPaywallPromo: true,
   },
@@ -70,18 +143,36 @@ const AD_VARIANTS: SponsorAdVariant[] = [
       en: 'Listen and Learn Languages Faster',
       ru: 'Слушайте и учите языки быстрее',
       tr: 'Dinleyerek Dil Öğrenmek Artık Çok Kolay',
+      it: 'Ascolta e impara le lingue più velocemente',
+      pt: 'Ouça e aprenda idiomas mais rápido',
+      pl: 'Słuchaj i ucz się języków szybciej',
+      cs: 'Poslouchejte a učte se jazyky rychleji',
+      hu: 'Hallgass és tanulj nyelveket gyorsabban',
+      uk: 'Слухайте та вивчайте мови швидше',
     },
     sub: {
       az: 'Kitabları təbii tələffüzlə dinləyin, dinləmə və anlama bacarığınızı 3 qat sürətləndirin.',
       en: 'Listen to native book narrations to accelerate your listening comprehension 3x.',
       ru: 'Слушайте книги с правильным произношением и улучшайте понимание на слух.',
       tr: 'Kitapları doğal telaffuzla dinleyin, anlama becerinizi 3 kat hızlandırın.',
+      it: 'Ascolta le narrazioni con voce nativa per triplicare la comprensione orale.',
+      pt: 'Ouça narrações nativas de livros para acelerar sua compreensão 3x.',
+      pl: 'Słuchaj profesjonalnych lektorów, aby 3x szybciej opanować rozumienie ze słuchu.',
+      cs: 'Poslouchejte rodilé mluvčí a zrychlete porozumění poslechu až 3x.',
+      hu: 'Hallgass anyanyelvi felolvasásokat a szövegértés 3-szoros felgyorsításához.',
+      uk: 'Слухайте озвучення рідною мовою, щоб покращити розуміння на слух у 3 рази.',
     },
     ctaText: {
       az: '🌟 Audio İmkanları Kəşf Et',
       en: '🌟 Explore Audio Features',
       ru: '🌟 Открыть аудио-функции',
       tr: '🌟 Sesli Özellikleri Keşfet',
+      it: '🌟 Esplora le Funzioni Audio',
+      pt: '🌟 Explorar Recursos de Áudio',
+      pl: '🌟 Odkryj Funkcje Audio',
+      cs: '🌟 Objevte Zvukové Funkce',
+      hu: '🌟 Fedezd fel a hangfunkciókat',
+      uk: '🌟 Дослідити аудіо-можливості',
     },
     isPaywallPromo: true,
   },
@@ -94,18 +185,36 @@ const AD_VARIANTS: SponsorAdVariant[] = [
       en: 'Master 10 New Words Every Day',
       ru: 'Изучайте 10 новых слов каждый день',
       tr: 'Her Gün 10 Yeni Kelime Öğrenin',
+      it: 'Impara 10 nuove parole ogni giorno',
+      pt: 'Domine 10 palavras novas todos os dias',
+      pl: 'Opanuj 10 nowych słów każdego dnia',
+      cs: 'Naučte se 10 nových slov každý den',
+      hu: 'Sajátíts el napi 10 új szót',
+      uk: 'Вивчайте 10 нових слів щодня',
     },
     sub: {
       az: 'Oxuduğunuz hər mətndən lüğət yaradın, fərdi kartlarla yaddaşınızı möhkəmləndirin.',
       en: 'Build custom flashcard decks straight from your reading with one tap.',
       ru: 'Создавайте карточки прямо из текста и закрепляйте словарный запас.',
       tr: 'Okuduğunuz metinlerden tek tıkla kelime kartları oluşturun ve pekiştirin.',
+      it: 'Crea mazzi di flashcard direttamente dalle tue letture con un tocco.',
+      pt: 'Crie baralhos de flashcards direto das suas leituras com um toque.',
+      pl: 'Twórz fiszki bezpośrednio z czytanego tekstu za pomocą jednego dotknięcia.',
+      cs: 'Vytvářejte kartičky přímo ze čtení jediným klepnutím.',
+      hu: 'Készíts szókártyákat közvetlenül az olvasmányaidból egyetlen érintéssel.',
+      uk: 'Створюйте картки слів прямо з прочитаного тексту одним дотиком.',
     },
     ctaText: {
       az: '🚀 Premium İmkanları Yoxla',
       en: '🚀 Explore Pro Features',
       ru: '🚀 Попробовать Премиум',
       tr: '🚀 Premium Özellikleri Dene',
+      it: '🚀 Scopri i Vantaggi PRO',
+      pt: '🚀 Explorar Recursos PRO',
+      pl: '🚀 Wypróbuj Funkcje PRO',
+      cs: '🚀 Vyzkoušet Funkce PRO',
+      hu: '🚀 Próbáld ki a PRO funkciókat',
+      uk: '🚀 Спробувати Преміум',
     },
     isPaywallPromo: true,
   },
@@ -161,8 +270,10 @@ export function FullscreenAdModal({
     return () => clearInterval(timer);
   }, [visible]);
 
+  const canSkip = countdown <= (COUNTDOWN_INITIAL - SKIPPABLE_AFTER);
+
   const handleRequestClose = () => {
-    if (countdown <= 0) {
+    if (canSkip) {
       onClose();
     }
   };
@@ -198,14 +309,14 @@ export function FullscreenAdModal({
                 backgroundColor: colors.isDark
                   ? 'rgba(255, 255, 255, 0.08)'
                   : 'rgba(0, 0, 0, 0.06)',
-                borderColor: countdown === 0 ? '#4ade80' : 'rgba(212, 175, 122, 0.3)',
+                borderColor: canSkip ? '#4ade80' : 'rgba(212, 175, 122, 0.3)',
               },
             ]}
           >
-            {countdown > 0 ? (
+            {!canSkip ? (
               <View style={styles.timerRow}>
                 <Feather name="clock" size={13} color="#d4af7a" />
-                <Text style={styles.timerText}>{countdown}s</Text>
+                <Text style={styles.timerText}>{countdown - (COUNTDOWN_INITIAL - SKIPPABLE_AFTER)}s</Text>
               </View>
             ) : (
               <Pressable onPress={onClose} style={styles.skipBtn} hitSlop={12}>
@@ -218,14 +329,14 @@ export function FullscreenAdModal({
           </View>
         </View>
 
-        {/* 5-second Progress Bar */}
+        {/* 10-second Progress Bar */}
         <View style={styles.progressBarBackground}>
           <View
             style={[
               styles.progressBarFill,
               {
                 width: `${progressPercent}%`,
-                backgroundColor: countdown === 0 ? '#4ade80' : '#d4af7a',
+                backgroundColor: canSkip ? '#4ade80' : '#d4af7a',
               },
             ]}
           />
@@ -252,22 +363,14 @@ export function FullscreenAdModal({
             {countdown > 0 ? (
               <View style={styles.countdownBadgeBox}>
                 <Text style={styles.lockNotice}>
-                  ⏱ {uiLang === 'az'
-                    ? `Reklam ${countdown} saniyə sonra keçilə bilər`
-                    : uiLang === 'ru'
-                    ? `Рекламу можно пропустить через ${countdown} сек`
-                    : `Ad can be skipped in ${countdown}s`}
+                  ⏱ {(SKIPPABLE_NOTICES[uiLang] || SKIPPABLE_NOTICES.en)(countdown)}
                 </Text>
               </View>
             ) : (
               <View style={styles.unlockedBadgeBox}>
                 <Feather name="check-circle" size={14} color="#4ade80" style={{ marginRight: 6 }} />
                 <Text style={styles.unlockedNotice}>
-                  {uiLang === 'az'
-                    ? 'Oxumağa davam edə bilərsiniz'
-                    : uiLang === 'ru'
-                    ? 'Можете продолжить чтение'
-                    : 'You can now continue reading'}
+                  {CONTINUE_READING_HINTS[uiLang] || CONTINUE_READING_HINTS.en}
                 </Text>
               </View>
             )}
@@ -286,16 +389,12 @@ export function FullscreenAdModal({
           {countdown === 0 ? (
             <Pressable onPress={onClose} style={styles.continueLink} hitSlop={10}>
               <Text style={[styles.continueLinkText, { color: colors.text }]}>
-                {t('continue_reading') || 'Oxumağa Davam Et'} →
+                {t('continue_reading')} →
               </Text>
             </Pressable>
           ) : (
             <Text style={[styles.continueDisabledText, { color: colors.textMuted }]}>
-              {uiLang === 'az'
-                ? `Zəhmət olmasa ${countdown} saniyə gözləyin...`
-                : uiLang === 'ru'
-                ? `Пожалуйста, подождите ${countdown} сек...`
-                : `Please wait ${countdown}s...`}
+              {(PLEASE_WAIT_NOTICES[uiLang] || PLEASE_WAIT_NOTICES.en)(countdown)}
             </Text>
           )}
         </View>
