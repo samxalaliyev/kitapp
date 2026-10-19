@@ -15,7 +15,7 @@ interface AdBannerContainerProps {
 
 const AD_UNIT_ID = __DEV__
   ? TestIds.BANNER
-  : (process.env.EXPO_PUBLIC_ADMOB_BANNER_ID || TestIds.BANNER);
+  : (process.env.EXPO_PUBLIC_ADMOB_BANNER_ID || 'ca-app-pub-8755646993189983/7292471465');
 
 export function AdBannerContainer({ onUpgradePress }: AdBannerContainerProps) {
   const { limits, isPremium } = useAuth();

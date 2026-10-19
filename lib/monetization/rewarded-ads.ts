@@ -26,7 +26,7 @@ export interface WatchAdOptions {
 // 1. Long High-Paying Rewarded Video Ad (20-30s) for Energy (+10 ⚡) and Hearts (+3 ❤️)
 const REWARDED_ID = __DEV__
   ? TestIds.REWARDED
-  : (process.env.EXPO_PUBLIC_ADMOB_REWARDED_ID || TestIds.REWARDED);
+  : (process.env.EXPO_PUBLIC_ADMOB_REWARDED_ID || 'ca-app-pub-8755646993189983/6190967776');
 
 let rewardedInstance: RewardedAd | null = null;
 let isRewardedLoaded = false;
@@ -58,8 +58,7 @@ function loadRewarded() {
 const REWARDED_INTERSTITIAL_ID = __DEV__
   ? TestIds.REWARDED_INTERSTITIAL
   : (process.env.EXPO_PUBLIC_ADMOB_REWARDED_INTERSTITIAL_ID ||
-     process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID ||
-     TestIds.REWARDED_INTERSTITIAL);
+     'ca-app-pub-8755646993189983/6793603003');
 
 let rewardedInterstitialInstance: RewardedInterstitialAd | null = null;
 let isRewardedInterstitialLoaded = false;

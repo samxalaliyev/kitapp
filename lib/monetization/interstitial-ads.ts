@@ -11,7 +11,7 @@ const MIN_COOLDOWN_MS = 60 * 1000; // Minimum 60s between full-screen ads
 
 const INTERSTITIAL_ID = __DEV__
   ? TestIds.INTERSTITIAL
-  : (process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID || TestIds.INTERSTITIAL);
+  : (process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID || 'ca-app-pub-8755646993189983/2638910582');
 
 let interstitialInstance: InterstitialAd | null = null;
 let isAdLoaded = false;

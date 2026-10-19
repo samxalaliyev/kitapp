@@ -60,13 +60,13 @@ module.exports = function withAndroidQueries(config) {
         (m) => m?.$?.['android:name'] === 'com.google.android.gms.ads.APPLICATION_ID'
       );
       if (existingAdMob) {
-        existingAdMob.$['android:value'] = 'ca-app-pub-3940256099942544~3347511713';
+        existingAdMob.$['android:value'] = 'ca-app-pub-8755646993189983~6362533179';
         existingAdMob.$['tools:replace'] = 'android:value';
       } else {
         manifest.application[0]['meta-data'].push({
           $: {
             'android:name': 'com.google.android.gms.ads.APPLICATION_ID',
-            'android:value': 'ca-app-pub-3940256099942544~3347511713',
+            'android:value': 'ca-app-pub-8755646993189983~6362533179',
             'tools:replace': 'android:value',
           },
         });
