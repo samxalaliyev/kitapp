@@ -236,10 +236,10 @@ export default function SettingsScreen() {
   }, [deleteAccount, t]);
 
   const handleRateApp = useCallback(async () => {
-    const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.litera.app';
-    const canOpen = await Linking.canOpenURL('market://details?id=com.litera.app');
+    const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.literabooks.app';
+    const canOpen = await Linking.canOpenURL('market://details?id=com.literabooks.app');
     if (canOpen) {
-      Linking.openURL('market://details?id=com.litera.app');
+      Linking.openURL('market://details?id=com.literabooks.app');
     } else {
       Linking.openURL(playStoreUrl);
     }

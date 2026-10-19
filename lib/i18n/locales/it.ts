@@ -264,7 +264,7 @@ export const itTranslations: Record<TranslationKey, string> = {
   delete_account_confirm_yes: 'Elimina Definitivamente',
   rate_app: 'Valuta l’App su Google Play',
   share_app: 'Condividi Litera con gli Amici',
-  share_app_msg: 'Sto imparando l’inglese leggendo i grandi classici mondiali con Litera! Scarica l’app: https://play.google.com/store/apps/details?id=com.litera.app',
+  share_app_msg: 'Sto imparando l’inglese leggendo i grandi classici mondiali con Litera! Scarica l’app: https://play.google.com/store/apps/details?id=com.literabooks.app',
   privacy_policy: 'Informativa sulla Privacy',
   terms_of_service: 'Termini e Condizioni di Utilizzo',
   restore_purchases: 'Ripristina Acquisti',

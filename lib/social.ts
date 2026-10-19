@@ -9,7 +9,7 @@ export const SOCIAL_CONFIG = {
   // App Scheme & Universal Link URLs
   APP_SCHEME: 'litera',
   WEB_BASE_URL: 'https://litera.app',
-  PLAY_STORE_URL: 'https://play.google.com/store/apps/details?id=com.litera.app',
+  PLAY_STORE_URL: 'https://play.google.com/store/apps/details?id=com.literabooks.app',
   APP_STORE_URL: process.env.EXPO_PUBLIC_APP_STORE_URL || '',
 
   getBookUrl(bookId: string): string {

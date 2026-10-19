@@ -2,7 +2,7 @@
 setlocal
 echo ======================================================================
 echo           LITERA - GOOGLE PLAY PRODUCTION BUNDLE (.AAB) BUILDER
-echo               Package: com.litera.app | Target: Google Play
+echo               Package: com.literabooks.app | Target: Google Play
 echo ======================================================================
 echo.
 
@@ -33,7 +33,7 @@ if %ERRORLEVEL% EQU 0 (
     echo android\app\build\outputs\bundle\release\app-release.aab
     echo.
     echo Keystore: android\app\release.keystore (litera-release-key)
-    echo Package:  com.litera.app
+    echo Package:  com.literabooks.app
     echo.
     echo You can now upload this .aab directly to Google Play Console:
     echo (Closed Testing -> Create new release -> Upload .aab)

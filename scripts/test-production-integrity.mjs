@@ -29,7 +29,7 @@ function assert(condition, message) {
 console.log('\n--- 1. Testing Android & EAS Release Configurations ---');
 const appJsonPath = path.join(rootDir, 'app.json');
 const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
-assert(appJson.expo.android?.package === 'com.litera.app', 'app.json defines android package com.litera.app');
+assert(appJson.expo.android?.package === 'com.literabooks.app', 'app.json defines android package com.literabooks.app');
 assert(typeof appJson.expo.android?.versionCode === 'number' && appJson.expo.android.versionCode >= 1, 'app.json defines valid android versionCode >= 1');
 assert(Array.isArray(appJson.expo.android?.permissions), 'app.json explicitly declares android permissions');
 assert(appJson.expo.android?.softwareKeyboardLayoutMode === 'resize', 'app.json sets softwareKeyboardLayoutMode to resize');
