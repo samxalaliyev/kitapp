@@ -26,7 +26,10 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.litera.app",
       "versionCode": 1,
-      "permissions": ["INTERNET", "ACCESS_NETWORK_STATE"],
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ],
       "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
@@ -51,6 +54,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b764f856-5853-4ffc-8c45-c5f92f47533a"
+      }
     }
   },
   "react-native-google-mobile-ads": {
