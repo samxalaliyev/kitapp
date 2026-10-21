@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -146,6 +147,7 @@ export default function LoginScreen() {
       if (res.error) {
         if (res.error !== 'cancelled') {
           setErrorMsg(res.error);
+          Alert.alert(t('error') || 'Xəta', res.error);
         }
       } else {
         router.back();

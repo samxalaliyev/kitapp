@@ -11,11 +11,31 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://afgnwhnuebxoqfnhdsew.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_q1OwK91SbFqSeTthHe_bUg_1-AkAF6a",
+        "EXPO_PUBLIC_CDN_BASE_URL": "https://pub-09392b74223c430486bb0bde1d6cddbb.r2.dev",
+        "EXPO_PUBLIC_ADMOB_APP_ID": "ca-app-pub-8755646993189983~6362533179",
+        "EXPO_PUBLIC_ADMOB_BANNER_ID": "ca-app-pub-8755646993189983/7292471465",
+        "EXPO_PUBLIC_ADMOB_REWARDED_ID": "ca-app-pub-8755646993189983/6190967776",
+        "EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID": "ca-app-pub-8755646993189983/2638910582",
+        "EXPO_PUBLIC_ADMOB_REWARDED_INTERSTITIAL_ID": "ca-app-pub-8755646993189983/6793603003"
       }
     },
     "production": {
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://afgnwhnuebxoqfnhdsew.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_q1OwK91SbFqSeTthHe_bUg_1-AkAF6a",
+        "EXPO_PUBLIC_CDN_BASE_URL": "https://pub-09392b74223c430486bb0bde1d6cddbb.r2.dev",
+        "EXPO_PUBLIC_ADMOB_APP_ID": "ca-app-pub-8755646993189983~6362533179",
+        "EXPO_PUBLIC_ADMOB_BANNER_ID": "ca-app-pub-8755646993189983/7292471465",
+        "EXPO_PUBLIC_ADMOB_REWARDED_ID": "ca-app-pub-8755646993189983/6190967776",
+        "EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID": "ca-app-pub-8755646993189983/2638910582",
+        "EXPO_PUBLIC_ADMOB_REWARDED_INTERSTITIAL_ID": "ca-app-pub-8755646993189983/6793603003"
       }
     }
   },

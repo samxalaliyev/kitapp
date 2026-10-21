@@ -603,18 +603,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithOAuth = useCallback(async (provider: 'google' | 'apple') => {
     if (!isSupabaseConfigured) {
-      const demoProf: UserProfile = {
-        id: `demo-${provider}-${Date.now()}`,
-        email: `${provider}.user@litera.app`,
-        displayName: provider === 'google' ? 'Google User' : 'Apple User',
-        role: 'free',
-        subscriptionPlan: 'free',
-        subscriptionStatus: 'active',
-        createdAt: new Date().toISOString(),
-      };
-      setProfile(demoProf);
-      await AsyncStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(demoProf));
-      return {};
+      return { error: 'Supabase serveri konfiqurasiya edilməyib.' };
     }
 
     try {
@@ -627,8 +616,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
-      if (error || !data.url) {
-        return { error: error?.message || 'OAuth giriş linki alına bilmədi.' };
+      if (error || !data?.url) {
+        const rawErr = error?.message || '';
+        if (
+          rawErr.toLowerCase().includes('not enabled') ||
+          rawErr.toLowerCase().includes('validation_failed') ||
+          rawErr.toLowerCase().includes('unsupported provider')
+        ) {
+          return {
+            error: `${provider === 'google' ? 'Google' : 'Apple'} ilə giriş Supabase panelində aktivləşdirilməyib. Zəhmət olmasa e-poçt və şifrə ilə qeydiyyatdan keçin və ya daxil olun.`,
+          };
+        }
+        return { error: rawErr || 'OAuth giriş linki alına bilmədi.' };
       }
 
       const res = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
