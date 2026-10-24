@@ -14,6 +14,11 @@ export {
   ErrorBoundary,
 } from 'expo-router';
 
+import * as Notifications from 'expo-notifications';
+import {
+  setupNotificationChannels,
+  scheduleAllSmartReminders,
+} from '@/lib/notifications/notification-service';
 import { isNativeAdMobAvailable } from '@/lib/monetization/ad-guard';
 import mobileAds from 'react-native-google-mobile-ads';
 
@@ -69,13 +74,24 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const { colors } = useAppTheme();
-  const { ready } = useLanguage();
+  const { ready, uiLang } = useLanguage();
 
   useEffect(() => {
     if (ready) {
       SplashScreen.hideAsync().catch(() => {});
+      setupNotificationChannels().catch(() => {});
+      scheduleAllSmartReminders(uiLang).catch(() => {});
     }
-  }, [ready]);
+  }, [ready, uiLang]);
+
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener(() => {
+      // User tapped on notification - app is in foreground / active
+    });
+    return () => {
+      sub.remove();
+    };
+  }, []);
 
   if (!ready) {
     return null;

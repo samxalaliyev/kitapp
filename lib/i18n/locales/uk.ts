@@ -515,4 +515,13 @@ export const ukTranslations: Record<TranslationKey, string> = {
   subscription_success_title: '🌟 Вітаємо!',
   subscription_success_msg: 'Вашу преміум-підписку успішно активовано.',
   subscription_failed_msg: 'Не вдалося завершити оформлення підписки. Спробуйте пізніше.',
+  section_notifications: 'Сповіщення та Нагадування',
+  daily_reading_reminder: 'Щоденне нагадування про читання',
+  daily_reading_reminder_desc: 'Зберігайте серію та формуйте щоденну звичку читати',
+  notification_time_label: 'Час нагадування',
+  test_notification_btn: 'Надіслати тестове сповіщення',
+  test_notification_sent_title: 'Тестове сповіщення надіслано',
+  test_notification_sent_desc: 'Сповіщення з’явиться на екрані через 2 секунди.',
+  notification_permission_denied: 'Дозвіл на сповіщення не надано. Увімкніть його в налаштуваннях пристрою.',
 };
+

@@ -515,4 +515,13 @@ export const csTranslations: Record<TranslationKey, string> = {
   subscription_success_title: '🌟 Gratulujeme!',
   subscription_success_msg: 'Vaše prémiové předplatné bylo úspěšně aktivováno.',
   subscription_failed_msg: 'Aktivace předplatného se nezdařila. Zkuste to prosím znovu.',
+  section_notifications: 'Oznámení a Připomínky',
+  daily_reading_reminder: 'Denní Připomínka Čtení',
+  daily_reading_reminder_desc: 'Chraňte svou sérii a budujte si denní návyk čtení',
+  notification_time_label: 'Čas Připomínky',
+  test_notification_btn: 'Odeslat Zkušební Oznámení',
+  test_notification_sent_title: 'Zkušební Oznámení Odesláno',
+  test_notification_sent_desc: 'Oznámení se zobrazí na obrazovce během 2 sekund.',
+  notification_permission_denied: 'Oprávnění k oznámením nebylo uděleno. Povolte jej v nastavení zařízení.',
 };
+

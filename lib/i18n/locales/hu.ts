@@ -515,4 +515,13 @@ export const huTranslations: Record<TranslationKey, string> = {
   subscription_success_title: '🌟 Gratulálunk!',
   subscription_success_msg: 'A prémium előfizetésed sikeresen aktiválódott.',
   subscription_failed_msg: 'Nem sikerült befejezni az előfizetést. Kérjük, próbáld újra később.',
+  section_notifications: 'Értesítések és Emlékeztetők',
+  daily_reading_reminder: 'Napi Olvasási Emlékeztető',
+  daily_reading_reminder_desc: 'Őrizd meg a sorozatodat és alakíts ki napi olvasási szokást',
+  notification_time_label: 'Emlékeztető Időpontja',
+  test_notification_btn: 'Teszt Értesítés Küldése',
+  test_notification_sent_title: 'Teszt Értesítés Elküldve',
+  test_notification_sent_desc: 'Az értesítés 2 másodpercen belül megjelenik a képernyőn.',
+  notification_permission_denied: 'Az értesítési engedély nincs megadva. Kérjük, engedélyezze a készülék beállításaiban.',
 };
+

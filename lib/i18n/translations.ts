@@ -525,7 +525,15 @@ export type TranslationKey =
   | 'auth_rate_limit'
   | 'subscription_success_title'
   | 'subscription_success_msg'
-  | 'subscription_failed_msg';
+  | 'subscription_failed_msg'
+  | 'section_notifications'
+  | 'daily_reading_reminder'
+  | 'daily_reading_reminder_desc'
+  | 'notification_time_label'
+  | 'test_notification_btn'
+  | 'test_notification_sent_title'
+  | 'test_notification_sent_desc'
+  | 'notification_permission_denied';
 
 const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>> = {
   az: {
@@ -1048,6 +1056,14 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     subscription_success_title: '🌟 Təbriklər!',
     subscription_success_msg: 'Premium abunəliyiniz uğurla aktivləşdirildi.',
     subscription_failed_msg: 'Abunəlik tamamlana bilmədi. Zəhmət olmasa yenidən cəhd edin.',
+    section_notifications: 'Bildirişlər və Xatırlatmalar',
+    daily_reading_reminder: 'Gündəlik Oxu Xatırlatması',
+    daily_reading_reminder_desc: 'Hər gün təyin olunmuş vaxtda vərdişinizi və seriyanızı qoruyun',
+    notification_time_label: 'Xatırlatma Vaxtı',
+    test_notification_btn: 'Sınaq Bildirişi Göndər',
+    test_notification_sent_title: 'Sınaq Bildirişi Göndərildi',
+    test_notification_sent_desc: 'Bildiriş 2 saniyə ərzində ekranınızda görünəcək.',
+    notification_permission_denied: 'Bildiriş icazəsi verilməyib. Zəhmət olmasa cihaz ayarlarından bildirişləri aktiv edin.',
   },
 
   en: {
@@ -1570,6 +1586,14 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     subscription_success_title: '🌟 Congratulations!',
     subscription_success_msg: 'Your premium subscription has been activated successfully.',
     subscription_failed_msg: 'Subscription could not be completed. Please try again.',
+    section_notifications: 'Notifications & Reminders',
+    daily_reading_reminder: 'Daily Reading Reminder',
+    daily_reading_reminder_desc: 'Protect your streak and build a daily reading habit',
+    notification_time_label: 'Reminder Time',
+    test_notification_btn: 'Send Test Notification',
+    test_notification_sent_title: 'Test Notification Scheduled',
+    test_notification_sent_desc: 'A notification will appear on your screen in 2 seconds.',
+    notification_permission_denied: 'Notification permission not granted. Please enable it in device settings.',
   },
 
   ru: {
@@ -2091,6 +2115,14 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     subscription_success_title: '🌟 Поздравляем!',
     subscription_success_msg: 'Ваша премиум-подписка успешно активирована.',
     subscription_failed_msg: 'Не удалось завершить подписку. Пожалуйста, попробуйте снова.',
+    section_notifications: 'Уведомления и Напоминания',
+    daily_reading_reminder: 'Ежедневное напоминание о чтении',
+    daily_reading_reminder_desc: 'Сохраняйте страйк и развивайте привычку читать каждый день',
+    notification_time_label: 'Время напоминания',
+    test_notification_btn: 'Отправить тестовое уведомление',
+    test_notification_sent_title: 'Тестовое уведомление отправлено',
+    test_notification_sent_desc: 'Уведомление появится на экране через 2 секунды.',
+    notification_permission_denied: 'Разрешение на уведомления не получено. Включите в настройках устройства.',
   },
 
   tr: {
@@ -2612,6 +2644,14 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     subscription_success_title: '🌟 Tebrikler!',
     subscription_success_msg: 'Premium aboneliğiniz başarıyla etkinleştirildi.',
     subscription_failed_msg: 'Abonelik tamamlanamadı. Lütfen tekrar deneyin.',
+    section_notifications: 'Bildirimler ve Hatırlatıcılar',
+    daily_reading_reminder: 'Günlük Okuma Hatırlatıcısı',
+    daily_reading_reminder_desc: 'Okuma serinizi koruyun ve alışkanlık kazanın',
+    notification_time_label: 'Hatırlatıcı Saati',
+    test_notification_btn: 'Test Bildirimi Gönder',
+    test_notification_sent_title: 'Test Bildirimi Gönderildi',
+    test_notification_sent_desc: 'Bildirim 2 saniye içinde ekranınızda görünecektir.',
+    notification_permission_denied: 'Bildirim izni verilmedi. Lütfen cihaz ayarlarından etkinleştirin.',
   },
 
   es: {

@@ -515,4 +515,13 @@ export const plTranslations: Record<TranslationKey, string> = {
   subscription_success_title: '🌟 Gratulacje!',
   subscription_success_msg: 'Twoja subskrypcja Premium została pomyślnie aktywowana.',
   subscription_failed_msg: 'Nie udało się przetworzyć subskrypcji. Spróbuj ponownie później.',
+  section_notifications: 'Powiadomienia i Przypomnienia',
+  daily_reading_reminder: 'Codzienne Przypomnienie o Czytaniu',
+  daily_reading_reminder_desc: 'Utrzymuj serię czytania i buduj codzienny nawyk',
+  notification_time_label: 'Godzina Przypomnienia',
+  test_notification_btn: 'Wyślij Powiadomienie Testowe',
+  test_notification_sent_title: 'Wysłano Powiadomienie Testowe',
+  test_notification_sent_desc: 'Powiadomienie pojawi się na ekranie w ciągu 2 sekund.',
+  notification_permission_denied: 'Brak uprawnień do powiadomień. Włącz je w ustawieniach urządzenia.',
 };
+

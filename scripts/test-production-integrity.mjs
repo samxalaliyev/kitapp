@@ -89,6 +89,22 @@ const rewardedVideoPath = path.join(rootDir, 'components/RewardedVideoPlayerModa
 const rewardedVideoContent = fs.readFileSync(rewardedVideoPath, 'utf8');
 assert(!rewardedVideoContent.includes('onRequestClose={() => {}}'), 'RewardedVideoPlayerModal does not trap back button with empty handler');
 
+console.log('\n--- 6. Testing Notifications Configuration & Service Integrity ---');
+assert(appJson.expo.android?.permissions?.includes('android.permission.POST_NOTIFICATIONS') || appJson.expo.android?.permissions?.includes('POST_NOTIFICATIONS'), 'app.json grants POST_NOTIFICATIONS permission');
+assert(appJson.expo.android?.permissions?.includes('android.permission.RECEIVE_BOOT_COMPLETED') || appJson.expo.android?.permissions?.includes('RECEIVE_BOOT_COMPLETED'), 'app.json grants RECEIVE_BOOT_COMPLETED permission');
+const hasExpoNotificationsPlugin = Array.isArray(appJson.expo.plugins) && appJson.expo.plugins.some(p => (Array.isArray(p) ? p[0] : p) === 'expo-notifications');
+assert(hasExpoNotificationsPlugin, 'app.json registers expo-notifications plugin');
+
+const notifServicePath = path.join(rootDir, 'lib/notifications/notification-service.ts');
+assert(fs.existsSync(notifServicePath), 'lib/notifications/notification-service.ts exists');
+const notifServiceContent = fs.readFileSync(notifServicePath, 'utf8');
+assert(notifServiceContent.includes('scheduleAllSmartReminders'), 'notification-service exports scheduleAllSmartReminders');
+assert(notifServiceContent.includes('sendInstantTestNotification'), 'notification-service exports sendInstantTestNotification');
+assert(notifServiceContent.includes('requestNotificationPermissions'), 'notification-service exports requestNotificationPermissions');
+assert(notifServiceContent.includes('getNotificationPreferences'), 'notification-service exports getNotificationPreferences');
+assert(notifServiceContent.includes('saveNotificationPreferences'), 'notification-service exports saveNotificationPreferences');
+
+
 console.log('\n========================================');
 console.log(`Test Results: ${passedTests}/${totalTests} passed, ${failedTests} failed.`);
 console.log('========================================\n');

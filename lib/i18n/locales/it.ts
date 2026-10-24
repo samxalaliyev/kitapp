@@ -515,4 +515,13 @@ export const itTranslations: Record<TranslationKey, string> = {
   subscription_success_title: '🌟 Congratulazioni!',
   subscription_success_msg: 'Il tuo abbonamento premium è stato attivato con successo.',
   subscription_failed_msg: 'Impossibile completare l’abbonamento. Riprova più tardi.',
+  section_notifications: 'Notifiche e Promemoria',
+  daily_reading_reminder: 'Promemoria di Lettura Giornaliero',
+  daily_reading_reminder_desc: 'Mantieni la tua serie e crea un’abitudine quotidiana di lettura',
+  notification_time_label: 'Orario Promemoria',
+  test_notification_btn: 'Invia Notifica di Prova',
+  test_notification_sent_title: 'Notifica di Prova Inviata',
+  test_notification_sent_desc: 'La notifica apparirà sullo schermo tra 2 secondi.',
+  notification_permission_denied: 'Permesso per le notifiche non concesso. Abilitalo nelle impostazioni del dispositivo.',
 };
+

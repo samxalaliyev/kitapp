@@ -515,4 +515,13 @@ export const ptTranslations: Record<TranslationKey, string> = {
   subscription_success_title: '🌟 Parabéns!',
   subscription_success_msg: 'A sua assinatura premium foi ativada com sucesso.',
   subscription_failed_msg: 'Não foi possível concluir a assinatura. Tente novamente mais tarde.',
+  section_notifications: 'Notificações e Lembretes',
+  daily_reading_reminder: 'Lembrete Diário de Leitura',
+  daily_reading_reminder_desc: 'Mantenha sua sequência ativa e crie o hábito de leitura diária',
+  notification_time_label: 'Horário do Lembrete',
+  test_notification_btn: 'Enviar Notificação de Teste',
+  test_notification_sent_title: 'Notificação de Teste Enviada',
+  test_notification_sent_desc: 'A notificação aparecerá na tela em 2 segundos.',
+  notification_permission_denied: 'Permissão de notificação não concedida. Ative-a nas configurações do dispositivo.',
 };
+

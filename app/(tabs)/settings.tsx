@@ -6,6 +6,7 @@ import {
   ScrollView,
   Share,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from 'react-native';
@@ -38,6 +39,12 @@ import {
 } from '@/lib/reader/settings';
 import { syncCloudData } from '@/lib/sync/sync-service';
 import { useAppTheme, type ThemeMode } from '@/lib/theme';
+import {
+  getNotificationPreferences,
+  saveNotificationPreferences,
+  sendInstantTestNotification,
+  requestNotificationPermissions,
+} from '@/lib/notifications/notification-service';
 
 interface SettingRowProps {
   iconName: keyof typeof Feather.glyphMap;
@@ -48,6 +55,7 @@ interface SettingRowProps {
   onPress?: () => void;
   danger?: boolean;
   isLast?: boolean;
+  rightElement?: React.ReactNode;
 }
 
 function SettingRow({
@@ -59,6 +67,7 @@ function SettingRow({
   onPress,
   danger,
   isLast,
+  rightElement,
 }: SettingRowProps) {
   const { colors } = useAppTheme();
   return (
@@ -86,18 +95,24 @@ function SettingRow({
       </View>
 
       <View style={styles.settingRight}>
-        {value ? (
-          <Text
-            style={[styles.settingValue, { color: colors.textMuted }]}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-          >
-            {value}
-          </Text>
-        ) : null}
-        {onPress ? (
-          <Feather name="chevron-right" size={16} color={colors.textSubtle} />
-        ) : null}
+        {rightElement ? (
+          rightElement
+        ) : (
+          <>
+            {value ? (
+              <Text
+                style={[styles.settingValue, { color: colors.textMuted }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {value}
+              </Text>
+            ) : null}
+            {onPress ? (
+              <Feather name="chevron-right" size={16} color={colors.textSubtle} />
+            ) : null}
+          </>
+        )}
       </View>
     </Pressable>
   );
@@ -133,7 +148,7 @@ function SettingGroup({
   );
 }
 
-type PickerType = 'theme' | 'fontSize' | 'fontFamily' | 'targetLang' | 'uiLang' | null;
+type PickerType = 'theme' | 'fontSize' | 'fontFamily' | 'targetLang' | 'uiLang' | 'notifTime' | null;
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -160,11 +175,56 @@ export default function SettingsScreen() {
   const [syncing, setSyncing] = useState(false);
   const [restoringPurchases, setRestoringPurchases] = useState(false);
 
+  // Notification Preferences State
+  const [notifEnabled, setNotifEnabled] = useState(true);
+  const [notifTime, setNotifTime] = useState('20:00');
+  const [sendingTestNotif, setSendingTestNotif] = useState(false);
+
   // Active Picker Modal State
   const [activePicker, setActivePicker] = useState<PickerType>(null);
   const [activeLegal, setActiveLegal] = useState<LegalType>(null);
   const [leaderboardVisible, setLeaderboardVisible] = useState(false);
   const [challengesVisible, setChallengesVisible] = useState(false);
+
+  useEffect(() => {
+    getNotificationPreferences().then((p) => {
+      setNotifEnabled(p.enabled);
+      setNotifTime(p.time);
+    });
+  }, []);
+
+  const handleToggleNotification = async (val: boolean) => {
+    if (val) {
+      const granted = await requestNotificationPermissions();
+      if (!granted) {
+        Alert.alert(t('error'), t('notification_permission_denied'));
+        return;
+      }
+    }
+    setNotifEnabled(val);
+    await saveNotificationPreferences(val, notifTime, uiLang);
+  };
+
+  const handleSelectNotifTime = async (time: string) => {
+    setNotifTime(time);
+    setActivePicker(null);
+    await saveNotificationPreferences(notifEnabled, time, uiLang);
+  };
+
+  const handleSendTestNotification = async () => {
+    if (sendingTestNotif) return;
+    setSendingTestNotif(true);
+    try {
+      const ok = await sendInstantTestNotification(uiLang);
+      if (ok) {
+        Alert.alert(t('test_notification_sent_title'), t('test_notification_sent_desc'));
+      } else {
+        Alert.alert(t('error'), t('notification_permission_denied'));
+      }
+    } finally {
+      setTimeout(() => setSendingTestNotif(false), 2000);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -334,6 +394,17 @@ export default function SettingsScreen() {
     label: `${l.flag} ${l.nativeLabel}`,
     subLabel: l.label,
   }));
+
+  const notifTimeOptions: OptionItem<string>[] = [
+    { id: '08:00', label: '08:00 (Səhər / Morning)' },
+    { id: '09:00', label: '09:00 (Səhər / Morning)' },
+    { id: '13:00', label: '13:00 (Günorta / Afternoon)' },
+    { id: '18:00', label: '18:00 (Axşam / Evening)' },
+    { id: '19:00', label: '19:00 (Axşam / Evening)' },
+    { id: '20:00', label: '20:00 (Axşam / Evening)' },
+    { id: '21:00', label: '21:00 (Gecə / Night)' },
+    { id: '22:00', label: '22:00 (Gecə / Night)' },
+  ];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -537,7 +608,47 @@ export default function SettingsScreen() {
         </SettingGroup>
 
         {/* ==================================================================== */}
-        {/* GROUP 2: LANGUAGE & TRANSLATION */}
+        {/* GROUP 2: NOTIFICATIONS & REMINDERS (Duolingo-style Retention) */}
+        {/* ==================================================================== */}
+        <SettingGroup title={t('section_notifications')}>
+          <SettingRow
+            iconName="bell"
+            iconColor="#f59e0b"
+            iconBgColor="rgba(245, 158, 11, 0.12)"
+            label={t('daily_reading_reminder')}
+            rightElement={
+              <Switch
+                value={notifEnabled}
+                onValueChange={handleToggleNotification}
+                thumbColor="#FFFFFF"
+                trackColor={{ false: 'rgba(255, 255, 255, 0.15)', true: '#d4af7a' }}
+              />
+            }
+          />
+          {notifEnabled ? (
+            <>
+              <SettingRow
+                iconName="clock"
+                iconColor="#38bdf8"
+                iconBgColor="rgba(56, 189, 248, 0.12)"
+                label={t('notification_time_label')}
+                value={notifTime}
+                onPress={() => setActivePicker('notifTime')}
+              />
+              <SettingRow
+                iconName="send"
+                iconColor="#10b981"
+                iconBgColor="rgba(16, 185, 129, 0.12)"
+                label={t('test_notification_btn')}
+                onPress={handleSendTestNotification}
+                isLast
+              />
+            </>
+          ) : null}
+        </SettingGroup>
+
+        {/* ==================================================================== */}
+        {/* GROUP 3: LANGUAGE & TRANSLATION */}
         {/* ==================================================================== */}
         <SettingGroup title={t('section_lang_trans')}>
           <SettingRow
@@ -691,6 +802,15 @@ export default function SettingsScreen() {
           options={languageOptions}
           selectedId={uiLang}
           onSelect={(id: LanguageCode) => setLanguage(id)}
+          onClose={() => setActivePicker(null)}
+        />
+
+        <IOSOptionPickerModal
+          visible={activePicker === 'notifTime'}
+          title={t('notification_time_label')}
+          options={notifTimeOptions}
+          selectedId={notifTime}
+          onSelect={(id: string) => handleSelectNotifTime(id)}
           onClose={() => setActivePicker(null)}
         />
 
