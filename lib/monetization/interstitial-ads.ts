@@ -136,3 +136,21 @@ function showDefaultInterstitialAdModal() {
     ],
   );
 }
+
+/**
+ * Shows an interstitial ad upon completing a curriculum lesson for free users.
+ * Automatically bypassed for Premium users.
+ */
+export function showCurriculumInterstitialAd(isPremium: boolean): boolean {
+  if (isPremium) return false;
+  if (isNativeAdMobAvailable() && isAdLoaded && interstitialInstance) {
+    try {
+      interstitialInstance.show();
+      return true;
+    } catch (e) {
+      if (__DEV__) console.warn('[AdMob] Curriculum interstitial show error:', e);
+    }
+  }
+  return false;
+}
+

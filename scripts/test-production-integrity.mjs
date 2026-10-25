@@ -104,6 +104,56 @@ assert(notifServiceContent.includes('requestNotificationPermissions'), 'notifica
 assert(notifServiceContent.includes('getNotificationPreferences'), 'notification-service exports getNotificationPreferences');
 assert(notifServiceContent.includes('saveNotificationPreferences'), 'notification-service exports saveNotificationPreferences');
 
+console.log('\n--- 7. Testing English Learning Curriculum & Anti-Bypass Integrity ---');
+const typesCurriculumPath = path.join(rootDir, 'types/curriculum.ts');
+assert(fs.existsSync(typesCurriculumPath), 'types/curriculum.ts exists');
+
+const curriculumDbPath = path.join(rootDir, 'lib/curriculum/db.ts');
+assert(fs.existsSync(curriculumDbPath), 'lib/curriculum/db.ts exists');
+const curriculumDbContent = fs.readFileSync(curriculumDbPath, 'utf8');
+assert(curriculumDbContent.includes('initCurriculumDatabase'), 'curriculum/db.ts exports initCurriculumDatabase');
+assert(curriculumDbContent.includes('getUnitProgress'), 'curriculum/db.ts exports getUnitProgress');
+assert(curriculumDbContent.includes('saveUnitProgress'), 'curriculum/db.ts exports saveUnitProgress');
+assert(curriculumDbContent.includes('unlockUnit'), 'curriculum/db.ts exports unlockUnit');
+assert(curriculumDbContent.includes('cacheUnitPayload'), 'curriculum/db.ts exports cacheUnitPayload');
+
+const securityGuardPath = path.join(rootDir, 'lib/curriculum/security-guard.ts');
+assert(fs.existsSync(securityGuardPath), 'lib/curriculum/security-guard.ts exists');
+const securityGuardContent = fs.readFileSync(securityGuardPath, 'utf8');
+assert(securityGuardContent.includes('validateUnitAccess'), 'security-guard.ts exports validateUnitAccess (anti-bypass)');
+assert(securityGuardContent.includes('handleLessonCompletion'), 'security-guard.ts exports handleLessonCompletion');
+assert(securityGuardContent.includes('OFFLINE_FREE_RESTRICTED'), 'security-guard.ts enforces OFFLINE_FREE_RESTRICTED for free users');
+assert(securityGuardContent.includes('PREREQUISITE_LOCKED'), 'security-guard.ts enforces PREREQUISITE_LOCKED sequential unlocks');
+
+const curriculumServicePath = path.join(rootDir, 'lib/curriculum/curriculum-service.ts');
+assert(fs.existsSync(curriculumServicePath), 'lib/curriculum/curriculum-service.ts exists');
+const curriculumServiceContent = fs.readFileSync(curriculumServicePath, 'utf8');
+assert(curriculumServiceContent.includes('CEFR_LEVELS'), 'curriculum-service.ts exports CEFR_LEVELS (A1, A2, B1, B2)');
+assert(curriculumServiceContent.includes('getUnitData'), 'curriculum-service.ts exports getUnitData');
+assert(curriculumServiceContent.includes('listUnitsWithProgress'), 'curriculum-service.ts exports listUnitsWithProgress');
+
+const lessonPlayerModalPath = path.join(rootDir, 'components/curriculum/LessonPlayerModal.tsx');
+assert(fs.existsSync(lessonPlayerModalPath), 'components/curriculum/LessonPlayerModal.tsx exists');
+const lessonPlayerModalContent = fs.readFileSync(lessonPlayerModalPath, 'utf8');
+assert(lessonPlayerModalContent.includes('LessonPlayerModal'), 'LessonPlayerModal component is exported');
+assert(lessonPlayerModalContent.includes('showCurriculumInterstitialAd'), 'LessonPlayerModal triggers interstitial ad for free users');
+
+const interstitialAdsPath = path.join(rootDir, 'lib/monetization/interstitial-ads.ts');
+const interstitialAdsContent = fs.readFileSync(interstitialAdsPath, 'utf8');
+assert(interstitialAdsContent.includes('showCurriculumInterstitialAd'), 'interstitial-ads.ts exports showCurriculumInterstitialAd');
+
+// Bundled units verification
+const bundledUnits = ['unit_01.json', 'unit_02.json', 'unit_03.json'];
+for (const unitFile of bundledUnits) {
+  const unitFilePath = path.join(rootDir, 'assets/data/curriculum/a1', unitFile);
+  assert(fs.existsSync(unitFilePath), `Bundled curriculum file exists: a1/${unitFile}`);
+  const unitJson = JSON.parse(fs.readFileSync(unitFilePath, 'utf8'));
+  assert(unitJson.id && unitJson.level === 'A1', `${unitFile} has valid id and level A1`);
+  assert(unitJson.grammarRule?.title && unitJson.grammarRule?.formula, `${unitFile} has grammar rule and formula`);
+  assert(Array.isArray(unitJson.vocabulary) && unitJson.vocabulary.length >= 7, `${unitFile} has vocabulary deck with >= 7 words`);
+  assert(unitJson.story?.content && Array.isArray(unitJson.story?.vocabularyHighlights), `${unitFile} has graded story with vocabulary highlights`);
+  assert(Array.isArray(unitJson.exercises) && unitJson.exercises.length >= 3, `${unitFile} has interactive exercises array (>= 3 exercises)`);
+}
 
 console.log('\n========================================');
 console.log(`Test Results: ${passedTests}/${totalTests} passed, ${failedTests} failed.`);
@@ -114,3 +164,4 @@ if (failedTests > 0) {
 } else {
   process.exit(0);
 }
+

@@ -1,0 +1,262 @@
+{
+  "id": "a1_unit_01",
+  "level": "A1",
+  "order": 1,
+  "title": {
+    "az": "İlk Görüş və Tanışlıq",
+    "en": "First Meeting & Greetings",
+    "tr": "İlk Tanışma ve Selamlaşma",
+    "ru": "Первая встреча и знакомство"
+  },
+  "description": {
+    "az": "'To Be' feli, salamlaşmalar və təbii tanışlıq ifadələri",
+    "en": "Verb 'To Be', greetings, and natural introduction phrases",
+    "tr": "'To Be' fiili, selamlaşmalar ve doğal tanışma kalıpları",
+    "ru": "Глагол 'To Be', приветствия и естественные фразы знакомства"
+  },
+  "estimatedMinutes": 4,
+  "iconName": "smile",
+  "xpReward": 50,
+  "grammarRule": {
+    "id": "a1_gr_01",
+    "title": {
+      "az": "'To Be' Feli (am / is / are)",
+      "en": "The Verb 'To Be' (am / is / are)",
+      "tr": "'To Be' Fiili (am / is / are)",
+      "ru": "Глагол 'To Be' (am / is / are)"
+    },
+    "subtitle": {
+      "az": "İngilis dilində cümlələrin ən təməl sütunu",
+      "en": "The foundational pillar of English sentences"
+    },
+    "explanation": {
+      "az": "İngilis dilində hərəkət bildirməyən cümlələrdə 'olmaq' mənasını verən 'To Be' feli işlədilir. Şəxslərə görə 3 formaya bölünür: I am, You/We/They are, He/She/It is.",
+      "en": "In sentences that describe a state or identity, English uses the verb 'To Be'. It changes form based on the subject: I am, You/We/They are, He/She/It is.",
+      "tr": "İngilizce'de durum veya kimlik belirten cümlelerde 'To Be' kullanılır: I am, You/We/They are, He/She/It is.",
+      "ru": "В предложениях, описывающих состояние или личность, используется глагол 'To Be': I am, You/We/They are, He/She/It is."
+    },
+    "formula": "Subject + am / is / are + Complement",
+    "examples": [
+      {
+        "english": "I am a student.",
+        "translation": {
+          "az": "Mən tələbəyəm.",
+          "en": "I am a student.",
+          "tr": "Ben bir öğrenciyim.",
+          "ru": "Я студент."
+        }
+      },
+      {
+        "english": "She is happy today.",
+        "translation": {
+          "az": "O, bu gün xoşbəxtdir.",
+          "en": "She is happy today.",
+          "tr": "O bugün mutlu.",
+          "ru": "Она сегодня счастлива."
+        }
+      },
+      {
+        "english": "Are you from London?",
+        "translation": {
+          "az": "Sən Londondansan?",
+          "en": "Are you from London?",
+          "tr": "Sen Londra'dan mısın?",
+          "ru": "Ты из Лондона?"
+        }
+      }
+    ],
+    "commonMistake": {
+      "incorrect": "I is ready.",
+      "correct": "I am ready.",
+      "explanation": {
+        "az": "'I' (mən) əvəzliyi ilə yalnız 'am' işlənir, heç vaxt 'is' işlənməz.",
+        "en": "'I' only pairs with 'am', never 'is'."
+      }
+    }
+  },
+  "vocabulary": [
+    {
+      "id": "v1",
+      "word": "Hello",
+      "phonetic": "/həˈləʊ/",
+      "audioText": "Hello",
+      "translations": { "az": "Salam", "en": "Hello", "tr": "Merhaba", "ru": "Привет" },
+      "exampleSentence": "Hello, how are you?",
+      "exampleTranslation": { "az": "Salam, necəsən?", "en": "Hello, how are you?", "tr": "Merhaba, nasılsın?", "ru": "Привет, как дела?" }
+    },
+    {
+      "id": "v2",
+      "word": "Nice to meet you",
+      "phonetic": "/naɪs tuː miːt juː/",
+      "audioText": "Nice to meet you",
+      "translations": { "az": "Tanış olmağımıza şadam", "en": "Nice to meet you", "tr": "Tanıştığımıza memnun oldum", "ru": "Приятно познакомиться" },
+      "exampleSentence": "Nice to meet you, Tom.",
+      "exampleTranslation": { "az": "Tanış olmağımıza şadam, Tom.", "en": "Nice to meet you, Tom.", "tr": "Tanıştığıma memnun oldum, Tom.", "ru": "Приятно познакомиться, Том." }
+    },
+    {
+      "id": "v3",
+      "word": "Name",
+      "phonetic": "/neɪm/",
+      "audioText": "Name",
+      "translations": { "az": "Ad", "en": "Name", "tr": "İsim", "ru": "Имя" },
+      "exampleSentence": "My name is Alex.",
+      "exampleTranslation": { "az": "Mənim adım Aleksdir.", "en": "My name is Alex.", "tr": "Benim adım Alex.", "ru": "Меня зовут Алекс." }
+    },
+    {
+      "id": "v4",
+      "word": "Where are you from?",
+      "phonetic": "/weər ɑːr juː frɒm/",
+      "audioText": "Where are you from?",
+      "translations": { "az": "Haradansan?", "en": "Where are you from?", "tr": "Nerelisin?", "ru": "Откуда ты?" },
+      "exampleSentence": "Where are you from, Sarah?",
+      "exampleTranslation": { "az": "Haradansan, Sara?", "en": "Where are you from, Sarah?", "tr": "Nerelisin, Sarah?", "ru": "Откуда ты, Сара?" }
+    },
+    {
+      "id": "v5",
+      "word": "Welcome",
+      "phonetic": "/ˈwelkəm/",
+      "audioText": "Welcome",
+      "translations": { "az": "Xoş gəlmisiniz", "en": "Welcome", "tr": "Hoş geldiniz", "ru": "Добро пожаловать" },
+      "exampleSentence": "Welcome to our city!",
+      "exampleTranslation": { "az": "Şəhərimizə xoş gəlmisiniz!", "en": "Welcome to our city!", "tr": "Şehrimize hoş geldiniz!", "ru": "Добро пожаловать в наш город!" }
+    },
+    {
+      "id": "v6",
+      "word": "Friend",
+      "phonetic": "/frend/",
+      "audioText": "Friend",
+      "translations": { "az": "Dost", "en": "Friend", "tr": "Arkadaş", "ru": "Друг" },
+      "exampleSentence": "He is my best friend.",
+      "exampleTranslation": { "az": "O, mənim ən yaxşı dostumdur.", "en": "He is my best friend.", "tr": "O benim en iyi arkadaşım.", "ru": "Он мой лучший друг." }
+    },
+    {
+      "id": "v7",
+      "word": "Ready",
+      "phonetic": "/ˈredi/",
+      "audioText": "Ready",
+      "translations": { "az": "Hazır", "en": "Ready", "tr": "Hazır", "ru": "Готов" },
+      "exampleSentence": "I am ready to learn.",
+      "exampleTranslation": { "az": "Mən öyrənməyə hazıram.", "en": "I am ready to learn.", "tr": "Öğrenmeye hazırım.", "ru": "Я готов учиться." }
+    },
+    {
+      "id": "v8",
+      "word": "See you soon",
+      "phonetic": "/siː juː suːn/",
+      "audioText": "See you soon",
+      "translations": { "az": "Tezliklə görüşərik", "en": "See you soon", "tr": "Yakında görüşürüz", "ru": "До скорой встречи" },
+      "exampleSentence": "Goodbye, see you soon!",
+      "exampleTranslation": { "az": "Sağ ol, tezliklə görüşərik!", "en": "Goodbye, see you soon!", "tr": "Hoşça kal, yakında görüşürüz!", "ru": "Пока, до скорой встречи!" }
+    }
+  ],
+  "story": {
+    "id": "s1",
+    "title": "A New Friend at the Library",
+    "titleTranslation": {
+      "az": "Kitabxanada Yeni Dost",
+      "en": "A New Friend at the Library",
+      "tr": "Kütüphanede Yeni Bir Arkadaş",
+      "ru": "Новый друг в библиотеке"
+    },
+    "cefr": "A1",
+    "wordCount": 95,
+    "content": "Tom is at the library today. It is a quiet morning. A friendly girl sits next to him.\n\n\"Hello,\" she says with a warm smile. \"My name is Sarah. Are you a student?\"\n\nTom smiles back. \"Yes, I am. Nice to meet you, Sarah. I am from Baku, and I love reading books here.\"\n\nSarah is pleased. \"Welcome to our city! We are friends now. Are you ready for class?\"\n\n\"Yes, I am!\" Tom replies. \"See you soon, Sarah.\"",
+    "vocabularyHighlights": ["Hello", "name", "Nice to meet you", "Welcome", "friends", "ready", "See you soon"]
+  },
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "word_scramble",
+      "prompt": {
+        "az": "Cümləni düzgün sıraya yığın:",
+        "en": "Arrange the words in correct order:",
+        "tr": "Kelimeleri doğru sıraya dizin:",
+        "ru": "Соберите предложение по порядку:"
+      },
+      "sentenceToBuild": ["Nice", "to", "meet", "you"],
+      "distractorWords": ["see", "are"],
+      "correctSentence": "Nice to meet you",
+      "xpReward": 10
+    },
+    {
+      "id": "ex2",
+      "type": "fill_in_the_blank",
+      "prompt": {
+        "az": "Boşluğa uyğun gələn variantı seçin:",
+        "en": "Fill in the blank with the correct form:",
+        "tr": "Boşluğa uygun formu seçin:",
+        "ru": "Выберите правильную форму:"
+      },
+      "instruction": {
+        "az": "She ___ a happy student.",
+        "en": "She ___ a happy student."
+      },
+      "options": [
+        { "id": "o1", "text": "is", "isCorrect": true },
+        { "id": "o2", "text": "am", "isCorrect": false },
+        { "id": "o3", "text": "are", "isCorrect": false }
+      ],
+      "xpReward": 10
+    },
+    {
+      "id": "ex3",
+      "type": "listening_dictation",
+      "prompt": {
+        "az": "Səsi dinləyin və eşitdiyiniz ifadəni seçin:",
+        "en": "Listen and select what you hear:",
+        "tr": "Dinleyin ve duyduğunuz ifadeyi seçin:",
+        "ru": "Послушайте и выберите то, что услышали:"
+      },
+      "audioPrompt": "Where are you from?",
+      "options": [
+        { "id": "a1", "text": "Where are you from?", "isCorrect": true },
+        { "id": "a2", "text": "What is your name?", "isCorrect": false },
+        { "id": "a3", "text": "See you soon!", "isCorrect": false }
+      ],
+      "xpReward": 10
+    },
+    {
+      "id": "ex4",
+      "type": "multiple_choice",
+      "prompt": {
+        "az": "'Xoş gəlmisiniz' ingiliscə necə deyilir?",
+        "en": "How do you say 'Welcome' in English?",
+        "tr": "'Hoş geldiniz' İngilizce nasıl söylenir?",
+        "ru": "Как сказать 'Добро пожаловать' по-английски?"
+      },
+      "options": [
+        { "id": "m1", "text": "Welcome", "isCorrect": true },
+        { "id": "m2", "text": "Goodbye", "isCorrect": false },
+        { "id": "m3", "text": "Excuse me", "isCorrect": false }
+      ],
+      "xpReward": 10
+    }
+  ],
+  "bossQuiz": [
+    {
+      "id": "bq1",
+      "type": "multiple_choice",
+      "prompt": {
+        "az": "\"I ___ ready to learn.\" Cümləni tamamlayın:",
+        "en": "Complete the sentence: \"I ___ ready to learn.\""
+      },
+      "options": [
+        { "id": "b1", "text": "am", "isCorrect": true },
+        { "id": "b2", "text": "is", "isCorrect": false },
+        { "id": "b3", "text": "are", "isCorrect": false }
+      ],
+      "xpReward": 10
+    },
+    {
+      "id": "bq2",
+      "type": "word_scramble",
+      "prompt": {
+        "az": "Cümləni yığın: 'See you soon'",
+        "en": "Build sentence: 'See you soon'"
+      },
+      "sentenceToBuild": ["See", "you", "soon"],
+      "distractorWords": ["me", "hello"],
+      "correctSentence": "See you soon",
+      "xpReward": 10
+    }
+  ]
+}

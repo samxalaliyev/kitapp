@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
   FlatList,
   Pressable,
   ScrollView,
@@ -35,6 +36,16 @@ import {
 } from '@/lib/vocabulary/game-service';
 import { type SavedWord, initVocabularyDatabase } from '@/lib/vocabulary/db';
 import { deleteSavedWord, listSavedWords } from '@/lib/vocabulary/store';
+import {
+  CEFR_LEVELS,
+  getUnitData,
+  listUnitsWithProgress,
+  type UnitDisplayItem,
+} from '@/lib/curriculum/curriculum-service';
+import { validateUnitAccess } from '@/lib/curriculum/security-guard';
+import { LessonPlayerModal } from '@/components/curriculum/LessonPlayerModal';
+import type { CurriculumUnit, LevelId } from '@/types/curriculum';
+import { checkIsOnline } from '@/lib/network';
 
 export default function VocabularyScreen() {
   const router = useRouter();
@@ -59,6 +70,24 @@ export default function VocabularyScreen() {
   const [energyActionModalVisible, setEnergyActionModalVisible] = useState(false);
   const [pendingGameType, setPendingGameType] = useState<'flashcard' | 'pair' | 'quiz' | null>(null);
   const [leaderboardVisible, setLeaderboardVisible] = useState(false);
+
+  // Curriculum Learning Path State
+  const [activeSection, setActiveSection] = useState<'curriculum' | 'vocab'>('curriculum');
+  const [selectedLevel, setSelectedLevel] = useState<LevelId>('A1');
+  const [curriculumUnits, setCurriculumUnits] = useState<UnitDisplayItem[]>([]);
+  const [activePlayingUnit, setActivePlayingUnit] = useState<CurriculumUnit | null>(null);
+  const [lessonPlayerVisible, setLessonPlayerVisible] = useState(false);
+  const [curriculumLoading, setCurriculumLoading] = useState(false);
+
+  // Load curriculum units for selected level
+  const loadCurriculum = useCallback(async () => {
+    try {
+      const units = await listUnitsWithProgress(selectedLevel, targetLang);
+      setCurriculumUnits(units);
+    } catch (e) {
+      if (__DEV__) console.warn('[Curriculum] Error loading units:', e);
+    }
+  }, [selectedLevel, targetLang]);
 
   // Load words, hearts, and game stats
   const loadData = useCallback(async () => {
@@ -86,13 +115,68 @@ export default function VocabularyScreen() {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    loadCurriculum();
+  }, [loadData, loadCurriculum]);
 
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [loadData]),
+      loadCurriculum();
+    }, [loadData, loadCurriculum]),
   );
+
+  const handleUnitPress = async (unitItem: UnitDisplayItem) => {
+    if (unitItem.status === 'locked') {
+      Alert.alert(
+        '🔒 Dərs Kilidlidir',
+        'Bu dərsin kilidini açmaq üçün əvvəlki dərsi ən azı 70% nəticə ilə bitirin.',
+        [{ text: 'Oldu', style: 'default' }]
+      );
+      return;
+    }
+
+    const isOnline = await checkIsOnline();
+    const access = await validateUnitAccess(
+      unitItem.id,
+      selectedLevel,
+      unitItem.order,
+      isPremium,
+      isOnline
+    );
+
+    if (!access.allowed) {
+      if (access.reason === 'OUT_OF_HEARTS') {
+        setPaywallVisible(true);
+        return;
+      }
+      if (access.reason === 'OFFLINE_FREE_RESTRICTED') {
+        Alert.alert(
+          '📶 İnternet Bağlantısı Tələb Olunur',
+          access.message || 'Növbəti dərslərə daxil olmaq üçün interneti aktiv edin və ya Oflayn Rejim üçün Litera Premium-a keçin.',
+          [
+            { text: 'Ləğv et', style: 'cancel' },
+            { text: '👑 Premium Al', onPress: () => setPaywallVisible(true) },
+          ]
+        );
+        return;
+      }
+      Alert.alert('Diqqət', access.message || 'Dərsə başlamaq mümkün olmadı.');
+      return;
+    }
+
+    setCurriculumLoading(true);
+    try {
+      const fullUnit = await getUnitData(unitItem.id, selectedLevel);
+      if (fullUnit) {
+        setActivePlayingUnit(fullUnit);
+        setLessonPlayerVisible(true);
+      } else {
+        Alert.alert('Xəta', 'Dərs materialları yüklənə bilmədi. İnternet bağlantınızı yoxlayın.');
+      }
+    } finally {
+      setCurriculumLoading(false);
+    }
+  };
 
   const handleDeleteWord = useCallback(
     async (wordItem: SavedWord) => {
@@ -222,21 +306,348 @@ export default function VocabularyScreen() {
         </View>
       </View>
 
+      {/* Top Segmented Bar: Curriculum Path vs Vocab & Games */}
+      <View
+        style={[
+          styles.topSegmentedBar,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.surfaceBorder,
+          },
+        ]}
+      >
+        <Pressable
+          style={[
+            styles.segmentBtn,
+            activeSection === 'curriculum' && {
+              backgroundColor: colors.primary,
+            },
+          ]}
+          onPress={() => setActiveSection('curriculum')}
+        >
+          <Feather
+            name="map"
+            size={16}
+            color={activeSection === 'curriculum' ? '#0d0f17' : colors.textMuted}
+          />
+          <Text
+            style={[
+              styles.segmentBtnText,
+              {
+                color: activeSection === 'curriculum' ? '#0d0f17' : colors.textMuted,
+                fontWeight: activeSection === 'curriculum' ? FontWeight.bold : FontWeight.medium,
+              },
+            ]}
+          >
+            Tədris Xəritəsi
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.segmentBtn,
+            activeSection === 'vocab' && {
+              backgroundColor: colors.primary,
+            },
+          ]}
+          onPress={() => setActiveSection('vocab')}
+        >
+          <Feather
+            name="book-open"
+            size={16}
+            color={activeSection === 'vocab' ? '#0d0f17' : colors.textMuted}
+          />
+          <Text
+            style={[
+              styles.segmentBtnText,
+              {
+                color: activeSection === 'vocab' ? '#0d0f17' : colors.textMuted,
+                fontWeight: activeSection === 'vocab' ? FontWeight.bold : FontWeight.medium,
+              },
+            ]}
+          >
+            Lüğətim & Oyunlar
+          </Text>
+        </Pressable>
+      </View>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
       >
-        {/* Guest Registration Incentive Banner */}
-        {!user ? (
-          <View
-            style={[
-              styles.guestBanner,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.surfaceBorder,
-              },
-            ]}
-          >
+        {activeSection === 'curriculum' ? (
+          <>
+            {/* Level Selector Pills */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.levelSelectorRow}
+            >
+              {CEFR_LEVELS.map((lvl) => {
+                const isSelected = selectedLevel === lvl.id;
+                return (
+                  <Pressable
+                    key={lvl.id}
+                    style={[
+                      styles.levelChip,
+                      {
+                        backgroundColor: isSelected
+                          ? colors.primary
+                          : colors.surface,
+                        borderColor: isSelected ? colors.primary : colors.surfaceBorder,
+                      },
+                    ]}
+                    onPress={() => setSelectedLevel(lvl.id)}
+                  >
+                    <Text
+                      style={[
+                        styles.levelChipText,
+                        {
+                          color: isSelected ? '#0d0f17' : colors.text,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.medium,
+                        },
+                      ]}
+                    >
+                      {lvl.id} Səviyyə
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            {/* Level Overview Hero Card */}
+            {(() => {
+              const currentLvl = CEFR_LEVELS.find((l) => l.id === selectedLevel) || CEFR_LEVELS[0];
+              const completedUnitsCount = curriculumUnits.filter((u) => u.status === 'completed').length;
+              const totalUnitsCount = Math.max(curriculumUnits.length, currentLvl.totalUnits);
+              const progressPct = Math.round((completedUnitsCount / totalUnitsCount) * 100);
+
+              return (
+                <View
+                  style={[
+                    styles.levelHeroCard,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: currentLvl.accentColor,
+                    },
+                  ]}
+                >
+                  <View style={styles.levelHeroTop}>
+                    <View
+                      style={[
+                        styles.levelHeroBadge,
+                        { backgroundColor: currentLvl.accentColor + '20' },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.levelHeroBadgeText,
+                          { color: currentLvl.accentColor },
+                        ]}
+                      >
+                        {selectedLevel} • CEFR Standartı
+                      </Text>
+                    </View>
+                    <Text style={[styles.levelProgressPercentText, { color: currentLvl.accentColor }]}>
+                      %{progressPct}
+                    </Text>
+                  </View>
+
+                  <Text style={[styles.levelHeroTitle, { color: colors.text }]}>
+                    {currentLvl.title.az || currentLvl.title.en}
+                  </Text>
+                  <Text style={[styles.levelHeroDesc, { color: colors.textMuted }]}>
+                    {currentLvl.description.az || currentLvl.description.en}
+                  </Text>
+
+                  {/* Level Progress Bar */}
+                  <View style={[styles.levelProgressBarTrack, { backgroundColor: colors.surfaceBorder }]}>
+                    <View
+                      style={[
+                        styles.levelProgressBarFill,
+                        {
+                          backgroundColor: currentLvl.accentColor,
+                          width: `${Math.max(8, progressPct)}%`,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text style={[styles.levelProgressCountText, { color: colors.textMuted }]}>
+                    {completedUnitsCount} / {totalUnitsCount} Modul tamamlandı
+                  </Text>
+                </View>
+              );
+            })()}
+
+            {/* Visual Learning Path Tree */}
+            <View style={styles.pathTreeContainer}>
+              {curriculumUnits.map((unitItem, index) => {
+                const isCompleted = unitItem.status === 'completed';
+                const isUnlocked = unitItem.status === 'unlocked';
+                const isLocked = unitItem.status === 'locked';
+                const isLast = index === curriculumUnits.length - 1;
+
+                return (
+                  <View key={unitItem.id} style={styles.pathNodeRow}>
+                    {/* Left: Node icon & vertical line */}
+                    <View style={styles.nodeColumn}>
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.nodeCircle,
+                          {
+                            backgroundColor: isCompleted
+                              ? '#10b981'
+                              : isUnlocked
+                              ? colors.primary
+                              : colors.surface,
+                            borderColor: isCompleted
+                              ? '#059669'
+                              : isUnlocked
+                              ? '#f59e0b'
+                              : colors.surfaceBorder,
+                          },
+                          isUnlocked && styles.nodeCircleGlow,
+                          pressed && styles.pressed,
+                        ]}
+                        onPress={() => handleUnitPress(unitItem)}
+                      >
+                        {isLocked ? (
+                          <Feather name="lock" size={20} color={colors.textMuted} />
+                        ) : isCompleted ? (
+                          <Feather name="check" size={22} color="#ffffff" />
+                        ) : (
+                          <Feather
+                            name={(unitItem.iconName as any) || 'book-open'}
+                            size={20}
+                            color="#0d0f17"
+                          />
+                        )}
+                      </Pressable>
+
+                      {/* Connecting Line */}
+                      {!isLast && (
+                        <View
+                          style={[
+                            styles.nodeLine,
+                            {
+                              backgroundColor: isCompleted
+                                ? '#10b981'
+                                : colors.surfaceBorder,
+                            },
+                          ]}
+                        />
+                      )}
+                    </View>
+
+                    {/* Right: Unit Details Card */}
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.unitCard,
+                        {
+                          backgroundColor: colors.surface,
+                          borderColor: isUnlocked
+                            ? colors.primary
+                            : colors.surfaceBorder,
+                        },
+                        isUnlocked && styles.unitCardActiveBorder,
+                        pressed && styles.pressed,
+                      ]}
+                      onPress={() => handleUnitPress(unitItem)}
+                    >
+                      <View style={styles.unitCardTop}>
+                        <View
+                          style={[
+                            styles.unitOrderBadge,
+                            {
+                              backgroundColor: isCompleted
+                                ? '#10b98120'
+                                : isUnlocked
+                                ? colors.primary + '20'
+                                : colors.surfaceBorder,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.unitOrderText,
+                              {
+                                color: isCompleted
+                                  ? '#10b981'
+                                  : isUnlocked
+                                  ? colors.primary
+                                  : colors.textMuted,
+                              },
+                            ]}
+                          >
+                            DƏRS {unitItem.order}
+                          </Text>
+                        </View>
+                        <Text style={[styles.unitTimeText, { color: colors.textMuted }]}>
+                          ⏱️ {unitItem.estimatedMinutes} dəq
+                        </Text>
+                      </View>
+
+                      <Text style={[styles.unitTitle, { color: colors.text }]}>
+                        {unitItem.title}
+                      </Text>
+                      <Text style={[styles.unitDesc, { color: colors.textMuted }]} numberOfLines={2}>
+                        {unitItem.description}
+                      </Text>
+
+                      {/* Footer Actions */}
+                      <View style={styles.unitCardFooter}>
+                        {isCompleted ? (
+                          <View style={styles.completedFooterRow}>
+                            <View style={styles.starsPill}>
+                              {[1, 2, 3].map((s) => (
+                                <Feather
+                                  key={s}
+                                  name="star"
+                                  size={13}
+                                  color={s <= unitItem.stars ? '#eab308' : colors.surfaceBorder}
+                                />
+                              ))}
+                              <Text style={styles.scoreText}>%{unitItem.score}</Text>
+                            </View>
+                            <View style={[styles.reviewBtn, { backgroundColor: colors.primary + '15' }]}>
+                              <Text style={[styles.reviewBtnText, { color: colors.primary }]}>
+                                Təkrar et
+                              </Text>
+                            </View>
+                          </View>
+                        ) : isUnlocked ? (
+                          <View style={[styles.startLessonBtn, { backgroundColor: colors.primary }]}>
+                            <Text style={styles.startLessonBtnText}>Dərsə Başla</Text>
+                            <Feather name="play" size={13} color="#0d0f17" />
+                          </View>
+                        ) : (
+                          <View style={styles.lockedFooterRow}>
+                            <Feather name="lock" size={13} color={colors.textMuted} />
+                            <Text style={[styles.lockedText, { color: colors.textMuted }]}>
+                              Kilidli (Əvvəlki dərsi 70%+ bitirin)
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </Pressable>
+                  </View>
+                );
+              })}
+            </View>
+          </>
+        ) : (
+          <>
+            {/* Guest Registration Incentive Banner */}
+            {!user ? (
+              <View
+                style={[
+                  styles.guestBanner,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.surfaceBorder,
+                  },
+                ]}
+              >
             <View style={styles.guestBannerLeft}>
               <View style={[styles.guestBannerIcon, { backgroundColor: colors.primaryBg }]}>
                 <Feather name="cloud" size={17} color={colors.primary} />
@@ -547,7 +958,9 @@ export default function VocabularyScreen() {
             ))}
           </View>
         )}
-      </ScrollView>
+      </>
+    )}
+  </ScrollView>
 
       {/* GAME & STUDY MODALS */}
       <FlashcardStudyModal
@@ -629,6 +1042,26 @@ export default function VocabularyScreen() {
         onClose={() => setLeaderboardVisible(false)}
         onOpenPaywall={() => {
           setLeaderboardVisible(false);
+          setPaywallVisible(true);
+        }}
+      />
+
+      {/* CURRICULUM LESSON PLAYER MODAL */}
+      <LessonPlayerModal
+        visible={lessonPlayerVisible}
+        unit={activePlayingUnit}
+        nextUnitId={curriculumUnits.find((u) => u.order === (activePlayingUnit?.order || 0) + 1)?.id}
+        isPremium={isPremium}
+        onClose={() => {
+          setLessonPlayerVisible(false);
+          setActivePlayingUnit(null);
+        }}
+        onCompleted={() => {
+          loadCurriculum();
+          loadData();
+        }}
+        onUpgradePremium={() => {
+          setLessonPlayerVisible(false);
           setPaywallVisible(true);
         }}
       />
@@ -982,4 +1415,215 @@ const styles = StyleSheet.create({
     opacity: 0.88,
     transform: [{ scale: 0.99 }],
   },
+  // Curriculum specific styles
+  topSegmentedBar: {
+    flexDirection: 'row',
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    padding: 4,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    gap: 6,
+  },
+  segmentBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: Radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  segmentBtnText: {
+    fontSize: FontSize.sm,
+  },
+  levelSelectorRow: {
+    paddingHorizontal: Spacing.lg,
+    gap: 10,
+    marginBottom: Spacing.md,
+  },
+  levelChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: Radius.pill,
+    borderWidth: 1.5,
+  },
+  levelChipText: {
+    fontSize: FontSize.sm,
+  },
+  levelHeroCard: {
+    marginHorizontal: Spacing.lg,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
+    borderWidth: 1.5,
+    marginBottom: Spacing.lg,
+    gap: 8,
+  },
+  levelHeroTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  levelHeroBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.pill,
+  },
+  levelHeroBadgeText: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+  },
+  levelProgressPercentText: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+  },
+  levelHeroTitle: {
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+  },
+  levelHeroDesc: {
+    fontSize: FontSize.sm,
+    lineHeight: 20,
+  },
+  levelProgressBarTrack: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginTop: 4,
+  },
+  levelProgressBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  levelProgressCountText: {
+    fontSize: FontSize.xs,
+  },
+  pathTreeContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xxl,
+  },
+  pathNodeRow: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    gap: 14,
+  },
+  nodeColumn: {
+    alignItems: 'center',
+    width: 48,
+  },
+  nodeCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  nodeCircleGlow: {
+    shadowColor: '#f59e0b',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  nodeLine: {
+    position: 'absolute',
+    top: 48,
+    bottom: -24,
+    width: 3,
+    zIndex: 1,
+  },
+  unitCard: {
+    flex: 1,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    padding: Spacing.md,
+    gap: 6,
+  },
+  unitCardActiveBorder: {
+    shadowColor: '#d4af7a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  unitCardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  unitOrderBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radius.sm,
+  },
+  unitOrderText: {
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
+  },
+  unitTimeText: {
+    fontSize: FontSize.xs,
+  },
+  unitTitle: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+  },
+  unitDesc: {
+    fontSize: FontSize.xs,
+    lineHeight: 18,
+  },
+  unitCardFooter: {
+    marginTop: 4,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  completedFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  starsPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  scoreText: {
+    color: '#10b981',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    marginLeft: 4,
+  },
+  reviewBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: Radius.pill,
+  },
+  reviewBtnText: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+  },
+  startLessonBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+    gap: 6,
+  },
+  startLessonBtnText: {
+    color: '#0d0f17',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+  },
+  lockedFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  lockedText: {
+    fontSize: FontSize.xs,
+  },
 });
+

@@ -1,0 +1,219 @@
+{
+  "id": "a1_unit_02",
+  "level": "A1",
+  "order": 2,
+  "title": {
+    "az": "Kafedə Sifariş və Qiymətlər",
+    "en": "At the Cafe: Ordering & Prices",
+    "tr": "Kafede Sipariş ve Fiyatlar",
+    "ru": "В кафе: Заказ и цены"
+  },
+  "description": {
+    "az": "'Would like', 'How much' və nəzakətli sifariş qəlibləri",
+    "en": "Polite ordering with 'would like' and asking prices",
+    "tr": "'Would like', 'How much' ve kibar sipariş kalıpları",
+    "ru": "Вежливый заказ с 'would like' и вопросы о цене"
+  },
+  "estimatedMinutes": 5,
+  "iconName": "coffee",
+  "xpReward": 50,
+  "grammarRule": {
+    "id": "a1_gr_02",
+    "title": {
+      "az": "'I would like' (Nəzakətli Sifariş)",
+      "en": "'I would like' (Polite Requests)",
+      "tr": "'I would like' (Kibar İstekler)",
+      "ru": "'I would like' (Вежливая просьба)"
+    },
+    "subtitle": {
+      "az": "'I want' yerinə işlənən nəzakətli qəlib",
+      "en": "The polite alternative to 'I want'"
+    },
+    "explanation": {
+      "az": "Kafedə və ya restoranda 'I want' (mən istəyirəm) demək kobud səslənir. Bunun əvəzinə ingilislər 'I would like' və ya qısaca 'I'd like' (istərdim / zəhmət olmasa verərdiniz) ifadəsini işlədirlər.",
+      "en": "Saying 'I want' in a cafe sounds demanding. Instead, native speakers say 'I would like' or 'I'd like' to be polite and natural.",
+      "tr": "Kafede 'I want' demek kaba algılanabilir. Bunun yerine 'I would like' veya 'I'd like' kalıbı kullanılır.",
+      "ru": "В кафе фраза 'I want' звучит грубовато. Вместо нее вежливо говорят 'I would like' или 'I'd like'."
+    },
+    "formula": "I would like (I'd like) + Noun / Verb",
+    "examples": [
+      {
+        "english": "I would like a cup of coffee, please.",
+        "translation": {
+          "az": "Zəhmət olmasa, bir fincan qəhvə verərdiniz.",
+          "en": "I would like a cup of coffee, please.",
+          "tr": "Bir fincan kahve rica ediyorum, lütfen.",
+          "ru": "Я бы хотел чашку кофе, пожалуйста."
+        }
+      },
+      {
+        "english": "How much is this tea?",
+        "translation": {
+          "az": "Bu çay neçəyədir?",
+          "en": "How much is this tea?",
+          "tr": "Bu çay ne kadar?",
+          "ru": "Сколько стоит этот чай?"
+        }
+      }
+    ],
+    "commonMistake": {
+      "incorrect": "I want coffee please now.",
+      "correct": "I'd like a coffee, please.",
+      "explanation": {
+        "az": "Həmişə 'I'd like' və cümlənin sonunda 'please' işlətmək mədəni təsir bağışlayır.",
+        "en": "Always prefer 'I'd like' and add 'please' for natural politeness."
+      }
+    }
+  },
+  "vocabulary": [
+    {
+      "id": "v2_1",
+      "word": "Coffee",
+      "phonetic": "/ˈkɒfi/",
+      "audioText": "Coffee",
+      "translations": { "az": "Qəhvə", "en": "Coffee", "tr": "Kahve", "ru": "Кофе" },
+      "exampleSentence": "Do you like hot coffee?",
+      "exampleTranslation": { "az": "İsti qəhvə xoşlayırsan?", "en": "Do you like hot coffee?", "tr": "Sıcak kahve sever misin?", "ru": "Ты любишь горячий кофе?" }
+    },
+    {
+      "id": "v2_2",
+      "word": "Tea",
+      "phonetic": "/tiː/",
+      "audioText": "Tea",
+      "translations": { "az": "Çay", "en": "Tea", "tr": "Çay", "ru": "Чай" },
+      "exampleSentence": "A green tea, please.",
+      "exampleTranslation": { "az": "Zəhmət olmasa, yaşıl çay.", "en": "A green tea, please.", "tr": "Bir yeşil çay, lütfen.", "ru": "Зеленый чай, пожалуйста." }
+    },
+    {
+      "id": "v2_3",
+      "word": "Please",
+      "phonetic": "/pliːz/",
+      "audioText": "Please",
+      "translations": { "az": "Zəhmət olmasa", "en": "Please", "tr": "Lütfen", "ru": "Пожалуйста" },
+      "exampleSentence": "Yes, please.",
+      "exampleTranslation": { "az": "Bəli, zəhmət olmasa.", "en": "Yes, please.", "tr": "Evet, lütfen.", "ru": "Да, пожалуйста." }
+    },
+    {
+      "id": "v2_4",
+      "word": "How much is it?",
+      "phonetic": "/haʊ mʌtʃ ɪz ɪt/",
+      "audioText": "How much is it?",
+      "translations": { "az": "Qiyməti neçəyədir?", "en": "How much is it?", "tr": "Fiyatı ne kadar?", "ru": "Сколько это стоит?" },
+      "exampleSentence": "Excuse me, how much is it?",
+      "exampleTranslation": { "az": "Bağışlayın, bunun qiyməti neçəyədir?", "en": "Excuse me, how much is it?", "tr": "Affedersiniz, ne kadar?", "ru": "Извините, сколько это стоит?" }
+    },
+    {
+      "id": "v2_5",
+      "word": "Check",
+      "phonetic": "/tʃek/",
+      "audioText": "Check",
+      "translations": { "az": "Hesab (qəbz)", "en": "Check", "tr": "Hesap", "ru": "Счет" },
+      "exampleSentence": "Could we have the check, please?",
+      "exampleTranslation": { "az": "Hesabı gətirə bilərsiniz, zəhmət olmasa?", "en": "Could we have the check, please?", "tr": "Hesabı alabilir miyiz, lütfen?", "ru": "Можно счет, пожалуйста?" }
+    },
+    {
+      "id": "v2_6",
+      "word": "Delicious",
+      "phonetic": "/dɪˈlɪʃəs/",
+      "audioText": "Delicious",
+      "translations": { "az": "Dadlı, ləzzətli", "en": "Delicious", "tr": "Lezzetli", "ru": "Вкусный" },
+      "exampleSentence": "This cake is delicious!",
+      "exampleTranslation": { "az": "Bu pirojna çox dadlıdır!", "en": "This cake is delicious!", "tr": "Bu pasta çok lezzetli!", "ru": "Этот пирог очень вкусный!" }
+    },
+    {
+      "id": "v2_7",
+      "word": "Water",
+      "phonetic": "/ˈwɔːtər/",
+      "audioText": "Water",
+      "translations": { "az": "Su", "en": "Water", "tr": "Su", "ru": "Вода" },
+      "exampleSentence": "A glass of water, please.",
+      "exampleTranslation": { "az": "Zəhmət olmasa bir stəkan su.", "en": "A glass of water, please.", "tr": "Bir bardak su lütfen.", "ru": "Стакан воды, пожалуйста." }
+    },
+    {
+      "id": "v2_8",
+      "word": "Sugar",
+      "phonetic": "/ˈʃʊɡər/",
+      "audioText": "Sugar",
+      "translations": { "az": "Şəkər", "en": "Sugar", "tr": "Şeker", "ru": "Сахар" },
+      "exampleSentence": "Sugar with your coffee?",
+      "exampleTranslation": { "az": "Qəhvənizə şəkər istəyirsiniz?", "en": "Sugar with your coffee?", "tr": "Kahvenize şeker ister misiniz?", "ru": "Сахар к кофе?" }
+    }
+  ],
+  "story": {
+    "id": "s2",
+    "title": "A Morning Coffee in London",
+    "titleTranslation": {
+      "az": "Londonda Səhər Qəhvəsi",
+      "en": "A Morning Coffee in London",
+      "tr": "Londra'da Sabah Kahvesi",
+      "ru": "Утренний кофе в Лондоне"
+    },
+    "cefr": "A1",
+    "wordCount": 110,
+    "content": "It is a sunny morning in London. John walks into a small cafe near the park. The aroma of fresh coffee fills the air.\n\n\"Good morning!\" the waiter says cheerfully. \"What would you like?\"\n\nJohn smiles. \"I would like a hot coffee and a croissant, please.\"\n\n\"Of course! Sugar with your coffee?\"\n\n\"No sugar, thank you.\"\n\nAfter five minutes, the waiter brings the warm cup. John takes a sip. \"This coffee is delicious! How much is it?\"\n\n\"It is three pounds, sir.\"\n\n\"Here you are. And could I have the check, please?\"\n\nJohn enjoys his peaceful morning.",
+    "vocabularyHighlights": ["coffee", "would you like", "please", "delicious", "How much is it", "check"]
+  },
+  "exercises": [
+    {
+      "id": "ex2_1",
+      "type": "word_scramble",
+      "prompt": {
+        "az": "Cümləni yığın: 'I would like coffee please'",
+        "en": "Build sentence: 'I would like coffee please'"
+      },
+      "sentenceToBuild": ["I", "would", "like", "coffee", "please"],
+      "distractorWords": ["want", "tea"],
+      "correctSentence": "I would like coffee please",
+      "xpReward": 10
+    },
+    {
+      "id": "ex2_2",
+      "type": "multiple_choice",
+      "prompt": {
+        "az": "Kafedə hesabı istəmək üçün ən nəzakətli ifadə hansıdır?",
+        "en": "What is the polite phrase to ask for the bill?"
+      },
+      "options": [
+        { "id": "c1", "text": "The check, please.", "isCorrect": true },
+        { "id": "c2", "text": "Give me money.", "isCorrect": false },
+        { "id": "c3", "text": "Where is food?", "isCorrect": false }
+      ],
+      "xpReward": 10
+    },
+    {
+      "id": "ex2_3",
+      "type": "listening_dictation",
+      "prompt": {
+        "az": "Səsi dinləyin və düzgün variantı seçin:",
+        "en": "Listen and select the phrase:"
+      },
+      "audioPrompt": "How much is it?",
+      "options": [
+        { "id": "l1", "text": "How much is it?", "isCorrect": true },
+        { "id": "l2", "text": "How are you today?", "isCorrect": false },
+        { "id": "l3", "text": "Here you are.", "isCorrect": false }
+      ],
+      "xpReward": 10
+    }
+  ],
+  "bossQuiz": [
+    {
+      "id": "bq2_1",
+      "type": "fill_in_the_blank",
+      "prompt": {
+        "az": "Boşluğu tamamlayın:",
+        "en": "Complete the phrase:"
+      },
+      "instruction": {
+        "az": "I ___ like a cup of tea, please.",
+        "en": "I ___ like a cup of tea, please."
+      },
+      "options": [
+        { "id": "w1", "text": "would", "isCorrect": true },
+        { "id": "w2", "text": "is", "isCorrect": false },
+        { "id": "w3", "text": "am", "isCorrect": false }
+      ],
+      "xpReward": 10
+    }
+  ]
+}

@@ -20,6 +20,9 @@ export interface SavedWord {
   language: LanguageCode;
   savedAt: number;
   reviewCount: number;
+  nextReviewAt?: number;
+  intervalDays?: number;
+  masteryLevel?: number; // 0: New, 1: Learning, 2: Familiar, 3: Mastered
 }
 
 function getDb(): SQLiteDatabase {
@@ -36,8 +39,21 @@ export async function initVocabularyDatabase(): Promise<void> {
     try {
       const db = getDb();
       await db.execAsync(
-        'CREATE TABLE IF NOT EXISTS saved_words (id INTEGER PRIMARY KEY AUTOINCREMENT, word TEXT NOT NULL, translation TEXT, phonetic TEXT, language TEXT NOT NULL, saved_at INTEGER NOT NULL, review_count INTEGER NOT NULL DEFAULT 0, UNIQUE(word, language));'
+        'CREATE TABLE IF NOT EXISTS saved_words (id INTEGER PRIMARY KEY AUTOINCREMENT, word TEXT NOT NULL, translation TEXT, phonetic TEXT, language TEXT NOT NULL, saved_at INTEGER NOT NULL, review_count INTEGER NOT NULL DEFAULT 0, next_review_at INTEGER, interval_days INTEGER DEFAULT 1, mastery_level INTEGER DEFAULT 0, UNIQUE(word, language));'
       );
+
+      // Safe column migration for existing installs
+      const tableInfo = await db.getAllAsync<{ name: string }>('PRAGMA table_info(saved_words)');
+      const columnNames = tableInfo.map((c) => c.name);
+      if (!columnNames.includes('next_review_at')) {
+        await db.execAsync('ALTER TABLE saved_words ADD COLUMN next_review_at INTEGER;');
+      }
+      if (!columnNames.includes('interval_days')) {
+        await db.execAsync('ALTER TABLE saved_words ADD COLUMN interval_days INTEGER DEFAULT 1;');
+      }
+      if (!columnNames.includes('mastery_level')) {
+        await db.execAsync('ALTER TABLE saved_words ADD COLUMN mastery_level INTEGER DEFAULT 0;');
+      }
     } catch (err) {
       resetVocabDatabaseHandle();
       throw err;
@@ -60,6 +76,9 @@ function rowToSavedWord(row: {
   language: string;
   saved_at: number;
   review_count: number;
+  next_review_at?: number | null;
+  interval_days?: number | null;
+  mastery_level?: number | null;
 }): SavedWord {
   return {
     id: row.id,
@@ -69,6 +88,9 @@ function rowToSavedWord(row: {
     language: row.language as LanguageCode,
     savedAt: row.saved_at,
     reviewCount: row.review_count,
+    nextReviewAt: row.next_review_at ?? undefined,
+    intervalDays: row.interval_days ?? 1,
+    masteryLevel: row.mastery_level ?? 0,
   };
 }
 
@@ -145,3 +167,67 @@ export async function clearAllSavedWordsDb(): Promise<void> {
   const db = await ensureReady();
   await db.execAsync('DELETE FROM saved_words');
 }
+
+/**
+ * Updates Spaced Repetition (SRS) schedule for a word based on user recall rating
+ */
+export async function updateWordSRS(
+  id: number,
+  rating: 'again' | 'good' | 'easy'
+): Promise<void> {
+  const db = await ensureReady();
+  const word = await db.getFirstAsync<{ interval_days: number | null; mastery_level: number | null; review_count: number }>(
+    'SELECT interval_days, mastery_level, review_count FROM saved_words WHERE id = ?',
+    [id]
+  );
+  if (!word) return;
+
+  let nextInterval = word.interval_days || 1;
+  let nextMastery = word.mastery_level || 0;
+
+  if (rating === 'again') {
+    nextInterval = 1;
+    nextMastery = Math.max(0, nextMastery - 1);
+  } else if (rating === 'good') {
+    nextInterval = Math.max(2, Math.round(nextInterval * 2.2));
+    nextMastery = Math.min(3, nextMastery + 1);
+  } else if (rating === 'easy') {
+    nextInterval = Math.max(4, Math.round(nextInterval * 3.5));
+    nextMastery = Math.min(3, nextMastery + 2);
+  }
+
+  const nextReviewAt = Date.now() + nextInterval * 24 * 60 * 60 * 1000;
+  await db.runAsync(
+    'UPDATE saved_words SET review_count = review_count + 1, interval_days = ?, mastery_level = ?, next_review_at = ? WHERE id = ?',
+    [nextInterval, nextMastery, nextReviewAt, id]
+  );
+}
+
+/**
+ * Returns words currently due for spaced repetition review
+ */
+export async function getWordsDueForReviewDb(language: LanguageCode): Promise<SavedWord[]> {
+  try {
+    const db = await ensureReady();
+    const now = Date.now();
+    const rows = await db.getAllAsync<{
+      id: number;
+      word: string;
+      translation: string | null;
+      phonetic: string | null;
+      language: string;
+      saved_at: number;
+      review_count: number;
+      next_review_at?: number | null;
+      interval_days?: number | null;
+      mastery_level?: number | null;
+    }>(
+      'SELECT id, word, translation, phonetic, language, saved_at, review_count, next_review_at, interval_days, mastery_level FROM saved_words WHERE language = ? AND (next_review_at IS NULL OR next_review_at <= ?) ORDER BY next_review_at ASC LIMIT 50',
+      [language, now]
+    );
+    return rows.map(rowToSavedWord);
+  } catch {
+    return [];
+  }
+}
+
