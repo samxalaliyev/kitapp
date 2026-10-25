@@ -1,3 +1,5 @@
+import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
@@ -10,26 +12,29 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
-import * as WebBrowser from 'expo-web-browser';
 
 import { AdBannerContainer } from '@/components/AdBannerContainer';
-import { IOSOptionPickerModal, type OptionItem } from '@/components/iOSOptionPickerModal';
-import { LegalModal, type LegalType } from '@/components/LegalModal';
-import { SubscriptionPaywallModal } from '@/components/SubscriptionPaywallModal';
 import { FullscreenAdModal } from '@/components/FullscreenAdModal';
-import { useAuth } from '@/lib/auth/AuthContext';
-import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
-import { useLanguage } from '@/lib/i18n/LanguageContext';
-import type { TranslationKey } from '@/lib/i18n/translations';
-import { getLanguage, SUPPORTED_LANGUAGES, type LanguageCode } from '@/lib/i18n/constants';
-import { clearTranslationCache } from '@/lib/i18n/cache';
 import {
   LeaderboardModal,
   ReadingChallengesModal,
 } from '@/components/gamification/LeaguesChallengesModal';
+import { IOSOptionPickerModal, type OptionItem } from '@/components/iOSOptionPickerModal';
+import { LegalModal, type LegalType } from '@/components/LegalModal';
+import { SubscriptionPaywallModal } from '@/components/SubscriptionPaywallModal';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
+import { clearTranslationCache } from '@/lib/i18n/cache';
+import { getLanguage, SUPPORTED_LANGUAGES, type LanguageCode } from '@/lib/i18n/constants';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+import type { TranslationKey } from '@/lib/i18n/translations';
+import {
+  getNotificationPreferences,
+  requestNotificationPermissions,
+  saveNotificationPreferences,
+  sendInstantTestNotification,
+} from '@/lib/notifications/notification-service';
 import {
   FONT_SIZE_PX,
   getReaderSettings,
@@ -39,12 +44,6 @@ import {
 } from '@/lib/reader/settings';
 import { syncCloudData } from '@/lib/sync/sync-service';
 import { useAppTheme, type ThemeMode } from '@/lib/theme';
-import {
-  getNotificationPreferences,
-  saveNotificationPreferences,
-  sendInstantTestNotification,
-  requestNotificationPermissions,
-} from '@/lib/notifications/notification-service';
 
 interface SettingRowProps {
   iconName: keyof typeof Feather.glyphMap;
@@ -310,7 +309,7 @@ export default function SettingsScreen() {
       await Share.share({
         message: t('share_app_msg'),
       });
-    } catch {}
+    } catch { }
   }, [t]);
 
   const handleOpenPrivacy = useCallback(() => {
@@ -341,10 +340,10 @@ export default function SettingsScreen() {
   const planBadgeText = isAdmin
     ? 'ADMIN'
     : subscriptionPlan === 'premium_yearly'
-    ? t('plan_yearly').toUpperCase()
-    : subscriptionPlan === 'premium_monthly'
-    ? t('plan_monthly').toUpperCase()
-    : t('plan_free_badge');
+      ? t('plan_yearly').toUpperCase()
+      : subscriptionPlan === 'premium_monthly'
+        ? t('plan_monthly').toUpperCase()
+        : t('plan_free_badge');
 
   // Dynamic Multi-language Helpers for Readers & Settings
   const sizeLabelKey: Record<FontSizeLevel, TranslationKey> = {
@@ -770,7 +769,7 @@ export default function SettingsScreen() {
           selectedId={fontSize}
           onSelect={(id: FontSizeLevel) => {
             setFontSizeState(id);
-            saveReaderSettings({ fontSize: id }).catch(() => {});
+            saveReaderSettings({ fontSize: id }).catch(() => { });
           }}
           onClose={() => setActivePicker(null)}
         />
@@ -782,7 +781,7 @@ export default function SettingsScreen() {
           selectedId={fontFamily}
           onSelect={(id: FontFamilyChoice) => {
             setFontFamilyState(id);
-            saveReaderSettings({ fontFamily: id }).catch(() => {});
+            saveReaderSettings({ fontFamily: id }).catch(() => { });
           }}
           onClose={() => setActivePicker(null)}
         />

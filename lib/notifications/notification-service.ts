@@ -127,7 +127,6 @@ export async function setupNotificationChannels(): Promise<void> {
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#D4AF7A',
-      sound: 'default',
     });
 
     await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.STREAK_ALERT, {
@@ -136,7 +135,6 @@ export async function setupNotificationChannels(): Promise<void> {
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 300, 150, 300],
       lightColor: '#F59E0B',
-      sound: 'default',
     });
   } catch (err) {
     if (__DEV__) console.warn('[Notifications] setupNotificationChannels error:', err);
@@ -269,6 +267,7 @@ export async function scheduleAllSmartReminders(lang: string = 'az'): Promise<bo
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        channelId: NOTIFICATION_CHANNELS.DAILY_REMINDER,
         hour: prefs.hour,
         minute: prefs.minute,
       },
@@ -286,6 +285,7 @@ export async function scheduleAllSmartReminders(lang: string = 'az'): Promise<bo
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        channelId: NOTIFICATION_CHANNELS.DAILY_REMINDER,
         seconds: 48 * 3600, // 48 hours from now
         repeats: false,
       },
@@ -320,6 +320,7 @@ export async function sendInstantTestNotification(lang: string = 'az'): Promise<
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        channelId: NOTIFICATION_CHANNELS.DAILY_REMINDER,
         seconds: 2,
         repeats: false,
       },
