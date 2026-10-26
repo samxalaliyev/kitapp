@@ -4,6 +4,7 @@ export const csTranslations: Record<TranslationKey, string> = {
   tab_home: 'Domů',
   tab_library: 'Knihovna',
   tab_vocabulary: 'Slovníček',
+  tab_learn: 'Učení',
   tab_settings: 'Nastavení',
   greeting_morning: 'Dobré ráno',
   continue_reading: 'Pokračovat ve Čtení',

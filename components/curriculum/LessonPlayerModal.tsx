@@ -374,7 +374,7 @@ export function LessonPlayerModal({
                   {getLocalizedText(unit.grammarRule.title, targetLang)}
                 </Text>
 
-                {/* Formula box */}
+                {/* Formula box / Murphy Rule Breakdown */}
                 {unit.grammarRule.formula && (
                   <View
                     style={[
@@ -386,12 +386,33 @@ export function LessonPlayerModal({
                     ]}
                   >
                     <View style={styles.formulaHeader}>
-                      <Feather name="code" size={15} color="#10b981" />
-                      <Text style={styles.formulaLabel}>Qayda Formulu</Text>
+                      <Feather name="zap" size={15} color="#10b981" />
+                      <Text style={styles.formulaLabel}>Qısa və Aydın Qayda</Text>
                     </View>
-                    <Text style={[styles.formulaText, { color: colors.text }]}>
-                      {unit.grammarRule.formula}
-                    </Text>
+                    {unit.grammarRule.formula.includes('•') ? (
+                      <View style={styles.formulaChipsRow}>
+                        {unit.grammarRule.formula.split('•').map((item, idx) => (
+                          <View
+                            key={idx}
+                            style={[
+                              styles.formulaPill,
+                              {
+                                backgroundColor: colors.isDark ? '#0f172a' : '#ffffff',
+                                borderColor: colors.isDark ? '#334155' : '#86efac',
+                              },
+                            ]}
+                          >
+                            <Text style={[styles.formulaPillText, { color: colors.text }]}>
+                              {item.trim()}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    ) : (
+                      <Text style={[styles.formulaText, { color: colors.text }]}>
+                        {unit.grammarRule.formula}
+                      </Text>
+                    )}
                   </View>
                 )}
 
@@ -716,6 +737,117 @@ export function LessonPlayerModal({
                   {getLocalizedText(currentExercise.prompt, targetLang)}
                 </Text>
 
+                {/* Target Sentence with Blank Slot or Context Instruction */}
+                {(() => {
+                  const instructionText = currentExercise.instruction
+                    ? getLocalizedText(currentExercise.instruction, targetLang)
+                    : '';
+                  const promptText = getLocalizedText(currentExercise.prompt, targetLang);
+                  const sentenceWithBlank = instructionText.includes('___')
+                    ? instructionText
+                    : promptText.includes('___')
+                    ? promptText
+                    : '';
+
+                  const chosenOption = currentExercise.options?.find((o) => o.id === selectedOptionId);
+
+                  if (sentenceWithBlank) {
+                    const [beforeBlank, afterBlank] = sentenceWithBlank.split('___');
+                    const fullSentence = chosenOption
+                      ? `${beforeBlank} ${chosenOption.text} ${afterBlank}`.replace(/\s+/g, ' ').trim()
+                      : beforeBlank.trim();
+
+                    return (
+                      <View
+                        style={[
+                          styles.blankSentenceCard,
+                          {
+                            backgroundColor: colors.surface,
+                            borderColor: colors.surfaceBorder,
+                          },
+                        ]}
+                      >
+                        <View style={styles.blankCardTop}>
+                          <Pressable
+                            style={styles.speakerBtn}
+                            onPress={() => handleSpeech(fullSentence, 0.9)}
+                            hitSlop={8}
+                          >
+                            <Feather name="volume-2" size={18} color={colors.primary} />
+                          </Pressable>
+                          <Text style={[styles.blankInstructionLabel, { color: colors.textMuted }]}>
+                            Boşluğa uyğun olan variantı aşağıdan seçin:
+                          </Text>
+                        </View>
+
+                        <View style={styles.blankTokensRow}>
+                          {Boolean(beforeBlank) && (
+                            <Text style={[styles.blankTokenText, { color: colors.text }]}>
+                              {beforeBlank.trim()}{' '}
+                            </Text>
+                          )}
+                          <View
+                            style={[
+                              styles.blankInteractiveSlot,
+                              {
+                                borderColor: chosenOption
+                                  ? colors.primary
+                                  : colors.isDark
+                                  ? '#475569'
+                                  : '#cbd5e1',
+                                backgroundColor: chosenOption
+                                  ? colors.isDark
+                                    ? '#2e2615'
+                                    : '#fef3c7'
+                                  : colors.isDark
+                                  ? '#0f172a'
+                                  : '#f1f5f9',
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.blankInteractiveSlotText,
+                                {
+                                  color: chosenOption ? colors.primary : colors.textMuted,
+                                  fontWeight: chosenOption ? FontWeight.bold : FontWeight.medium,
+                                },
+                              ]}
+                            >
+                              {chosenOption ? chosenOption.text : '  ____  '}
+                            </Text>
+                          </View>
+                          {Boolean(afterBlank) && (
+                            <Text style={[styles.blankTokenText, { color: colors.text }]}>
+                              {' '}{afterBlank.trim()}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+                    );
+                  }
+
+                  if (instructionText && !sentenceWithBlank) {
+                    return (
+                      <View
+                        style={[
+                          styles.instructionCard,
+                          {
+                            backgroundColor: colors.surface,
+                            borderColor: colors.surfaceBorder,
+                          },
+                        ]}
+                      >
+                        <Text style={[styles.instructionCardText, { color: colors.text }]}>
+                          {instructionText}
+                        </Text>
+                      </View>
+                    );
+                  }
+
+                  return null;
+                })()}
+
                 {/* Listening Prompt Audio */}
                 {currentExercise.type === 'listening_dictation' && (
                   <View style={styles.listeningWrap}>
@@ -962,7 +1094,16 @@ export function LessonPlayerModal({
                       >
                         Doğru cavab:{' '}
                         {currentExercise?.correctSentence ||
-                          currentExercise?.options?.find((o) => o.isCorrect)?.text}
+                          (() => {
+                            const correctOpt = currentExercise?.options?.find((o) => o.isCorrect);
+                            const instr = currentExercise?.instruction
+                              ? getLocalizedText(currentExercise.instruction, targetLang)
+                              : '';
+                            if (instr.includes('___') && correctOpt) {
+                              return instr.replace('___', correctOpt.text);
+                            }
+                            return correctOpt?.text || '';
+                          })()}
                       </Text>
                     )}
                   </View>
@@ -1167,6 +1308,22 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
     textTransform: 'uppercase',
+  },
+  formulaChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
+  },
+  formulaPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+  formulaPillText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   formulaText: {
     fontSize: FontSize.lg,
@@ -1513,6 +1670,55 @@ const styles = StyleSheet.create({
   scrambleChipAvailableText: {
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
+  },
+  blankSentenceCard: {
+    borderWidth: 1.5,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  blankCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: Spacing.md,
+  },
+  blankInstructionLabel: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.medium,
+    flex: 1,
+  },
+  blankTokensRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    minHeight: 44,
+  },
+  blankTokenText: {
+    fontSize: 20,
+    fontWeight: FontWeight.semibold,
+  },
+  blankInteractiveSlot: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: Radius.md,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    marginHorizontal: 4,
+  },
+  blankInteractiveSlotText: {
+    fontSize: 20,
+  },
+  instructionCard: {
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  instructionCardText: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.medium,
+    lineHeight: 22,
   },
   optionsList: {
     gap: 12,

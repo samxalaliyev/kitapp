@@ -10,6 +10,7 @@ export type TranslationKey =
   | 'tab_home'
   | 'tab_library'
   | 'tab_vocabulary'
+  | 'tab_learn'
   | 'tab_settings'
   | 'greeting_morning'
   | 'continue_reading'
@@ -540,6 +541,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     tab_home: 'Ana səhifə',
     tab_library: 'Kitabxana',
     tab_vocabulary: 'Söz ehtiyatı',
+    tab_learn: 'Tədris',
     tab_settings: 'Ayarlar',
     greeting_morning: 'Sabahınız xeyir',
     continue_reading: 'Oxumağa Davam Et',
@@ -1070,6 +1072,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     tab_home: 'Home',
     tab_library: 'Library',
     tab_vocabulary: 'Vocabulary',
+    tab_learn: 'Learn',
     tab_settings: 'Settings',
     greeting_morning: 'Good morning',
     continue_reading: 'Continue Reading',
@@ -1600,6 +1603,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     tab_home: 'Главная',
     tab_library: 'Библиотека',
     tab_vocabulary: 'Словарь',
+    tab_learn: 'Обучение',
     tab_settings: 'Настройки',
     greeting_morning: 'Доброе утро',
     continue_reading: 'Продолжить чтение',
@@ -2129,6 +2133,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     tab_home: 'Ana Sayfa',
     tab_library: 'Kütüphane',
     tab_vocabulary: 'Kelime Bilgisi',
+    tab_learn: 'Öğren',
     tab_settings: 'Ayarlar',
     greeting_morning: 'Günaydın',
     continue_reading: 'Okumaya Devam Et',
@@ -2658,6 +2663,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     tab_home: 'Inicio',
     tab_library: 'Biblioteca',
     tab_vocabulary: 'Vocabulario',
+    tab_learn: 'Aprender',
     tab_settings: 'Ajustes',
     greeting_morning: 'Buenos días',
     continue_reading: 'Continuar Leyendo',
@@ -3180,6 +3186,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     tab_home: 'Startseite',
     tab_library: 'Bibliothek',
     tab_vocabulary: 'Wortschatz',
+    tab_learn: 'Lernen',
     tab_settings: 'Einstellungen',
     greeting_morning: 'Guten Morgen',
     continue_reading: 'Weiterlesen',
@@ -3702,6 +3709,7 @@ const TRANSLATIONS: Record<LanguageCode, Partial<Record<TranslationKey, string>>
     tab_home: 'Accueil',
     tab_library: 'Bibliothèque',
     tab_vocabulary: 'Vocabulaire',
+    tab_learn: 'Apprendre',
     tab_settings: 'Paramètres',
     greeting_morning: 'Bonjour',
     continue_reading: 'Continuer la Lecture',

@@ -4,6 +4,7 @@ export const plTranslations: Record<TranslationKey, string> = {
   tab_home: 'Główna',
   tab_library: 'Biblioteka',
   tab_vocabulary: 'Słownictwo',
+  tab_learn: 'Nauka',
   tab_settings: 'Ustawienia',
   greeting_morning: 'Dzień dobry',
   continue_reading: 'Kontynuuj Czytanie',

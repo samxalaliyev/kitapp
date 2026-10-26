@@ -29,6 +29,7 @@ interface TabItemConfig {
 const TAB_CONFIGS: Record<string, TabItemConfig> = {
   index: { icon: 'home', titleKey: 'tab_home', fallback: 'Home' },
   library: { icon: 'book-open', titleKey: 'tab_library', fallback: 'Library' },
+  learn: { icon: 'compass', titleKey: 'tab_learn', fallback: 'Learn' },
   vocabulary: { icon: 'heart', titleKey: 'tab_vocabulary', fallback: 'Vocabulary' },
   settings: { icon: 'settings', titleKey: 'tab_settings', fallback: 'Settings' },
 };

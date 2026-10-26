@@ -14,15 +14,20 @@ import { Feather } from '@expo/vector-icons';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useAppTheme } from '@/lib/theme';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
-import { CEFR_LEVELS, type UnitDisplayItem } from '@/lib/curriculum/curriculum-service';
+import {
+  CEFR_LEVELS,
+  type CurriculumSection,
+  type UnitDisplayItem,
+} from '@/lib/curriculum/curriculum-service';
 import type { LevelId } from '@/types/curriculum';
 import { addXP } from '@/lib/gamification/leagues';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export interface GamifiedPathMapProps {
-  units: UnitDisplayItem[];
-  selectedLevel: LevelId;
+  sections?: CurriculumSection[];
+  units?: UnitDisplayItem[];
+  selectedLevel?: LevelId;
   onSelectUnit: (unit: UnitDisplayItem) => void;
   isPremium: boolean;
   onOpenPaywall?: () => void;
@@ -33,6 +38,7 @@ export interface GamifiedPathMapProps {
 const OFFSET_PATTERN = [0, -68, -34, 34, 68, 34, -34, -68];
 
 export function GamifiedPathMap({
+  sections,
   units,
   selectedLevel,
   onSelectUnit,
@@ -47,16 +53,39 @@ export function GamifiedPathMap({
   const [previewUnit, setPreviewUnit] = useState<UnitDisplayItem | null>(null);
   const [chestClaimedMap, setChestClaimedMap] = useState<Record<string, boolean>>({});
   const [showHandbookModal, setShowHandbookModal] = useState(false);
+  const [selectedHandbookLevel, setSelectedHandbookLevel] = useState<LevelId>('A1');
 
   // Animations
   const bounceAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  // Find the first unlocked (or current active) unit
-  const activeUnitIndex = useMemo(() => {
-    const idx = units.findIndex((u) => u.status === 'unlocked');
-    return idx !== -1 ? idx : 0;
-  }, [units]);
+  // Multi-level continuous sections
+  const activeSections: CurriculumSection[] = useMemo(() => {
+    if (sections && sections.length > 0) return sections;
+    const lvl = CEFR_LEVELS.find((l) => l.id === selectedLevel) || CEFR_LEVELS[0];
+    return [
+      {
+        level: selectedLevel || 'A1',
+        order: 1,
+        title: lvl.title[targetLang] || lvl.title.en,
+        description: lvl.description[targetLang] || lvl.description.en,
+        accentColor: lvl.accentColor,
+        isUnlocked: true,
+        units: units || [],
+      },
+    ];
+  }, [sections, selectedLevel, units, targetLang]);
+
+  // Global active node (the first incomplete, unlocked node across unlocked sections)
+  const globalActiveUnitId = useMemo(() => {
+    for (const sec of activeSections) {
+      if (sec.isUnlocked) {
+        const u = sec.units.find((item) => item.status === 'unlocked');
+        if (u) return u.id;
+      }
+    }
+    return activeSections[0]?.units[0]?.id || null;
+  }, [activeSections]);
 
   // Floating "BAŞLA" bounce & pulse loop
   useEffect(() => {
@@ -103,16 +132,11 @@ export function GamifiedPathMap({
     };
   }, [bounceAnim, pulseAnim]);
 
-  // Current level details
-  const levelInfo = useMemo(() => {
-    return CEFR_LEVELS.find((l) => l.id === selectedLevel) || CEFR_LEVELS[0];
-  }, [selectedLevel]);
-
-  const completedCount = useMemo(() => {
-    return units.filter((u) => u.status === 'completed').length;
-  }, [units]);
-
-  const progressPercent = Math.round((completedCount / Math.max(1, units.length)) * 100);
+  // Current preview level details
+  const previewLevelInfo = useMemo(() => {
+    const targetLvl = previewUnit?.level || selectedHandbookLevel || selectedLevel || 'A1';
+    return CEFR_LEVELS.find((l) => l.id === targetLvl) || CEFR_LEVELS[0];
+  }, [previewUnit?.level, selectedHandbookLevel, selectedLevel]);
 
   // Handle node tap
   const handleNodePress = (unit: UnitDisplayItem) => {
@@ -141,63 +165,92 @@ export function GamifiedPathMap({
 
   return (
     <View style={styles.container}>
-      {/* 1. DUOLINGO-STYLE SECTION HERO BANNER */}
-      <View
-        style={[
-          styles.sectionBanner,
-          {
-            backgroundColor: levelInfo.accentColor,
-            borderColor: colors.isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)',
-          },
-        ]}
-      >
-        <View style={styles.sectionBannerHeader}>
-          <View style={styles.sectionBadge}>
-            <Text style={styles.sectionBadgeText}>
-              BÖLMƏ 1 • {selectedLevel} SEVİYYƏ
-            </Text>
-          </View>
-          <Pressable
-            style={styles.handbookBtn}
-            onPress={() => setShowHandbookModal(true)}
-            hitSlop={8}
-          >
-            <Feather name="book-open" size={16} color="#ffffff" />
-            <Text style={styles.handbookBtnText}>Qaydalar</Text>
-          </Pressable>
-        </View>
+      {/* CONTINUOUS DOWNWARD MULTI-SECTION MAP (DUOLINGO STYLE) */}
+      {activeSections.map((sec, secIndex) => {
+        const completedCount = sec.units.filter((u) => u.status === 'completed').length;
+        const progressPercent = Math.round((completedCount / Math.max(1, sec.units.length)) * 100);
 
-        <Text style={styles.sectionBannerTitle}>
-          {levelInfo.title[targetLang] || levelInfo.title.en}
-        </Text>
-        <Text style={styles.sectionBannerSubtitle} numberOfLines={2}>
-          {levelInfo.description[targetLang] || levelInfo.description.en}
-        </Text>
-
-        {/* Level Progress Bar */}
-        <View style={styles.progressRow}>
-          <View style={styles.progressBarTrack}>
+        return (
+          <View key={sec.level} style={styles.sectionBlock}>
+            {/* 1. DUOLINGO-STYLE SECTION HERO BANNER */}
             <View
               style={[
-                styles.progressBarFill,
-                { width: `${Math.max(6, progressPercent)}%` },
+                styles.sectionBanner,
+                {
+                  backgroundColor: sec.isUnlocked
+                    ? sec.accentColor
+                    : colors.isDark
+                    ? '#1e293b'
+                    : '#475569',
+                  borderColor: colors.isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)',
+                  marginTop: secIndex > 0 ? 32 : 0,
+                },
               ]}
-            />
-          </View>
-          <Text style={styles.progressPercentText}>%{progressPercent}</Text>
-        </View>
-      </View>
+            >
+              <View style={styles.sectionBannerHeader}>
+                <View style={styles.sectionBadge}>
+                  <Text style={styles.sectionBadgeText}>
+                    BÖLMƏ {sec.order} • {sec.level} SEVİYYƏ
+                  </Text>
+                </View>
+                {sec.isUnlocked ? (
+                  <Pressable
+                    style={styles.handbookBtn}
+                    onPress={() => {
+                      setSelectedHandbookLevel(sec.level);
+                      setShowHandbookModal(true);
+                    }}
+                    hitSlop={8}
+                  >
+                    <Feather name="book-open" size={16} color="#ffffff" />
+                    <Text style={styles.handbookBtnText}>Qaydalar</Text>
+                  </Pressable>
+                ) : (
+                  <View style={[styles.handbookBtn, { backgroundColor: 'rgba(0, 0, 0, 0.28)' }]}>
+                    <Feather name="lock" size={13} color="#ffffff" />
+                    <Text style={styles.handbookBtnText}>Kilidli</Text>
+                  </View>
+                )}
+              </View>
 
-      {/* 2. THE GAMIFIED SINUOUS WINDING PATH */}
-      <View style={styles.pathMapContainer}>
-        {units.map((unit, index) => {
+              <Text style={styles.sectionBannerTitle}>{sec.title}</Text>
+              <Text style={styles.sectionBannerSubtitle} numberOfLines={2}>
+                {sec.description}
+              </Text>
+
+              {/* Level Progress Bar or Lock Note */}
+              {sec.isUnlocked ? (
+                <View style={styles.progressRow}>
+                  <View style={styles.progressBarTrack}>
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        { width: `${Math.max(6, progressPercent)}%` },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.progressPercentText}>%{progressPercent}</Text>
+                </View>
+              ) : (
+                <View style={styles.lockedSectionRow}>
+                  <Feather name="lock" size={13} color="#ffffffcc" />
+                  <Text style={styles.lockedSectionNote}>
+                    Bu bölməni açmaq üçün əvvəlki səviyyəni tamamlayın
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* 2. THE GAMIFIED SINUOUS WINDING PATH */}
+            <View style={styles.pathMapContainer}>
+              {sec.units.map((unit, index) => {
           const isCompleted = unit.status === 'completed';
           const isUnlocked = unit.status === 'unlocked';
-          const isLocked = unit.status === 'locked';
-          const isActiveNode = index === activeUnitIndex && isUnlocked;
+          const isLocked = unit.status === 'locked' || !sec.isUnlocked;
+          const isActiveNode = unit.id === globalActiveUnitId && isUnlocked;
 
           const currentOffset = OFFSET_PATTERN[index % OFFSET_PATTERN.length];
-          const hasNextNode = index < units.length - 1;
+          const hasNextNode = index < sec.units.length - 1;
           const nextOffset = hasNextNode
             ? OFFSET_PATTERN[(index + 1) % OFFSET_PATTERN.length]
             : currentOffset;
@@ -208,7 +261,12 @@ export function GamifiedPathMap({
           let btnHighlight = colors.isDark ? '#334155' : '#f1f5f9';
           let iconColor = colors.isDark ? '#64748b' : '#94a3b8';
 
-          if (unit.nodeType === 'chest') {
+          if (isLocked) {
+            btnBg = colors.isDark ? '#182030' : '#e2e8f0';
+            btnBevel = colors.isDark ? '#0c111c' : '#cbd5e1';
+            btnHighlight = colors.isDark ? '#232f44' : '#f1f5f9';
+            iconColor = colors.isDark ? '#4b5563' : '#94a3b8';
+          } else if (unit.nodeType === 'chest') {
             btnBg = isCompleted || isUnlocked ? '#f59e0b' : (colors.isDark ? '#2b2111' : '#fef3c7');
             btnBevel = isCompleted || isUnlocked ? '#b45309' : (colors.isDark ? '#191206' : '#fde68a');
             btnHighlight = '#fde68a';
@@ -243,8 +301,10 @@ export function GamifiedPathMap({
                       tVal * tVal * nextOffset;
                     const dotY = tVal * 115;
 
-                    const nextNode = units[index + 1];
-                    const isNextActive = nextNode.status === 'completed' || nextNode.status === 'unlocked';
+                    const nextNode = sec.units[index + 1];
+                    const isNextActive =
+                      sec.isUnlocked &&
+                      (nextNode.status === 'completed' || nextNode.status === 'unlocked');
 
                     return (
                       <View
@@ -255,7 +315,7 @@ export function GamifiedPathMap({
                             transform: [{ translateX: dotX }],
                             top: dotY + 45,
                             backgroundColor: isNextActive
-                              ? levelInfo.accentColor
+                              ? sec.accentColor
                               : colors.isDark
                               ? 'rgba(255, 255, 255, 0.12)'
                               : 'rgba(0, 0, 0, 0.1)',
@@ -387,6 +447,9 @@ export function GamifiedPathMap({
           );
         })}
       </View>
+    </View>
+  );
+})}
 
       {/* 3. DUOLINGO-STYLE LESSON PREVIEW BOTTOM SHEET MODAL */}
       <Modal
@@ -407,7 +470,7 @@ export function GamifiedPathMap({
                 styles.previewCard,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: previewUnit.status === 'locked' ? colors.surfaceBorder : levelInfo.accentColor,
+                  borderColor: previewUnit.status === 'locked' ? colors.surfaceBorder : previewLevelInfo.accentColor,
                 },
               ]}
             >
@@ -428,11 +491,11 @@ export function GamifiedPathMap({
                     backgroundColor:
                       previewUnit.status === 'locked'
                         ? colors.isDark ? '#1e293b' : '#f1f5f9'
-                        : levelInfo.accentColor + '20',
+                        : previewLevelInfo.accentColor + '20',
                     borderColor:
                       previewUnit.status === 'locked'
                         ? colors.surfaceBorder
-                        : levelInfo.accentColor,
+                        : previewLevelInfo.accentColor,
                   },
                 ]}
               >
@@ -448,7 +511,7 @@ export function GamifiedPathMap({
                   color={
                     previewUnit.status === 'locked'
                       ? colors.textMuted
-                      : levelInfo.accentColor
+                      : previewLevelInfo.accentColor
                   }
                 />
               </View>
@@ -457,10 +520,10 @@ export function GamifiedPathMap({
               <View
                 style={[
                   styles.previewOrderTag,
-                  { backgroundColor: levelInfo.accentColor + '20' },
+                  { backgroundColor: previewLevelInfo.accentColor + '20' },
                 ]}
               >
-                <Text style={[styles.previewOrderText, { color: levelInfo.accentColor }]}>
+                <Text style={[styles.previewOrderText, { color: previewLevelInfo.accentColor }]}>
                   {previewUnit.nodeType === 'chest'
                     ? '🎁 XƏZİNƏ MÜKAFATI'
                     : `${previewUnit.level} • DƏRS ${previewUnit.order}`}
@@ -537,7 +600,7 @@ export function GamifiedPathMap({
                   <Pressable
                     style={[
                       styles.start3DBtn,
-                      { backgroundColor: levelInfo.accentColor, borderBottomColor: '#059669' },
+                      { backgroundColor: previewLevelInfo.accentColor, borderBottomColor: '#059669' },
                     ]}
                     onPress={handleStartFromPreview}
                   >
@@ -576,7 +639,7 @@ export function GamifiedPathMap({
                   📖 Qaydalar Kitabçası ({selectedLevel})
                 </Text>
                 <Text style={[styles.handbookSub, { color: colors.textMuted }]}>
-                  {levelInfo.title.az || levelInfo.title.en} təməl formulları
+                  {previewLevelInfo.title.az || previewLevelInfo.title.en} təməl formulları
                 </Text>
               </View>
               <Pressable
@@ -620,7 +683,7 @@ export function GamifiedPathMap({
             </View>
 
             <Pressable
-              style={[styles.start3DBtn, { backgroundColor: levelInfo.accentColor, borderBottomColor: '#059669', marginTop: Spacing.md }]}
+              style={[styles.start3DBtn, { backgroundColor: previewLevelInfo.accentColor, borderBottomColor: '#059669', marginTop: Spacing.md }]}
               onPress={() => setShowHandbookModal(false)}
             >
               <Text style={styles.start3DBtnText}>Anladım, Xəritəyə Qayıt</Text>
@@ -635,6 +698,20 @@ export function GamifiedPathMap({
 const styles = StyleSheet.create({
   container: {
     paddingBottom: 40,
+  },
+  sectionBlock: {
+    marginBottom: Spacing.xl,
+  },
+  lockedSectionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 6,
+  },
+  lockedSectionNote: {
+    color: '#ffffffdd',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.medium,
   },
   sectionBanner: {
     marginHorizontal: Spacing.lg,

@@ -4,6 +4,7 @@ export const itTranslations: Record<TranslationKey, string> = {
   tab_home: 'Home',
   tab_library: 'Libreria',
   tab_vocabulary: 'Vocabolario',
+  tab_learn: 'Impara',
   tab_settings: 'Impostazioni',
   greeting_morning: 'Buongiorno',
   continue_reading: 'Continua a Leggere',

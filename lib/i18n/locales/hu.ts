@@ -4,6 +4,7 @@ export const huTranslations: Record<TranslationKey, string> = {
   tab_home: 'Kezdőlap',
   tab_library: 'Könyvtár',
   tab_vocabulary: 'Szótár',
+  tab_learn: 'Tanulás',
   tab_settings: 'Beállítások',
   greeting_morning: 'Jó reggelt',
   continue_reading: 'Olvasás Folytatása',

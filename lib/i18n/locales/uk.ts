@@ -4,6 +4,7 @@ export const ukTranslations: Record<TranslationKey, string> = {
   tab_home: 'Головна',
   tab_library: 'Бібліотека',
   tab_vocabulary: 'Словник',
+  tab_learn: 'Навчання',
   tab_settings: 'Налаштування',
   greeting_morning: 'Доброго ранку',
   continue_reading: 'Продовжити Читання',

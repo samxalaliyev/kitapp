@@ -26,6 +26,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="learn"
+        options={{
+          title: t('tab_learn'),
+        }}
+      />
+      <Tabs.Screen
         name="vocabulary"
         options={{
           title: t('tab_vocabulary'),

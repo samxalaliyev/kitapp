@@ -128,6 +128,33 @@ export async function getAllProgressForLevel(levelId: LevelId): Promise<UserUnit
   }
 }
 
+export async function getAllUserProgress(): Promise<UserUnitProgress[]> {
+  try {
+    const db = await ensureCurriculumReady();
+    const rows = await db.getAllAsync<{
+      unit_id: string;
+      level_id: string;
+      status: string;
+      score: number;
+      stars: number;
+      completed_at: number | null;
+      unlocked_at: number;
+    }>('SELECT * FROM curriculum_progress');
+
+    return rows.map((r) => ({
+      unitId: r.unit_id,
+      levelId: r.level_id as LevelId,
+      status: r.status as UnitStatus,
+      score: r.score,
+      stars: r.stars,
+      completedAt: r.completed_at ?? undefined,
+      unlockedAt: r.unlocked_at,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function saveUnitProgress(progress: UserUnitProgress): Promise<void> {
   const db = await ensureCurriculumReady();
   await db.runAsync(

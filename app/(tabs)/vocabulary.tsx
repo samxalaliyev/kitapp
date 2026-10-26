@@ -36,17 +36,7 @@ import {
 } from '@/lib/vocabulary/game-service';
 import { type SavedWord, initVocabularyDatabase } from '@/lib/vocabulary/db';
 import { deleteSavedWord, listSavedWords } from '@/lib/vocabulary/store';
-import {
-  CEFR_LEVELS,
-  getUnitData,
-  listUnitsWithProgress,
-  type UnitDisplayItem,
-} from '@/lib/curriculum/curriculum-service';
-import { validateUnitAccess } from '@/lib/curriculum/security-guard';
-import { LessonPlayerModal } from '@/components/curriculum/LessonPlayerModal';
-import { GamifiedPathMap } from '@/components/curriculum/GamifiedPathMap';
-import type { CurriculumUnit, LevelId } from '@/types/curriculum';
-import { checkIsOnline } from '@/lib/network';
+
 
 export default function VocabularyScreen() {
   const router = useRouter();
@@ -72,23 +62,7 @@ export default function VocabularyScreen() {
   const [pendingGameType, setPendingGameType] = useState<'flashcard' | 'pair' | 'quiz' | null>(null);
   const [leaderboardVisible, setLeaderboardVisible] = useState(false);
 
-  // Curriculum Learning Path State
-  const [activeSection, setActiveSection] = useState<'curriculum' | 'vocab'>('curriculum');
-  const [selectedLevel, setSelectedLevel] = useState<LevelId>('A1');
-  const [curriculumUnits, setCurriculumUnits] = useState<UnitDisplayItem[]>([]);
-  const [activePlayingUnit, setActivePlayingUnit] = useState<CurriculumUnit | null>(null);
-  const [lessonPlayerVisible, setLessonPlayerVisible] = useState(false);
-  const [curriculumLoading, setCurriculumLoading] = useState(false);
 
-  // Load curriculum units for selected level
-  const loadCurriculum = useCallback(async () => {
-    try {
-      const units = await listUnitsWithProgress(selectedLevel, targetLang);
-      setCurriculumUnits(units);
-    } catch (e) {
-      if (__DEV__) console.warn('[Curriculum] Error loading units:', e);
-    }
-  }, [selectedLevel, targetLang]);
 
   // Load words, hearts, and game stats
   const loadData = useCallback(async () => {
@@ -116,68 +90,15 @@ export default function VocabularyScreen() {
 
   useEffect(() => {
     loadData();
-    loadCurriculum();
-  }, [loadData, loadCurriculum]);
+  }, [loadData]);
 
   useFocusEffect(
     useCallback(() => {
       loadData();
-      loadCurriculum();
-    }, [loadData, loadCurriculum]),
+    }, [loadData]),
   );
 
-  const handleUnitPress = async (unitItem: UnitDisplayItem) => {
-    if (unitItem.status === 'locked') {
-      Alert.alert(
-        '🔒 Dərs Kilidlidir',
-        'Bu dərsin kilidini açmaq üçün əvvəlki dərsi ən azı 70% nəticə ilə bitirin.',
-        [{ text: 'Oldu', style: 'default' }]
-      );
-      return;
-    }
 
-    const isOnline = await checkIsOnline();
-    const access = await validateUnitAccess(
-      unitItem.id,
-      selectedLevel,
-      unitItem.order,
-      isPremium,
-      isOnline
-    );
-
-    if (!access.allowed) {
-      if (access.reason === 'OUT_OF_HEARTS') {
-        setPaywallVisible(true);
-        return;
-      }
-      if (access.reason === 'OFFLINE_FREE_RESTRICTED') {
-        Alert.alert(
-          '📶 İnternet Bağlantısı Tələb Olunur',
-          access.message || 'Növbəti dərslərə daxil olmaq üçün interneti aktiv edin və ya Oflayn Rejim üçün Litera Premium-a keçin.',
-          [
-            { text: 'Ləğv et', style: 'cancel' },
-            { text: '👑 Premium Al', onPress: () => setPaywallVisible(true) },
-          ]
-        );
-        return;
-      }
-      Alert.alert('Diqqət', access.message || 'Dərsə başlamaq mümkün olmadı.');
-      return;
-    }
-
-    setCurriculumLoading(true);
-    try {
-      const fullUnit = await getUnitData(unitItem.id, selectedLevel);
-      if (fullUnit) {
-        setActivePlayingUnit(fullUnit);
-        setLessonPlayerVisible(true);
-      } else {
-        Alert.alert('Xəta', 'Dərs materialları yüklənə bilmədi. İnternet bağlantınızı yoxlayın.');
-      }
-    } finally {
-      setCurriculumLoading(false);
-    }
-  };
 
   const handleDeleteWord = useCallback(
     async (wordItem: SavedWord) => {
@@ -307,131 +228,11 @@ export default function VocabularyScreen() {
         </View>
       </View>
 
-      {/* Top Segmented Bar: Curriculum Path vs Vocab & Games */}
-      <View
-        style={[
-          styles.topSegmentedBar,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.surfaceBorder,
-          },
-        ]}
-      >
-        <Pressable
-          style={[
-            styles.segmentBtn,
-            activeSection === 'curriculum' && {
-              backgroundColor: colors.primary,
-            },
-          ]}
-          onPress={() => setActiveSection('curriculum')}
-        >
-          <Feather
-            name="map"
-            size={16}
-            color={activeSection === 'curriculum' ? '#0d0f17' : colors.textMuted}
-          />
-          <Text
-            style={[
-              styles.segmentBtnText,
-              {
-                color: activeSection === 'curriculum' ? '#0d0f17' : colors.textMuted,
-                fontWeight: activeSection === 'curriculum' ? FontWeight.bold : FontWeight.medium,
-              },
-            ]}
-          >
-            Tədris Xəritəsi
-          </Text>
-        </Pressable>
-
-        <Pressable
-          style={[
-            styles.segmentBtn,
-            activeSection === 'vocab' && {
-              backgroundColor: colors.primary,
-            },
-          ]}
-          onPress={() => setActiveSection('vocab')}
-        >
-          <Feather
-            name="book-open"
-            size={16}
-            color={activeSection === 'vocab' ? '#0d0f17' : colors.textMuted}
-          />
-          <Text
-            style={[
-              styles.segmentBtnText,
-              {
-                color: activeSection === 'vocab' ? '#0d0f17' : colors.textMuted,
-                fontWeight: activeSection === 'vocab' ? FontWeight.bold : FontWeight.medium,
-              },
-            ]}
-          >
-            Lüğətim & Oyunlar
-          </Text>
-        </Pressable>
-      </View>
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
       >
-        {activeSection === 'curriculum' ? (
-          <>
-            {/* Level Selector Pills */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.levelSelectorRow}
-            >
-              {CEFR_LEVELS.map((lvl) => {
-                const isSelected = selectedLevel === lvl.id;
-                return (
-                  <Pressable
-                    key={lvl.id}
-                    style={[
-                      styles.levelChip,
-                      {
-                        backgroundColor: isSelected
-                          ? colors.primary
-                          : colors.surface,
-                        borderColor: isSelected ? colors.primary : colors.surfaceBorder,
-                      },
-                    ]}
-                    onPress={() => setSelectedLevel(lvl.id)}
-                  >
-                    <Text
-                      style={[
-                        styles.levelChipText,
-                        {
-                          color: isSelected ? '#0d0f17' : colors.text,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.medium,
-                        },
-                      ]}
-                    >
-                      {lvl.id} Səviyyə
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            {/* Gamified Sinuous Winding Path (Duolingo & EWA style) */}
-            <GamifiedPathMap
-              units={curriculumUnits}
-              selectedLevel={selectedLevel}
-              onSelectUnit={handleUnitPress}
-              isPremium={isPremium}
-              onOpenPaywall={() => setPaywallVisible(true)}
-              onUnitRefreshed={() => {
-                loadCurriculum();
-                loadData();
-              }}
-            />
-          </>
-        ) : (
-          <>
-            {/* Guest Registration Incentive Banner */}
+        {/* Guest Registration Incentive Banner */}
             {!user ? (
               <View
                 style={[
@@ -752,9 +553,7 @@ export default function VocabularyScreen() {
             ))}
           </View>
         )}
-      </>
-    )}
-  </ScrollView>
+      </ScrollView>
 
       {/* GAME & STUDY MODALS */}
       <FlashcardStudyModal
@@ -840,25 +639,7 @@ export default function VocabularyScreen() {
         }}
       />
 
-      {/* CURRICULUM LESSON PLAYER MODAL */}
-      <LessonPlayerModal
-        visible={lessonPlayerVisible}
-        unit={activePlayingUnit}
-        nextUnitId={curriculumUnits.find((u) => u.order === (activePlayingUnit?.order || 0) + 1)?.id}
-        isPremium={isPremium}
-        onClose={() => {
-          setLessonPlayerVisible(false);
-          setActivePlayingUnit(null);
-        }}
-        onCompleted={() => {
-          loadCurriculum();
-          loadData();
-        }}
-        onUpgradePremium={() => {
-          setLessonPlayerVisible(false);
-          setPaywallVisible(true);
-        }}
-      />
+
     </View>
   );
 }
