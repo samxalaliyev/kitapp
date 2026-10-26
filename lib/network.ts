@@ -21,23 +21,38 @@ export async function checkIsOnline(): Promise<boolean> {
     return lastCheckResult;
   }
 
-  // 3. Ultra-fast HTTP ping probe with 1.8s timeout
+  // 3. Resilient HTTP ping probe
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1800);
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
 
-    const res = await fetch('https://clients3.google.com/generate_204', {
-      method: 'HEAD',
-      signal: controller.signal,
-      headers: { 'Cache-Control': 'no-cache' },
-    });
+    let isReachable = false;
+    try {
+      const res = await fetch('https://clients3.google.com/generate_204', {
+        method: 'GET',
+        signal: controller.signal,
+        headers: { 'Cache-Control': 'no-cache' },
+      });
+      isReachable = res.status >= 200 && res.status < 400;
+    } catch {
+      // Fallback probe if Google 204 is restricted or timed out
+      try {
+        const fallbackRes = await fetch('https://cloudflare.com/cdn-cgi/trace', {
+          method: 'HEAD',
+          signal: controller.signal,
+          headers: { 'Cache-Control': 'no-cache' },
+        });
+        isReachable = fallbackRes.status >= 200 && fallbackRes.status < 400;
+      } catch {
+        isReachable = false;
+      }
+    }
 
     clearTimeout(timeoutId);
-    lastCheckResult = res.status >= 200 && res.status < 400;
+    lastCheckResult = isReachable;
     lastCheckTime = Date.now();
     return lastCheckResult;
   } catch {
-    // If the probe fails, assume offline
     lastCheckResult = false;
     lastCheckTime = Date.now();
     return false;

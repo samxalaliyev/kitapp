@@ -21,6 +21,7 @@ import {
 } from '@/lib/curriculum/curriculum-service';
 import type { LevelId } from '@/types/curriculum';
 import { addXP } from '@/lib/gamification/leagues';
+import { getCurriculumText, getLocalizedContent } from '@/lib/curriculum/curriculum-i18n';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -28,6 +29,7 @@ export interface GamifiedPathMapProps {
   sections?: CurriculumSection[];
   units?: UnitDisplayItem[];
   selectedLevel?: LevelId;
+  uiLang?: string;
   onSelectUnit: (unit: UnitDisplayItem) => void;
   isPremium: boolean;
   onOpenPaywall?: () => void;
@@ -41,6 +43,7 @@ export function GamifiedPathMap({
   sections,
   units,
   selectedLevel,
+  uiLang,
   onSelectUnit,
   isPremium,
   onOpenPaywall,
@@ -48,6 +51,7 @@ export function GamifiedPathMap({
 }: GamifiedPathMapProps) {
   const { colors } = useAppTheme();
   const { targetLang, t } = useLanguage();
+  const activeLang = uiLang || targetLang || 'az';
 
   // Selected unit for preview modal
   const [previewUnit, setPreviewUnit] = useState<UnitDisplayItem | null>(null);
@@ -190,7 +194,7 @@ export function GamifiedPathMap({
               <View style={styles.sectionBannerHeader}>
                 <View style={styles.sectionBadge}>
                   <Text style={styles.sectionBadgeText}>
-                    BÖLMƏ {sec.order} • {sec.level} SEVİYYƏ
+                    {getCurriculumText('section', activeLang)} {sec.order} • {sec.level} {getCurriculumText('level', activeLang)}
                   </Text>
                 </View>
                 {sec.isUnlocked ? (
@@ -203,12 +207,12 @@ export function GamifiedPathMap({
                     hitSlop={8}
                   >
                     <Feather name="book-open" size={16} color="#ffffff" />
-                    <Text style={styles.handbookBtnText}>Qaydalar</Text>
+                    <Text style={styles.handbookBtnText}>{getCurriculumText('rules', activeLang)}</Text>
                   </Pressable>
                 ) : (
                   <View style={[styles.handbookBtn, { backgroundColor: 'rgba(0, 0, 0, 0.28)' }]}>
                     <Feather name="lock" size={13} color="#ffffff" />
-                    <Text style={styles.handbookBtnText}>Kilidli</Text>
+                    <Text style={styles.handbookBtnText}>{getCurriculumText('locked', activeLang)}</Text>
                   </View>
                 )}
               </View>
@@ -235,7 +239,7 @@ export function GamifiedPathMap({
                 <View style={styles.lockedSectionRow}>
                   <Feather name="lock" size={13} color="#ffffffcc" />
                   <Text style={styles.lockedSectionNote}>
-                    Bu bölməni açmaq üçün əvvəlki səviyyəni tamamlayın
+                    {getCurriculumText('locked_section_note', activeLang)}
                   </Text>
                 </View>
               )}
@@ -345,7 +349,7 @@ export function GamifiedPathMap({
                       },
                     ]}
                   >
-                    <Text style={styles.floatingStartText}>BAŞLA</Text>
+                    <Text style={styles.floatingStartText}>{getCurriculumText('start', activeLang)}</Text>
                     {/* Downward pointer triangle */}
                     <View style={styles.pointerTriangle} />
                   </Animated.View>
@@ -525,8 +529,10 @@ export function GamifiedPathMap({
               >
                 <Text style={[styles.previewOrderText, { color: previewLevelInfo.accentColor }]}>
                   {previewUnit.nodeType === 'chest'
-                    ? '🎁 XƏZİNƏ MÜKAFATI'
-                    : `${previewUnit.level} • DƏRS ${previewUnit.order}`}
+                    ? getCurriculumText('chest_reward', activeLang)
+                    : previewUnit.nodeType === 'checkpoint'
+                    ? getCurriculumText('level_exam', activeLang)
+                    : `${previewUnit.level} • ${getCurriculumText('lesson', activeLang)} ${previewUnit.order}`}
                 </Text>
               </View>
 
@@ -548,7 +554,7 @@ export function GamifiedPathMap({
                 >
                   <Feather name="clock" size={13} color={colors.textMuted} />
                   <Text style={[styles.previewBadgePillText, { color: colors.textMuted }]}>
-                    {previewUnit.estimatedMinutes} dəq
+                    {previewUnit.estimatedMinutes} {getCurriculumText('min', activeLang)}
                   </Text>
                 </View>
 
@@ -584,7 +590,7 @@ export function GamifiedPathMap({
                   <View style={styles.lockedWarningBox}>
                     <Feather name="lock" size={16} color="#ef4444" />
                     <Text style={styles.lockedWarningText}>
-                      Bu dərsi açmaq üçün əvvəlki dərsi ən azı 70% nəticə ilə bitirin.
+                      {getCurriculumText('lesson_locked_prev_unit', activeLang)}
                     </Text>
                   </View>
                 ) : previewUnit.nodeType === 'chest' ? (
@@ -593,7 +599,7 @@ export function GamifiedPathMap({
                     onPress={() => setPreviewUnit(null)}
                   >
                     <Text style={styles.start3DBtnText}>
-                      {chestClaimedMap[previewUnit.id] ? 'Mükafat Artıq Alınıb ✅' : 'Mükafatı Qəbul Et (+25 XP) 🎁'}
+                      {chestClaimedMap[previewUnit.id] ? '✅' : `${getCurriculumText('chest_reward', activeLang)} (+25 XP) 🎁`}
                     </Text>
                   </Pressable>
                 ) : (
@@ -605,7 +611,9 @@ export function GamifiedPathMap({
                     onPress={handleStartFromPreview}
                   >
                     <Text style={styles.start3DBtnText}>
-                      {previewUnit.status === 'completed' ? 'TƏKRAR ET (+50 XP) 🔄' : 'DƏRSƏ BAŞLA (+50 XP) ▶'}
+                      {previewUnit.status === 'completed'
+                        ? `${getCurriculumText('review_lesson', activeLang)} (+50 XP) 🔄`
+                        : `${getCurriculumText('start_lesson', activeLang)} (+50 XP) ▶`}
                     </Text>
                   </Pressable>
                 )}
@@ -636,10 +644,10 @@ export function GamifiedPathMap({
             <View style={styles.handbookHeaderRow}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.handbookTitle, { color: colors.text }]}>
-                  📖 Qaydalar Kitabçası ({selectedLevel})
+                  📖 {getCurriculumText('rules_handbook', activeLang)} ({selectedHandbookLevel})
                 </Text>
                 <Text style={[styles.handbookSub, { color: colors.textMuted }]}>
-                  {previewLevelInfo.title.az || previewLevelInfo.title.en} təməl formulları
+                  {getLocalizedContent(previewLevelInfo.title, activeLang)} {getCurriculumText('basic_formulas', activeLang)}
                 </Text>
               </View>
               <Pressable
@@ -686,7 +694,7 @@ export function GamifiedPathMap({
               style={[styles.start3DBtn, { backgroundColor: previewLevelInfo.accentColor, borderBottomColor: '#059669', marginTop: Spacing.md }]}
               onPress={() => setShowHandbookModal(false)}
             >
-              <Text style={styles.start3DBtnText}>Anladım, Xəritəyə Qayıt</Text>
+              <Text style={styles.start3DBtnText}>{getCurriculumText('got_it_back', activeLang)}</Text>
             </Pressable>
           </View>
         </View>

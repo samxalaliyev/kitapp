@@ -22,7 +22,8 @@ export async function validateUnitAccess(
   levelId: LevelId,
   unitOrder: number,
   isPremium: boolean,
-  isOnline: boolean
+  isOnline: boolean,
+  isBundled: boolean = false
 ): Promise<UnitAccessCheckResult> {
   // 1. Starter unit (Unit 1) is always accessible to everyone
   if (unitId === 'a1_unit_01' || unitOrder === 1) {
@@ -38,8 +39,8 @@ export async function validateUnitAccess(
   }
 
   // 2. Offline check for non-premium users
-  // Free users must be online to unlock/start new stages so AdMob ads can serve
-  if (!isPremium && !isOnline) {
+  // Free users must be online to fetch unbundled/uncached lessons
+  if (!isPremium && !isOnline && !isBundled) {
     const currentProgress = await getUnitProgress(unitId);
     if (!currentProgress || currentProgress.status === 'locked') {
       return {
@@ -106,9 +107,13 @@ export async function handleLessonCompletion(
     await saveUnitProgress(progress);
 
     // Auto-unlock next unit in sequence
-    if (nextUnitId) {
-      await unlockUnit(nextUnitId, levelId);
-      return { passed: true, stars, nextUnlockedId: nextUnitId };
+    let targetNextUnitId = nextUnitId;
+    if (!targetNextUnitId) {
+      targetNextUnitId = `${levelId.toLowerCase()}_unit_${String(unitOrder + 1).padStart(2, '0')}`;
+    }
+    if (targetNextUnitId) {
+      await unlockUnit(targetNextUnitId, levelId);
+      return { passed: true, stars, nextUnlockedId: targetNextUnitId };
     }
     return { passed: true, stars };
   } else {

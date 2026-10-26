@@ -30,12 +30,15 @@ import { addXP } from '@/lib/gamification/leagues';
 import { OutOfHeartsModal } from '@/components/vocabulary/OutOfHeartsModal';
 import { showCurriculumInterstitialAd } from '@/lib/monetization/interstitial-ads';
 
+import { getCurriculumText, getLocalizedContent } from '@/lib/curriculum/curriculum-i18n';
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export interface LessonPlayerModalProps {
   visible: boolean;
   unit: CurriculumUnit | null;
   nextUnitId?: string;
+  uiLang?: string;
   isPremium: boolean;
   onClose: () => void;
   onCompleted?: (result: { passed: boolean; stars: number; score: number }) => void;
@@ -44,19 +47,11 @@ export interface LessonPlayerModalProps {
 
 type StageType = 'theory' | 'vocabulary' | 'story' | 'exercise' | 'victory';
 
-function getLocalizedText(
-  item: LocalizedString | undefined,
-  lang: string,
-  fallback = ''
-): string {
-  if (!item) return fallback;
-  return item[lang] || item.az || item.en || fallback;
-}
-
 export function LessonPlayerModal({
   visible,
   unit,
   nextUnitId,
+  uiLang,
   isPremium,
   onClose,
   onCompleted,
@@ -65,6 +60,7 @@ export function LessonPlayerModal({
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
   const { targetLang, t } = useLanguage();
+  const activeLang = uiLang || targetLang || 'az';
 
   // Navigation & stages
   const [currentStage, setCurrentStage] = useState<StageType>('theory');
@@ -358,20 +354,20 @@ export function LessonPlayerModal({
                 <View style={styles.unitBadgeRow}>
                   <View style={[styles.levelTag, { backgroundColor: colors.primary + '20' }]}>
                     <Text style={[styles.levelTagText, { color: colors.primary }]}>
-                      {unit.level} • DƏRS {unit.order}
+                      {unit.level} • {getCurriculumText('lesson', activeLang)} {unit.order}
                     </Text>
                   </View>
                   <Text style={[styles.minutesTag, { color: colors.textMuted }]}>
-                    ⏱️ {unit.estimatedMinutes} dəq
+                    ⏱️ {unit.estimatedMinutes} {getCurriculumText('min', activeLang)}
                   </Text>
                 </View>
 
                 {/* Title */}
                 <Text style={[styles.title, { color: colors.text }]}>
-                  {getLocalizedText(unit.title, targetLang)}
+                  {getLocalizedContent(unit.title, activeLang)}
                 </Text>
                 <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                  {getLocalizedText(unit.grammarRule.title, targetLang)}
+                  {getLocalizedContent(unit.grammarRule.title, activeLang)}
                 </Text>
 
                 {/* Formula box / Murphy Rule Breakdown */}
@@ -387,7 +383,7 @@ export function LessonPlayerModal({
                   >
                     <View style={styles.formulaHeader}>
                       <Feather name="zap" size={15} color="#10b981" />
-                      <Text style={styles.formulaLabel}>Qısa və Aydın Qayda</Text>
+                      <Text style={styles.formulaLabel}>{getCurriculumText('quick_rule', activeLang)}</Text>
                     </View>
                     {unit.grammarRule.formula.includes('•') ? (
                       <View style={styles.formulaChipsRow}>
@@ -427,13 +423,13 @@ export function LessonPlayerModal({
                   ]}
                 >
                   <Text style={[styles.explanationText, { color: colors.text }]}>
-                    {getLocalizedText(unit.grammarRule.explanation, targetLang)}
+                    {getLocalizedContent(unit.grammarRule.explanation, activeLang)}
                   </Text>
                 </View>
 
                 {/* Examples */}
                 <Text style={[styles.sectionHeading, { color: colors.text }]}>
-                  Nümunə Cümlələr
+                  {getCurriculumText('examples', activeLang)}
                 </Text>
                 <View style={styles.examplesList}>
                   {unit.grammarRule.examples.map((ex, idx) => (
@@ -459,7 +455,7 @@ export function LessonPlayerModal({
                           {ex.english}
                         </Text>
                         <Text style={[styles.exampleTr, { color: colors.textMuted }]}>
-                          {getLocalizedText(ex.translation, targetLang)}
+                          {getLocalizedContent(ex.translation, activeLang)}
                         </Text>
                       </View>
                     </View>
@@ -479,14 +475,14 @@ export function LessonPlayerModal({
                   >
                     <View style={styles.mistakeHeader}>
                       <Feather name="alert-triangle" size={16} color="#ef4444" />
-                      <Text style={styles.mistakeHeaderTitle}>Tez-tez Edilən Səhv</Text>
+                      <Text style={styles.mistakeHeaderTitle}>{getCurriculumText('common_mistake', activeLang)}</Text>
                     </View>
                     <View style={styles.mistakeRow}>
                       <Text style={styles.wrongBadge}>❌ {unit.grammarRule.commonMistake.incorrect}</Text>
                       <Text style={styles.correctBadge}>✅ {unit.grammarRule.commonMistake.correct}</Text>
                     </View>
                     <Text style={[styles.mistakeExplanation, { color: colors.textMuted }]}>
-                      {getLocalizedText(unit.grammarRule.commonMistake.explanation, targetLang)}
+                      {getLocalizedContent(unit.grammarRule.commonMistake.explanation, activeLang)}
                     </Text>
                   </View>
                 )}
@@ -497,7 +493,7 @@ export function LessonPlayerModal({
               <View style={styles.vocabStageWrap}>
                 <View style={styles.vocabCounterRow}>
                   <Text style={[styles.vocabCounterText, { color: colors.textMuted }]}>
-                    Söz {vocabIndex + 1} / {unit.vocabulary.length}
+                    {getCurriculumText('word_counter', activeLang)} {vocabIndex + 1} / {unit.vocabulary.length}
                   </Text>
                   <View style={styles.vocabDots}>
                     {unit.vocabulary.map((_, i) => (
@@ -558,10 +554,10 @@ export function LessonPlayerModal({
                         ]}
                       >
                         <Text style={[styles.translationLabel, { color: colors.textMuted }]}>
-                          Tərcümə
+                          {getCurriculumText('translation', activeLang)}
                         </Text>
                         <Text style={[styles.translationValue, { color: colors.text }]}>
-                          {getLocalizedText(item.translations, targetLang)}
+                          {getLocalizedContent(item.translations, activeLang)}
                         </Text>
                       </View>
 
@@ -569,7 +565,7 @@ export function LessonPlayerModal({
                       <View style={styles.exampleSentenceBox}>
                         <View style={styles.exampleSentenceHeader}>
                           <Text style={[styles.exampleSentenceLabel, { color: colors.textMuted }]}>
-                            Kontekstdə istifadə:
+                            {getCurriculumText('example_sentence', activeLang)}:
                           </Text>
                           <Pressable
                             onPress={() => handleSpeech(item.exampleSentence)}
@@ -582,7 +578,7 @@ export function LessonPlayerModal({
                           "{item.exampleSentence}"
                         </Text>
                         <Text style={[styles.exampleSentenceTr, { color: colors.textMuted }]}>
-                          {getLocalizedText(item.exampleTranslation, targetLang)}
+                          {getLocalizedContent(item.exampleTranslation, activeLang)}
                         </Text>
                       </View>
                     </View>
@@ -604,7 +600,7 @@ export function LessonPlayerModal({
                     disabled={vocabIndex === 0}
                   >
                     <Feather name="arrow-left" size={18} color={colors.text} />
-                    <Text style={[styles.vocabNavBtnText, { color: colors.text }]}>Əvvəlki</Text>
+                    <Text style={[styles.vocabNavBtnText, { color: colors.text }]}>{getCurriculumText('previous', activeLang)}</Text>
                   </Pressable>
 
                   <Pressable
@@ -619,7 +615,9 @@ export function LessonPlayerModal({
                     }}
                   >
                     <Text style={styles.vocabNavBtnPrimaryText}>
-                      {vocabIndex + 1 < unit.vocabulary.length ? 'Növbəti Söz' : 'Hekayəyə Keç 📖'}
+                      {vocabIndex + 1 < unit.vocabulary.length
+                        ? getCurriculumText('next_word', activeLang)
+                        : getCurriculumText('continue_to_story', activeLang)}
                     </Text>
                     <Feather name="arrow-right" size={18} color="#0d0f17" />
                   </Pressable>
@@ -635,14 +633,14 @@ export function LessonPlayerModal({
                 <View style={styles.storyHeader}>
                   <View style={[styles.storyTag, { backgroundColor: colors.primary + '20' }]}>
                     <Text style={[styles.storyTagText, { color: colors.primary }]}>
-                      Səviyyəli Oxu • {unit.story.cefr} ({unit.story.wordCount} söz)
+                      {getCurriculumText('graded_reading', activeLang)} • {unit.story.cefr} ({unit.story.wordCount} {getCurriculumText('words', activeLang)})
                     </Text>
                   </View>
                   <Text style={[styles.storyTitle, { color: colors.text }]}>
                     {unit.story.title}
                   </Text>
                   <Text style={[styles.storyTitleTr, { color: colors.textMuted }]}>
-                    {getLocalizedText(unit.story.titleTranslation, targetLang)}
+                    {getLocalizedContent(unit.story.titleTranslation, activeLang)}
                   </Text>
                 </View>
 
@@ -671,7 +669,7 @@ export function LessonPlayerModal({
                       { color: isSpeakingStory ? '#ffffff' : colors.text },
                     ]}
                   >
-                    {isSpeakingStory ? 'Səsi Dayandır' : 'Hekayəni Dinlə (TTS)'}
+                    {isSpeakingStory ? getCurriculumText('stop_audio', activeLang) : getCurriculumText('listen_story', activeLang)}
                   </Text>
                 </Pressable>
 
@@ -692,7 +690,7 @@ export function LessonPlayerModal({
 
                 {/* Highlighted words list */}
                 <Text style={[styles.sectionHeading, { color: colors.text, marginTop: Spacing.lg }]}>
-                  Öyrəndiyiniz Açar Sözlər
+                  {getCurriculumText('learned_keywords', activeLang)}
                 </Text>
                 <View style={styles.chipsWrap}>
                   {unit.story.vocabularyHighlights.map((w, idx) => (
@@ -725,7 +723,7 @@ export function LessonPlayerModal({
                 {/* Exercise Type badge */}
                 <View style={styles.exerciseBadgeRow}>
                   <Text style={[styles.exerciseCountText, { color: colors.textMuted }]}>
-                    Məşq {exerciseIndex + 1} / {allExercises.length}
+                    {getCurriculumText('exercise', activeLang)} {exerciseIndex + 1} / {allExercises.length}
                   </Text>
                   <View style={[styles.xpBadge, { backgroundColor: '#10b98120' }]}>
                     <Text style={styles.xpBadgeText}>+{currentExercise.xpReward || 10} XP</Text>
@@ -734,15 +732,15 @@ export function LessonPlayerModal({
 
                 {/* Exercise Prompt */}
                 <Text style={[styles.exercisePrompt, { color: colors.text }]}>
-                  {getLocalizedText(currentExercise.prompt, targetLang)}
+                  {getLocalizedContent(currentExercise.prompt, activeLang)}
                 </Text>
 
                 {/* Target Sentence with Blank Slot or Context Instruction */}
                 {(() => {
                   const instructionText = currentExercise.instruction
-                    ? getLocalizedText(currentExercise.instruction, targetLang)
+                    ? getLocalizedContent(currentExercise.instruction, activeLang)
                     : '';
-                  const promptText = getLocalizedText(currentExercise.prompt, targetLang);
+                  const promptText = getLocalizedContent(currentExercise.prompt, activeLang);
                   const sentenceWithBlank = instructionText.includes('___')
                     ? instructionText
                     : promptText.includes('___')
@@ -776,7 +774,7 @@ export function LessonPlayerModal({
                             <Feather name="volume-2" size={18} color={colors.primary} />
                           </Pressable>
                           <Text style={[styles.blankInstructionLabel, { color: colors.textMuted }]}>
-                            Boşluğa uyğun olan variantı aşağıdan seçin:
+                            {getCurriculumText('fill_blank_instruction', activeLang)}
                           </Text>
                         </View>
 
@@ -981,7 +979,7 @@ export function LessonPlayerModal({
               </ScrollView>
             )}
 
-            {/* Victory Stage */}
+                {/* Victory Stage */}
             {currentStage === 'victory' && completedResult && (
               <View style={styles.victoryContainer}>
                 <View style={styles.victoryIconWrap}>
@@ -991,12 +989,12 @@ export function LessonPlayerModal({
                 </View>
 
                 <Text style={[styles.victoryTitle, { color: colors.text }]}>
-                  {completedResult.passed ? 'Təbriklər! Dərs Bitdi!' : 'Təslim Olmaq Yoxdur!'}
+                  {completedResult.passed ? getCurriculumText('victory_title', activeLang) : getCurriculumText('defeat_title', activeLang)}
                 </Text>
                 <Text style={[styles.victorySubtitle, { color: colors.textMuted }]}>
                   {completedResult.passed
-                    ? `${unit.level} • ${getLocalizedText(unit.title, targetLang)} uğurla tamamlandı.`
-                    : 'Növbəti modulu açmaq üçün ən azı 70% nəticə toplamalısınız.'}
+                    ? `${unit.level} • ${getLocalizedContent(unit.title, activeLang)} ${getCurriculumText('lesson_passed_sub', activeLang)}`
+                    : getCurriculumText('lesson_failed_sub', activeLang)}
                 </Text>
 
                 {/* Stars Row */}
@@ -1024,7 +1022,7 @@ export function LessonPlayerModal({
                   <View style={styles.victoryStatCol}>
                     <Text style={styles.victoryStatVal}>+{unit.xpReward || 50}</Text>
                     <Text style={[styles.victoryStatLbl, { color: colors.textMuted }]}>
-                      Qazanılan XP
+                      {getCurriculumText('earned_xp', activeLang)}
                     </Text>
                   </View>
                   <View style={[styles.victoryDivider, { backgroundColor: colors.surfaceBorder }]} />
@@ -1033,7 +1031,7 @@ export function LessonPlayerModal({
                       %{completedResult.score}
                     </Text>
                     <Text style={[styles.victoryStatLbl, { color: colors.textMuted }]}>
-                      Dəqiqlik
+                      {getCurriculumText('accuracy', activeLang)}
                     </Text>
                   </View>
                 </View>
@@ -1083,7 +1081,7 @@ export function LessonPlayerModal({
                         { color: feedbackState === 'correct' ? '#047857' : '#b91c1c' },
                       ]}
                     >
-                      {feedbackState === 'correct' ? 'Əla! Doğru cavab!' : 'Səhv cavab! (-1 can)'}
+                      {feedbackState === 'correct' ? getCurriculumText('feedback_correct', activeLang) : getCurriculumText('feedback_wrong', activeLang)}
                     </Text>
                     {feedbackState === 'wrong' && (
                       <Text
@@ -1092,12 +1090,12 @@ export function LessonPlayerModal({
                           { color: '#991b1b' },
                         ]}
                       >
-                        Doğru cavab:{' '}
+                        {getCurriculumText('correct_answer_label', activeLang)}{' '}
                         {currentExercise?.correctSentence ||
                           (() => {
                             const correctOpt = currentExercise?.options?.find((o) => o.isCorrect);
                             const instr = currentExercise?.instruction
-                              ? getLocalizedText(currentExercise.instruction, targetLang)
+                              ? getLocalizedContent(currentExercise.instruction, activeLang)
                               : '';
                             if (instr.includes('___') && correctOpt) {
                               return instr.replace('___', correctOpt.text);
@@ -1119,7 +1117,7 @@ export function LessonPlayerModal({
                   ]}
                   onPress={handleContinueAfterFeedback}
                 >
-                  <Text style={styles.primaryBtnText}>Davam et</Text>
+                  <Text style={styles.primaryBtnText}>{getCurriculumText('continue_btn', activeLang)}</Text>
                   <Feather name="arrow-right" size={18} color="#ffffff" />
                 </Pressable>
               </View>
@@ -1133,7 +1131,7 @@ export function LessonPlayerModal({
                     style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
                     onPress={() => setCurrentStage('vocabulary')}
                   >
-                    <Text style={styles.primaryBtnText}>Sözlərə Keç</Text>
+                    <Text style={styles.primaryBtnText}>{getCurriculumText('continue_to_words', activeLang)}</Text>
                     <Feather name="arrow-right" size={18} color="#0d0f17" />
                   </Pressable>
                 )}
@@ -1147,7 +1145,7 @@ export function LessonPlayerModal({
                       setCurrentStage('exercise');
                     }}
                   >
-                    <Text style={styles.primaryBtnText}>Məşqlərə Başla</Text>
+                    <Text style={styles.primaryBtnText}>{getCurriculumText('start_exercises', activeLang)}</Text>
                     <Feather name="play" size={18} color="#0d0f17" />
                   </Pressable>
                 )}
@@ -1175,7 +1173,7 @@ export function LessonPlayerModal({
                     }
                     onPress={handleCheckAnswer}
                   >
-                    <Text style={styles.primaryBtnText}>Cavabı Yoxla</Text>
+                    <Text style={styles.primaryBtnText}>{getCurriculumText('check_answer', activeLang)}</Text>
                     <Feather name="check" size={18} color="#0d0f17" />
                   </Pressable>
                 )}
@@ -1186,7 +1184,7 @@ export function LessonPlayerModal({
                     onPress={onClose}
                   >
                     <Text style={styles.primaryBtnText}>
-                      {completedResult.passed ? 'Xəritəyə Qayıt' : 'Yenidən Sına'}
+                      {completedResult.passed ? getCurriculumText('return_to_map', activeLang) : getCurriculumText('try_again', activeLang)}
                     </Text>
                     <Feather name="check" size={18} color="#0d0f17" />
                   </Pressable>

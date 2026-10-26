@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -24,9 +24,11 @@ import { checkIsOnline } from '@/lib/network';
 import {
   type CurriculumSection,
   getUnitData,
+  isUnitBundled,
   listContinuousSectionsWithProgress,
   type UnitDisplayItem,
 } from '@/lib/curriculum/curriculum-service';
+import { getCurriculumText } from '@/lib/curriculum/curriculum-i18n';
 import { validateUnitAccess } from '@/lib/curriculum/security-guard';
 import { getHearts, MAX_HEARTS } from '@/lib/vocabulary/game-service';
 import type { CurriculumUnit } from '@/types/curriculum';
@@ -35,7 +37,8 @@ export default function LearnScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
-  const { targetLang, t } = useLanguage();
+  const { uiLang, targetLang, t } = useLanguage();
+  const activeLang = uiLang || targetLang || 'az';
   const { user, isPremium, energy, totalXp } = useAuth();
 
   // State
@@ -48,11 +51,22 @@ export default function LearnScreen() {
   const [showOutOfHearts, setShowOutOfHearts] = useState(false);
   const [curriculumLoading, setCurriculumLoading] = useState(false);
 
+  // Compute nextUnitId dynamically from full continuous sections
+  const nextUnitId = useMemo(() => {
+    if (!activePlayingUnit || sections.length === 0) return undefined;
+    const allUnits = sections.flatMap((s) => s.units);
+    const currentIndex = allUnits.findIndex((u) => u.id === activePlayingUnit.id);
+    if (currentIndex >= 0 && currentIndex < allUnits.length - 1) {
+      return allUnits[currentIndex + 1].id;
+    }
+    return undefined;
+  }, [activePlayingUnit, sections]);
+
   // Load continuous sections and user hearts
   const loadPathData = useCallback(async () => {
     try {
       const [secList, h] = await Promise.all([
-        listContinuousSectionsWithProgress(targetLang),
+        listContinuousSectionsWithProgress(activeLang),
         getHearts(),
       ]);
       setSections(secList);
@@ -62,7 +76,7 @@ export default function LearnScreen() {
     } finally {
       setLoading(false);
     }
-  }, [targetLang]);
+  }, [activeLang]);
 
   useEffect(() => {
     loadPathData();
@@ -76,23 +90,28 @@ export default function LearnScreen() {
 
   const handleUnitPress = async (unitItem: UnitDisplayItem) => {
     if (unitItem.status === 'locked') {
-      Alert.alert(
-        '🔒 Dərs Kilidlidir',
+      const lockedTitle = getCurriculumText('lesson_locked_title', activeLang);
+      const lockedMsg =
         unitItem.level !== 'A1'
-          ? `Bu ${unitItem.level} dərsinə başlamaq üçün əvvəlcə əvvəlki səviyyəni uğurla tamamlayın.`
-          : 'Bu dərsin kilidini açmaq üçün əvvəlki dərsi ən azı 70% nəticə ilə bitirin.',
-        [{ text: 'Oldu', style: 'default' }]
+          ? getCurriculumText('lesson_locked_prev_level', activeLang)
+          : getCurriculumText('lesson_locked_prev_unit', activeLang);
+      Alert.alert(
+        lockedTitle,
+        lockedMsg,
+        [{ text: getCurriculumText('ok', activeLang), style: 'default' }]
       );
       return;
     }
 
-    const isOnline = await checkIsOnline();
+    const isBundled = isUnitBundled(unitItem.id);
+    const isOnline = isBundled ? true : await checkIsOnline();
     const access = await validateUnitAccess(
       unitItem.id,
       unitItem.level,
       unitItem.order,
       isPremium,
-      isOnline
+      isOnline,
+      isBundled
     );
 
     if (!access.allowed) {
@@ -102,16 +121,22 @@ export default function LearnScreen() {
       }
       if (access.reason === 'OFFLINE_FREE_RESTRICTED') {
         Alert.alert(
-          '📶 İnternet Bağlantısı Tələb Olunur',
-          access.message || 'Növbəti dərslərə daxil olmaq üçün interneti aktiv edin və ya Oflayn Rejim üçün Litera Premium-a keçin.',
+          getCurriculumText('need_internet_title', activeLang),
+          getCurriculumText('need_internet_msg', activeLang),
           [
-            { text: 'Ləğv et', style: 'cancel' },
-            { text: '👑 Premium Al', onPress: () => setPaywallVisible(true) },
+            { text: getCurriculumText('cancel', activeLang), style: 'cancel' },
+            {
+              text: getCurriculumText('upgrade_premium', activeLang),
+              onPress: () => setPaywallVisible(true),
+            },
           ]
         );
         return;
       }
-      Alert.alert('Diqqət', access.message || 'Dərsə başlamaq mümkün olmadı.');
+      Alert.alert(
+        getCurriculumText('lesson_locked_title', activeLang),
+        access.message || getCurriculumText('lesson_locked_prev_unit', activeLang)
+      );
       return;
     }
 
@@ -122,7 +147,10 @@ export default function LearnScreen() {
         setActivePlayingUnit(fullUnit);
         setLessonPlayerVisible(true);
       } else {
-        Alert.alert('Xəta', 'Dərs materialları yüklənə bilmədi. İnternet bağlantınızı yoxlayın.');
+        Alert.alert(
+          getCurriculumText('need_internet_title', activeLang),
+          getCurriculumText('need_internet_msg', activeLang)
+        );
       }
     } finally {
       setCurriculumLoading(false);
@@ -150,10 +178,10 @@ export default function LearnScreen() {
       >
         <View style={styles.headerLeft}>
           <Text style={[styles.screenTitle, { color: colors.text }]}>
-            {t('tab_learn')} Xəritəsi
+            {getCurriculumText('learn_map_title', activeLang)}
           </Text>
           <Text style={[styles.screenSubtitle, { color: colors.textMuted }]}>
-            Addım-addım sərbəst ingilis dili
+            {getCurriculumText('learn_map_subtitle', activeLang)}
           </Text>
         </View>
 
@@ -214,6 +242,7 @@ export default function LearnScreen() {
           isPremium={isPremium}
           onOpenPaywall={() => setPaywallVisible(true)}
           onUnitRefreshed={loadPathData}
+          uiLang={activeLang}
         />
       </ScrollView>
 
@@ -222,6 +251,8 @@ export default function LearnScreen() {
         visible={lessonPlayerVisible}
         unit={activePlayingUnit}
         isPremium={isPremium}
+        nextUnitId={nextUnitId}
+        uiLang={activeLang}
         onClose={() => {
           setLessonPlayerVisible(false);
           setActivePlayingUnit(null);
