@@ -44,6 +44,7 @@ import {
 } from '@/lib/curriculum/curriculum-service';
 import { validateUnitAccess } from '@/lib/curriculum/security-guard';
 import { LessonPlayerModal } from '@/components/curriculum/LessonPlayerModal';
+import { GamifiedPathMap } from '@/components/curriculum/GamifiedPathMap';
 import type { CurriculumUnit, LevelId } from '@/types/curriculum';
 import { checkIsOnline } from '@/lib/network';
 
@@ -415,225 +416,18 @@ export default function VocabularyScreen() {
               })}
             </ScrollView>
 
-            {/* Level Overview Hero Card */}
-            {(() => {
-              const currentLvl = CEFR_LEVELS.find((l) => l.id === selectedLevel) || CEFR_LEVELS[0];
-              const completedUnitsCount = curriculumUnits.filter((u) => u.status === 'completed').length;
-              const totalUnitsCount = Math.max(curriculumUnits.length, currentLvl.totalUnits);
-              const progressPct = Math.round((completedUnitsCount / totalUnitsCount) * 100);
-
-              return (
-                <View
-                  style={[
-                    styles.levelHeroCard,
-                    {
-                      backgroundColor: colors.surface,
-                      borderColor: currentLvl.accentColor,
-                    },
-                  ]}
-                >
-                  <View style={styles.levelHeroTop}>
-                    <View
-                      style={[
-                        styles.levelHeroBadge,
-                        { backgroundColor: currentLvl.accentColor + '20' },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.levelHeroBadgeText,
-                          { color: currentLvl.accentColor },
-                        ]}
-                      >
-                        {selectedLevel} • CEFR Standartı
-                      </Text>
-                    </View>
-                    <Text style={[styles.levelProgressPercentText, { color: currentLvl.accentColor }]}>
-                      %{progressPct}
-                    </Text>
-                  </View>
-
-                  <Text style={[styles.levelHeroTitle, { color: colors.text }]}>
-                    {currentLvl.title.az || currentLvl.title.en}
-                  </Text>
-                  <Text style={[styles.levelHeroDesc, { color: colors.textMuted }]}>
-                    {currentLvl.description.az || currentLvl.description.en}
-                  </Text>
-
-                  {/* Level Progress Bar */}
-                  <View style={[styles.levelProgressBarTrack, { backgroundColor: colors.surfaceBorder }]}>
-                    <View
-                      style={[
-                        styles.levelProgressBarFill,
-                        {
-                          backgroundColor: currentLvl.accentColor,
-                          width: `${Math.max(8, progressPct)}%`,
-                        },
-                      ]}
-                    />
-                  </View>
-                  <Text style={[styles.levelProgressCountText, { color: colors.textMuted }]}>
-                    {completedUnitsCount} / {totalUnitsCount} Modul tamamlandı
-                  </Text>
-                </View>
-              );
-            })()}
-
-            {/* Visual Learning Path Tree */}
-            <View style={styles.pathTreeContainer}>
-              {curriculumUnits.map((unitItem, index) => {
-                const isCompleted = unitItem.status === 'completed';
-                const isUnlocked = unitItem.status === 'unlocked';
-                const isLocked = unitItem.status === 'locked';
-                const isLast = index === curriculumUnits.length - 1;
-
-                return (
-                  <View key={unitItem.id} style={styles.pathNodeRow}>
-                    {/* Left: Node icon & vertical line */}
-                    <View style={styles.nodeColumn}>
-                      <Pressable
-                        style={({ pressed }) => [
-                          styles.nodeCircle,
-                          {
-                            backgroundColor: isCompleted
-                              ? '#10b981'
-                              : isUnlocked
-                              ? colors.primary
-                              : colors.surface,
-                            borderColor: isCompleted
-                              ? '#059669'
-                              : isUnlocked
-                              ? '#f59e0b'
-                              : colors.surfaceBorder,
-                          },
-                          isUnlocked && styles.nodeCircleGlow,
-                          pressed && styles.pressed,
-                        ]}
-                        onPress={() => handleUnitPress(unitItem)}
-                      >
-                        {isLocked ? (
-                          <Feather name="lock" size={20} color={colors.textMuted} />
-                        ) : isCompleted ? (
-                          <Feather name="check" size={22} color="#ffffff" />
-                        ) : (
-                          <Feather
-                            name={(unitItem.iconName as any) || 'book-open'}
-                            size={20}
-                            color="#0d0f17"
-                          />
-                        )}
-                      </Pressable>
-
-                      {/* Connecting Line */}
-                      {!isLast && (
-                        <View
-                          style={[
-                            styles.nodeLine,
-                            {
-                              backgroundColor: isCompleted
-                                ? '#10b981'
-                                : colors.surfaceBorder,
-                            },
-                          ]}
-                        />
-                      )}
-                    </View>
-
-                    {/* Right: Unit Details Card */}
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.unitCard,
-                        {
-                          backgroundColor: colors.surface,
-                          borderColor: isUnlocked
-                            ? colors.primary
-                            : colors.surfaceBorder,
-                        },
-                        isUnlocked && styles.unitCardActiveBorder,
-                        pressed && styles.pressed,
-                      ]}
-                      onPress={() => handleUnitPress(unitItem)}
-                    >
-                      <View style={styles.unitCardTop}>
-                        <View
-                          style={[
-                            styles.unitOrderBadge,
-                            {
-                              backgroundColor: isCompleted
-                                ? '#10b98120'
-                                : isUnlocked
-                                ? colors.primary + '20'
-                                : colors.surfaceBorder,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.unitOrderText,
-                              {
-                                color: isCompleted
-                                  ? '#10b981'
-                                  : isUnlocked
-                                  ? colors.primary
-                                  : colors.textMuted,
-                              },
-                            ]}
-                          >
-                            DƏRS {unitItem.order}
-                          </Text>
-                        </View>
-                        <Text style={[styles.unitTimeText, { color: colors.textMuted }]}>
-                          ⏱️ {unitItem.estimatedMinutes} dəq
-                        </Text>
-                      </View>
-
-                      <Text style={[styles.unitTitle, { color: colors.text }]}>
-                        {unitItem.title}
-                      </Text>
-                      <Text style={[styles.unitDesc, { color: colors.textMuted }]} numberOfLines={2}>
-                        {unitItem.description}
-                      </Text>
-
-                      {/* Footer Actions */}
-                      <View style={styles.unitCardFooter}>
-                        {isCompleted ? (
-                          <View style={styles.completedFooterRow}>
-                            <View style={styles.starsPill}>
-                              {[1, 2, 3].map((s) => (
-                                <Feather
-                                  key={s}
-                                  name="star"
-                                  size={13}
-                                  color={s <= unitItem.stars ? '#eab308' : colors.surfaceBorder}
-                                />
-                              ))}
-                              <Text style={styles.scoreText}>%{unitItem.score}</Text>
-                            </View>
-                            <View style={[styles.reviewBtn, { backgroundColor: colors.primary + '15' }]}>
-                              <Text style={[styles.reviewBtnText, { color: colors.primary }]}>
-                                Təkrar et
-                              </Text>
-                            </View>
-                          </View>
-                        ) : isUnlocked ? (
-                          <View style={[styles.startLessonBtn, { backgroundColor: colors.primary }]}>
-                            <Text style={styles.startLessonBtnText}>Dərsə Başla</Text>
-                            <Feather name="play" size={13} color="#0d0f17" />
-                          </View>
-                        ) : (
-                          <View style={styles.lockedFooterRow}>
-                            <Feather name="lock" size={13} color={colors.textMuted} />
-                            <Text style={[styles.lockedText, { color: colors.textMuted }]}>
-                              Kilidli (Əvvəlki dərsi 70%+ bitirin)
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    </Pressable>
-                  </View>
-                );
-              })}
-            </View>
+            {/* Gamified Sinuous Winding Path (Duolingo & EWA style) */}
+            <GamifiedPathMap
+              units={curriculumUnits}
+              selectedLevel={selectedLevel}
+              onSelectUnit={handleUnitPress}
+              isPremium={isPremium}
+              onOpenPaywall={() => setPaywallVisible(true)}
+              onUnitRefreshed={() => {
+                loadCurriculum();
+                loadData();
+              }}
+            />
           </>
         ) : (
           <>
