@@ -122,8 +122,8 @@ export async function getUnitData(unitId: string, levelId: LevelId): Promise<Cur
   if (BUNDLED_UNITS[unitId]) {
     try {
       const data = BUNDLED_UNITS[unitId]();
-      // Keep SQLite cache updated with the latest bundled payload
-      await cacheUnitPayload(data).catch(() => {});
+      // Keep SQLite cache updated in background without blocking UI
+      cacheUnitPayload(data).catch(() => {});
       return data;
     } catch (err) {
       console.warn('[Curriculum] Error loading bundled unit:', err);

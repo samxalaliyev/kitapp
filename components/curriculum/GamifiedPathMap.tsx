@@ -19,6 +19,7 @@ import {
   CEFR_LEVELS,
   type CurriculumSection,
   type UnitDisplayItem,
+  getUnitData,
 } from '@/lib/curriculum/curriculum-service';
 import type { LevelId } from '@/types/curriculum';
 import { addXP } from '@/lib/gamification/leagues';
@@ -143,6 +144,29 @@ export function GamifiedPathMap({
   // Animations
   const bounceAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const previewScaleAnim = useRef(new Animated.Value(0.92)).current;
+  const previewOpacityAnim = useRef(new Animated.Value(0)).current;
+
+  // Fast spring animation for preview popup
+  useEffect(() => {
+    if (previewUnit) {
+      previewScaleAnim.setValue(0.92);
+      previewOpacityAnim.setValue(0);
+      Animated.parallel([
+        Animated.spring(previewScaleAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 70,
+          useNativeDriver: true,
+        }),
+        Animated.timing(previewOpacityAnim, {
+          toValue: 1,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [previewUnit, previewScaleAnim, previewOpacityAnim]);
 
   // Multi-level continuous sections
   const activeSections: CurriculumSection[] = useMemo(() => {
@@ -258,6 +282,11 @@ export function GamifiedPathMap({
 
   // Handle node tap
   const handleNodePress = (unit: UnitDisplayItem) => {
+    // Pre-warm the unit in memory immediately so clicking start opens with zero delay!
+    if (unit.status !== 'locked') {
+      getUnitData(unit.id, unit.level).catch(() => {});
+    }
+
     if (unit.nodeType === 'chest') {
       if (unit.status !== 'locked' && !chestClaimedMap[unit.id]) {
         claimChestReward(unit);
@@ -400,6 +429,12 @@ export function GamifiedPathMap({
             iconColor = '#ffffff';
           }
 
+          // Determine which side to place the badge
+          // If node is shifted left (negative offset), place badge on the right.
+          // If node is shifted right (positive offset), place badge on the left.
+          // If node is center (0), place badge on opposite side of next node.
+          const isRightSide = currentOffset < 0 ? true : currentOffset > 0 ? false : nextOffset <= 0;
+
           return (
             <View key={unit.id} style={styles.nodeWrapper}>
               {/* CONNECTING DOTTED ARC TO NEXT NODE (EWA STYLE) */}
@@ -411,7 +446,7 @@ export function GamifiedPathMap({
                       (1 - tVal) * (1 - tVal) * currentOffset +
                       2 * (1 - tVal) * tVal * ((currentOffset + nextOffset) / 2) +
                       tVal * tVal * nextOffset;
-                    const dotY = tVal * 115;
+                    const dotY = tVal * 135;
 
                     const nextNode = sec.units[index + 1];
                     const isNextActive =
@@ -425,7 +460,7 @@ export function GamifiedPathMap({
                           styles.connectorDot,
                           {
                             transform: [{ translateX: dotX }],
-                            top: dotY + 45,
+                            top: dotY + 44,
                             backgroundColor: isNextActive
                               ? sec.accentColor
                               : colors.isDark
@@ -450,31 +485,40 @@ export function GamifiedPathMap({
                 {isActiveNode && (
                   <Animated.View
                     style={[
-                      styles.floatingStartBubble,
+                      styles.floatingStartBubbleWrap,
                       {
-                        backgroundColor: '#1cb0f6',
                         transform: [{ translateY: bounceAnim }],
                       },
                     ]}
                   >
-                    <Text style={styles.floatingStartText}>{getCurriculumText('start', activeLang)}</Text>
-                    {/* Downward pointer triangle */}
-                    <View style={styles.pointerTriangle} />
+                    <Pressable
+                      style={styles.floatingStartBubble}
+                      onPress={() => handleNodePress(unit)}
+                      hitSlop={8}
+                    >
+                      <Text style={styles.floatingStartText}>{getCurriculumText('start', activeLang)}</Text>
+                      {/* Downward pointer triangle */}
+                      <View style={styles.pointerTriangle} />
+                    </Pressable>
                   </Animated.View>
                 )}
 
-                {/* PULSING HALO RING (FOR ACTIVE NODE) */}
+                {/* SOFT RADIANT HALO AURA (FOR ACTIVE NODE) */}
                 {isActiveNode && (
                   <Animated.View
                     style={[
-                      styles.pulsingRing,
+                      styles.pulsingAuraOuter,
                       {
-                        borderColor: '#10b981',
                         transform: [{ scale: pulseAnim }],
+                        opacity: pulseAnim.interpolate({
+                          inputRange: [1.0, 1.12],
+                          outputRange: [0.75, 0.15],
+                        }),
                       },
                     ]}
                   />
                 )}
+                {isActiveNode && <View style={styles.pulsingAuraInner} />}
 
                 {/* JUICY 3D TACTILE BUTTON */}
                 <Pressable
@@ -512,48 +556,63 @@ export function GamifiedPathMap({
                   )}
                 </Pressable>
 
-                {/* 3-STARS ROW UNDERNEATH (DUOLINGO & EWA STYLE) */}
-                {unit.nodeType !== 'chest' && (
-                  <View style={styles.starsRowUnderNode}>
-                    {[1, 2, 3].map((starIdx) => (
-                      <Feather
-                        key={starIdx}
-                        name="star"
-                        size={12}
-                        color={
-                          isCompleted && starIdx <= (unit.stars || 3)
-                            ? '#f59e0b'
-                            : colors.isDark
-                            ? '#334155'
-                            : '#cbd5e1'
-                        }
-                      />
-                    ))}
-                  </View>
-                )}
-
-                {/* SHORT TITLE UNDER BUTTON */}
-                <View
-                  style={[
-                    styles.nodeTitlePill,
+                {/* SIDE BADGE CARD (STARS + TITLE ON THE SIDE) */}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.sideBadge,
+                    isRightSide ? styles.sideBadgeRight : styles.sideBadgeLeft,
                     {
-                      backgroundColor: colors.isDark
-                        ? 'rgba(15, 23, 42, 0.75)'
-                        : 'rgba(255, 255, 255, 0.9)',
-                      borderColor: colors.surfaceBorder,
+                      backgroundColor: colors.surface,
+                      borderColor: isActiveNode
+                        ? '#10b981'
+                        : isCompleted
+                        ? colors.isDark ? '#1e3a2f' : '#bbf7d0'
+                        : colors.isDark ? '#243247' : '#e2e8f0',
+                      borderBottomColor: isActiveNode
+                        ? '#059669'
+                        : isCompleted
+                        ? colors.isDark ? '#06291a' : '#86efac'
+                        : colors.isDark ? '#0f172a' : '#cbd5e1',
+                      transform: [{ translateY: pressed ? 1 : 0 }],
                     },
                   ]}
+                  onPress={() => handleNodePress(unit)}
                 >
+                  {unit.nodeType !== 'chest' && (
+                    <View style={styles.sideBadgeStarsRow}>
+                      {[1, 2, 3].map((starIdx) => (
+                        <Feather
+                          key={starIdx}
+                          name="star"
+                          size={10}
+                          color={
+                            isCompleted && starIdx <= (unit.stars || 3)
+                              ? '#f59e0b'
+                              : colors.isDark
+                              ? '#334155'
+                              : '#cbd5e1'
+                          }
+                        />
+                      ))}
+                    </View>
+                  )}
                   <Text
                     style={[
-                      styles.nodeTitlePillText,
-                      { color: isLocked ? colors.textMuted : colors.text },
+                      styles.sideBadgeTitleText,
+                      {
+                        color: isLocked
+                          ? colors.textMuted
+                          : isActiveNode
+                          ? colors.isDark ? '#34d399' : '#059669'
+                          : colors.text,
+                        fontWeight: isActiveNode || isCompleted ? FontWeight.bold : FontWeight.semibold,
+                      },
                     ]}
                     numberOfLines={1}
                   >
                     {unit.shortTitle || unit.title}
                   </Text>
-                </View>
+                </Pressable>
               </View>
             </View>
           );
@@ -567,22 +626,24 @@ export function GamifiedPathMap({
       <Modal
         visible={!!previewUnit}
         transparent
-        animationType="fade"
+        animationType="none"
+        statusBarTranslucent
         onRequestClose={() => setPreviewUnit(null)}
       >
-        <View style={styles.modalBackdrop}>
+        <Animated.View style={[styles.modalBackdrop, { opacity: previewOpacityAnim }]}>
           <Pressable
             style={StyleSheet.absoluteFill}
             onPress={() => setPreviewUnit(null)}
           />
 
           {previewUnit && (
-            <View
+            <Animated.View
               style={[
                 styles.previewCard,
                 {
                   backgroundColor: colors.surface,
                   borderColor: previewUnit.status === 'locked' ? colors.surfaceBorder : previewLevelInfo.accentColor,
+                  transform: [{ scale: previewScaleAnim }],
                 },
               ]}
             >
@@ -731,9 +792,9 @@ export function GamifiedPathMap({
                   </Pressable>
                 )}
               </View>
-            </View>
+            </Animated.View>
           )}
-        </View>
+        </Animated.View>
       </Modal>
 
       {/* 4. GRAMMAR HANDBOOK SUMMARY MODAL */}
@@ -903,14 +964,14 @@ const styles = StyleSheet.create({
   },
   nodeWrapper: {
     width: '100%',
-    height: 115,
+    height: 135,
     alignItems: 'center',
     justifyContent: 'center',
   },
   connectorContainer: {
     position: 'absolute',
     width: '100%',
-    height: 115,
+    height: 135,
     top: 0,
     alignItems: 'center',
     justifyContent: 'center',
@@ -922,23 +983,32 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   nodeCenterRow: {
+    width: 74,
+    height: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  floatingStartBubbleWrap: {
+    position: 'absolute',
+    top: -46,
+    zIndex: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   floatingStartBubble: {
-    position: 'absolute',
-    top: -42,
-    paddingHorizontal: 14,
+    backgroundColor: '#1cb0f6',
+    paddingHorizontal: 15,
     paddingVertical: 6,
     borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
+    borderBottomWidth: 3,
+    borderBottomColor: '#0284c7',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 6,
-    zIndex: 10,
   },
   floatingStartText: {
     color: '#ffffff',
@@ -956,14 +1026,25 @@ const styles = StyleSheet.create({
     borderTopWidth: 6,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderTopColor: '#1cb0f6',
+    borderTopColor: '#0284c7',
   },
-  pulsingRing: {
+  pulsingAuraOuter: {
     position: 'absolute',
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    borderWidth: 3,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 2.5,
+    borderColor: 'rgba(16, 185, 129, 0.45)',
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    zIndex: 1,
+  },
+  pulsingAuraInner: {
+    position: 'absolute',
+    width: 82,
+    height: 82,
+    borderRadius: 41,
+    borderWidth: 2,
+    borderColor: 'rgba(52, 211, 153, 0.55)',
     zIndex: 1,
   },
   nodeButton3D: {
@@ -985,23 +1066,40 @@ const styles = StyleSheet.create({
     transform: [{ translateY: 3 }],
     borderBottomWidth: 4,
   },
-  starsRowUnderNode: {
+  sideBadge: {
+    position: 'absolute',
+    top: 14,
+    minWidth: 80,
+    maxWidth: 116,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  sideBadgeRight: {
+    left: 80,
+  },
+  sideBadgeLeft: {
+    right: 80,
+  },
+  sideBadgeStarsRow: {
     flexDirection: 'row',
     gap: 3,
-    marginTop: 6,
+    marginBottom: 3,
   },
-  nodeTitlePill: {
-    marginTop: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: Radius.pill,
-    borderWidth: 1,
-    maxWidth: 120,
-    alignItems: 'center',
-  },
-  nodeTitlePillText: {
-    fontSize: 11,
+  sideBadgeTitleText: {
+    fontSize: 12,
     fontWeight: FontWeight.bold,
+    textAlign: 'center',
   },
   modalBackdrop: {
     flex: 1,

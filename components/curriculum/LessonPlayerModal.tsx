@@ -440,6 +440,7 @@ export function LessonPlayerModal({
         visible={visible}
         animationType="slide"
         presentationStyle="fullScreen"
+        statusBarTranslucent
         onRequestClose={handleClose}
       >
         <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: insets.top }]}>

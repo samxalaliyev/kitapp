@@ -49,7 +49,6 @@ export default function LearnScreen() {
   const [lessonPlayerVisible, setLessonPlayerVisible] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [showOutOfHearts, setShowOutOfHearts] = useState(false);
-  const [curriculumLoading, setCurriculumLoading] = useState(false);
 
   // Compute nextUnitId dynamically from full continuous sections
   const nextUnitId = useMemo(() => {
@@ -140,7 +139,6 @@ export default function LearnScreen() {
       return;
     }
 
-    setCurriculumLoading(true);
     try {
       const fullUnit = await getUnitData(unitItem.id, unitItem.level);
       if (fullUnit) {
@@ -152,8 +150,8 @@ export default function LearnScreen() {
           getCurriculumText('need_internet_msg', activeLang)
         );
       }
-    } finally {
-      setCurriculumLoading(false);
+    } catch (err) {
+      if (__DEV__) console.warn('[LearnScreen] Failed to launch unit:', err);
     }
   };
 
