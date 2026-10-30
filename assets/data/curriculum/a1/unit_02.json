@@ -160,8 +160,16 @@
       "id": "ex2_1",
       "type": "word_scramble",
       "prompt": {
-        "az": "Cümləni yığın: 'I would like coffee please'",
-        "en": "Build sentence: 'I would like coffee please'"
+        "az": "Bu cümləni ingiliscəyə tərcümə edin:",
+        "en": "Translate this sentence to English:",
+        "tr": "Bu cümleyi İngilizceye çevirin:",
+        "ru": "Переведите это предложение на английский:"
+      },
+      "instruction": {
+        "az": "Zəhmət olmasa, qəhvə istərdim.",
+        "en": "I would like coffee please.",
+        "tr": "Lütfen kahve rica ediyorum.",
+        "ru": "Кофе, пожалуйста."
       },
       "sentenceToBuild": ["I", "would", "like", "coffee", "please"],
       "distractorWords": ["want", "tea"],
@@ -173,7 +181,9 @@
       "type": "multiple_choice",
       "prompt": {
         "az": "Kafedə hesabı istəmək üçün ən nəzakətli ifadə hansıdır?",
-        "en": "What is the polite phrase to ask for the bill?"
+        "en": "What is the polite phrase to ask for the bill?",
+        "tr": "Kafede hesabı istemek için en nazik ifade hangisidir?",
+        "ru": "Какая самая вежливая фраза, чтобы попросить счет в кафе?"
       },
       "options": [
         { "id": "c1", "text": "The check, please.", "isCorrect": true },
@@ -187,7 +197,9 @@
       "type": "listening_dictation",
       "prompt": {
         "az": "Səsi dinləyin və düzgün variantı seçin:",
-        "en": "Listen and select the phrase:"
+        "en": "Listen and select the phrase:",
+        "tr": "Sesi dinleyin ve doğru ifadeyi seçin:",
+        "ru": "Послушайте запись и выберите правильную фразу:"
       },
       "audioPrompt": "How much is it?",
       "options": [
@@ -204,11 +216,15 @@
       "type": "fill_in_the_blank",
       "prompt": {
         "az": "Boşluğu tamamlayın:",
-        "en": "Complete the phrase:"
+        "en": "Complete the phrase:",
+        "tr": "Boşluğu tamamlayın:",
+        "ru": "Заполните пропуск:"
       },
       "instruction": {
         "az": "I ___ like a cup of tea, please.",
-        "en": "I ___ like a cup of tea, please."
+        "en": "I ___ like a cup of tea, please.",
+        "tr": "I ___ like a cup of tea, please.",
+        "ru": "I ___ like a cup of tea, please."
       },
       "options": [
         { "id": "w1", "text": "would", "isCorrect": true },

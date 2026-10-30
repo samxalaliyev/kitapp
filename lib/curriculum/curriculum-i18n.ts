@@ -73,7 +73,12 @@ export type CurriculumStringKey =
   | 'tap_to_listen'
   | 'pro_tip_title'
   | 'wrong_label'
-  | 'correct_label';
+  | 'correct_label'
+  | 'see_examples'
+  | 'see_trap'
+  | 'rule_step_title'
+  | 'examples_step_title'
+  | 'step_counter';
 
 const CURRICULUM_STRINGS: Record<CurriculumStringKey, Record<string, string>> = {
   learn_map_title: {
@@ -513,6 +518,36 @@ const CURRICULUM_STRINGS: Record<CurriculumStringKey, Record<string, string>> = 
     az: 'Doğrusu Budur',
     en: 'Say it like this',
     ru: 'Правильно так',
+  },
+  see_examples: {
+    tr: 'Örnekleri Gör',
+    az: 'Nümunələrə Bax',
+    en: 'See Examples',
+    ru: 'Посмотреть примеры',
+  },
+  see_trap: {
+    tr: 'Püf Noktasına Bak',
+    az: 'Püf Nöqtəsinə Bax',
+    en: 'See Common Trap',
+    ru: 'Ловушки и нюансы',
+  },
+  rule_step_title: {
+    tr: 'Temel Kural & Formül',
+    az: 'Əsas Qayda & Düstur',
+    en: 'Core Rule & Formula',
+    ru: 'Базовое правило',
+  },
+  examples_step_title: {
+    tr: 'Cümle İçinde Kullanım',
+    az: 'Cümlədə İstifadəsi',
+    en: 'Usage in Context',
+    ru: 'Примеры в речи',
+  },
+  step_counter: {
+    tr: 'Adım',
+    az: 'Addım',
+    en: 'Step',
+    ru: 'Шаг',
   },
 };
 

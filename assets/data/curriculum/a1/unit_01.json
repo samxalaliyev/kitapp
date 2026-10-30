@@ -171,10 +171,16 @@
       "id": "ex1",
       "type": "word_scramble",
       "prompt": {
-        "az": "Cümləni düzgün sıraya yığın: 'My name is Lisa'",
-        "en": "Arrange the words: 'My name is Lisa'",
-        "tr": "Cümleyi doğru sıraya dizin: 'My name is Lisa'",
-        "ru": "Соберите предложение: 'My name is Lisa'"
+        "az": "Bu cümləni ingiliscəyə tərcümə edin:",
+        "en": "Translate this sentence to English:",
+        "tr": "Bu cümleyi İngilizceye çevirin:",
+        "ru": "Переведите это предложение на английский:"
+      },
+      "instruction": {
+        "az": "Mənim adım Lisadır.",
+        "en": "My name is Lisa.",
+        "tr": "Benim adım Lisa.",
+        "ru": "Меня зовут Лиза."
       },
       "sentenceToBuild": ["My", "name", "is", "Lisa"],
       "distractorWords": ["am", "hello"],
@@ -286,10 +292,16 @@
       "id": "bq2",
       "type": "word_scramble",
       "prompt": {
-        "az": "Cümləni yığın: 'Nice to meet you'",
-        "en": "Build sentence: 'Nice to meet you'",
-        "tr": "Cümleyi kurun: 'Nice to meet you'",
-        "ru": "Соберите: 'Nice to meet you'"
+        "az": "Bu cümləni ingiliscəyə tərcümə edin:",
+        "en": "Translate this sentence to English:",
+        "tr": "Bu cümleyi İngilizceye çevirin:",
+        "ru": "Переведите это предложение на английский:"
+      },
+      "instruction": {
+        "az": "Sizinlə tanış olmağıma şadam.",
+        "en": "Nice to meet you.",
+        "tr": "Tanıştığımıza memnun oldum.",
+        "ru": "Приятно познакомиться."
       },
       "sentenceToBuild": ["Nice", "to", "meet", "you"],
       "distractorWords": ["see", "ready"],

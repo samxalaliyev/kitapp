@@ -160,8 +160,16 @@
       "id": "ex3_1",
       "type": "word_scramble",
       "prompt": {
-        "az": "Cümləni yığın: 'He always works hard'",
-        "en": "Build sentence: 'He always works hard'"
+        "az": "Bu cümləni ingiliscəyə tərcümə edin:",
+        "tr": "Bu cümleyi İngilizceye çevirin:",
+        "en": "Translate this sentence to English:",
+        "ru": "Переведите это предложение на английский:"
+      },
+      "instruction": {
+        "az": "O, həmişə çox işləyir.",
+        "tr": "O her zaman çok çalışır.",
+        "en": "He always works hard.",
+        "ru": "Он всегда усердно работает."
       },
       "sentenceToBuild": ["He", "always", "works", "hard"],
       "distractorWords": ["work", "am"],
@@ -172,8 +180,16 @@
       "id": "ex3_2",
       "type": "fill_in_the_blank",
       "prompt": {
-        "az": "Düzgün feli seçin: 'She ___ up early.'",
-        "en": "Select the correct verb: 'She ___ up early.'"
+        "az": "Boşluğa uyğun olan feli seçin:",
+        "tr": "Boşluğa uygun olan fiili seçin:",
+        "en": "Select the correct verb for the blank:",
+        "ru": "Выберите правильный глагол для пропуска:"
+      },
+      "instruction": {
+        "az": "She ___ up early.",
+        "tr": "She ___ up early.",
+        "en": "She ___ up early.",
+        "ru": "She ___ up early."
       },
       "options": [
         { "id": "p1", "text": "wakes", "isCorrect": true },
@@ -185,8 +201,10 @@
       "id": "ex3_3",
       "type": "multiple_choice",
       "prompt": {
-        "az": "Doğru cümləni seçin: 'I have breakfast in the morning'",
-        "en": "Choose the correct sentence"
+        "az": "'Mən səhər yeməyi yeyirəm' cümləsinin düzgün tərcüməsini seçin:",
+        "tr": "'Sabah kahvaltısı yaparım' cümlesinin doğru çevirisini seçin:",
+        "en": "Choose the correct translation for 'I have breakfast in the morning':",
+        "ru": "Выберите правильный перевод для 'Я завтракаю по утрам':"
       },
       "options": [
         { "id": "opt1", "text": "I have breakfast in the morning.", "isCorrect": true },
@@ -201,7 +219,9 @@
       "type": "multiple_choice",
       "prompt": {
         "az": "'Səhər yeməyi' ingiliscə necə adlanır?",
-        "en": "What is the word for 'Səhər yeməyi'?"
+        "tr": "'Kahvaltı' İngilizce nasıl söylenir?",
+        "en": "What is the English word for 'Breakfast'?",
+        "ru": "Как по-английски называется 'Завтрак'?"
       },
       "options": [
         { "id": "b1", "text": "Breakfast", "isCorrect": true },
