@@ -59,7 +59,13 @@ export type CurriculumStringKey =
   | 'need_internet_title'
   | 'need_internet_msg'
   | 'cancel'
-  | 'upgrade_premium';
+  | 'upgrade_premium'
+  | 'exit_lesson_title'
+  | 'exit_lesson_msg'
+  | 'stay_btn'
+  | 'exit_btn'
+  | 'slow_audio'
+  | 'chest_opened_reward';
 
 const CURRICULUM_STRINGS: Record<CurriculumStringKey, Record<string, string>> = {
   learn_map_title: {
@@ -415,6 +421,42 @@ const CURRICULUM_STRINGS: Record<CurriculumStringKey, Record<string, string>> = 
     az: '👑 Premium Al',
     en: '👑 Get Premium',
     ru: '👑 Перейти на Premium',
+  },
+  exit_lesson_title: {
+    tr: 'Dersten çıkmak istiyor musunuz?',
+    az: 'Dərsdən çıxmaq istəyirsiniz?',
+    en: 'Do you want to exit the lesson?',
+    ru: 'Вы хотите выйти из урока?',
+  },
+  exit_lesson_msg: {
+    tr: 'Şimdi çıkarsanız mevcut ilerlemeniz sıfırlanacaktır.',
+    az: 'Dərsdən indi çıxsanız cari irəliləyiş sıfırlanacaq.',
+    en: 'If you exit now, your current progress in this lesson will be lost.',
+    ru: 'Если вы выйдете сейчас, текущий прогресс будет потерян.',
+  },
+  stay_btn: {
+    tr: 'Kal',
+    az: 'Qal',
+    en: 'Stay',
+    ru: 'Остаться',
+  },
+  exit_btn: {
+    tr: 'Çık',
+    az: 'Çıx',
+    en: 'Exit',
+    ru: 'Выйти',
+  },
+  slow_audio: {
+    tr: 'Yavaş Dinle',
+    az: 'Yavaş Dinlə',
+    en: 'Slow Audio',
+    ru: 'Медленно',
+  },
+  chest_opened_reward: {
+    tr: 'Tebrikler! +25 XP ve +1 Can Kazandınız! 🎁',
+    az: 'Təbriklər! +25 XP və +1 Can Qazandınız! 🎁',
+    en: 'Congratulations! You earned +25 XP and +1 Heart! 🎁',
+    ru: 'Поздравляем! Вы получили +25 XP и +1 Жизнь! 🎁',
   },
 };
 

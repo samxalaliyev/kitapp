@@ -61,7 +61,9 @@
       "correct": "He wakes up early.",
       "explanation": {
         "az": "'He' (o) üçün felin sonuna '-s' əlavə olunmalıdır.",
-        "en": "Remember the 3rd person singular '-s' ending."
+        "en": "Remember the 3rd person singular '-s' ending.",
+        "tr": "'He/She/It' özneleri için fiilin sonuna '-s' veya '-es' takısı gelmelidir.",
+        "ru": "Для третьего лица единственного числа (He/She/It) к глаголу добавляется окончание '-s'."
       }
     }
   },

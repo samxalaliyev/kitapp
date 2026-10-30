@@ -58,10 +58,10 @@ export async function getEnergyBalance(
     if (isNaN(balance)) balance = INITIAL_STARTER_ENERGY;
 
     // 2. Daily midnight reset (00:00)
+    // Each new calendar day starts fresh with the daily quota (60 for registered, 40 for guest)
     if (lastDateStr !== today) {
       const dailyCap = isGuest ? DAILY_GUEST_ENERGY : DAILY_FREE_ENERGY;
-      // Refill to at least daily cap
-      balance = Math.max(balance, dailyCap);
+      balance = dailyCap;
       await AsyncStorage.setItem(STORAGE_KEYS.BALANCE, String(balance));
       await AsyncStorage.setItem(STORAGE_KEYS.LAST_RESET_DATE, today);
     }

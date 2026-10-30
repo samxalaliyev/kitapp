@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   Dimensions,
   Easing,
@@ -22,8 +23,88 @@ import {
 import type { LevelId } from '@/types/curriculum';
 import { addXP } from '@/lib/gamification/leagues';
 import { getCurriculumText, getLocalizedContent } from '@/lib/curriculum/curriculum-i18n';
+import { saveUnitProgress, unlockUnit } from '@/lib/curriculum/db';
+import { refillHearts } from '@/lib/vocabulary/game-service';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+interface HandbookRuleItem {
+  badge: Record<string, string>;
+  formula: string;
+  example: string;
+}
+
+const LEVEL_RULES_DATA: Record<LevelId, HandbookRuleItem[]> = {
+  A1: [
+    {
+      badge: { az: 'Modul 1 • To Be', tr: 'Modül 1 • To Be', en: 'Module 1 • To Be', ru: 'Модуль 1 • To Be' },
+      formula: 'Subject + am / is / are + Noun / Adj',
+      example: '"I am a student. She is ready."',
+    },
+    {
+      badge: { az: 'Modul 2 • Would like', tr: 'Modül 2 • Would like', en: 'Module 2 • Would like', ru: 'Модуль 2 • Would like' },
+      formula: "I would like (I'd like) + Noun / Verb",
+      example: "\"I'd like a coffee, please. How much is it?\"",
+    },
+    {
+      badge: { az: 'Modul 3 • Present Simple', tr: 'Modül 3 • Present Simple', en: 'Module 3 • Present Simple', ru: 'Модуль 3 • Present Simple' },
+      formula: 'He / She / It + Verb-s | I / You / We / They + Verb',
+      example: '"He always works hard. I wake up early."',
+    },
+  ],
+  A2: [
+    {
+      badge: { az: 'Modul 1 • Past Simple', tr: 'Modül 1 • Past Simple', en: 'Module 1 • Past Simple', ru: 'Модуль 1 • Past Simple' },
+      formula: 'Subject + Verb-ed / Irregular V2 (did / went)',
+      example: '"We traveled to London last month. She saw him."',
+    },
+    {
+      badge: { az: 'Modul 2 • Müqayisə (Comparatives)', tr: 'Modül 2 • Karşılaştırma', en: 'Module 2 • Comparatives', ru: 'Модуль 2 • Сравнения' },
+      formula: 'Short adj + -er than | More + Long adj + than',
+      example: '"English is easier than you think. Today is more exciting."',
+    },
+    {
+      badge: { az: 'Modul 3 • Present Perfect', tr: 'Modül 3 • Present Perfect', en: 'Module 3 • Present Perfect', ru: 'Модуль 3 • Present Perfect' },
+      formula: 'Subject + have / has + Verb-3 (V3)',
+      example: '"I have already finished my task. Have you ever been there?"',
+    },
+  ],
+  B1: [
+    {
+      badge: { az: 'Modul 1 • Məchul Növ (Passive)', tr: 'Modül 1 • Edilgen Çatı', en: 'Module 1 • Passive Voice', ru: 'Модуль 1 • Пассивный залог' },
+      formula: 'Subject + Be (is/was/been) + Past Participle (V3)',
+      example: '"English is spoken worldwide. The report was sent yesterday."',
+    },
+    {
+      badge: { az: 'Modul 2 • Şərt Cümlələri (Type 1 & 2)', tr: 'Modül 2 • Şart Cümleleri', en: 'Module 2 • Conditionals', ru: 'Модуль 2 • Условные предложения' },
+      formula: 'Type 1: If + Present, Will + V | Type 2: If + Past, Would + V',
+      example: '"If it rains, we will stay. If I had time, I would join."',
+    },
+    {
+      badge: { az: 'Modul 3 • Nisbi Əvəzliklər (Relative)', tr: 'Modül 3 • İlgi Zamirleri', en: 'Module 3 • Relative Clauses', ru: 'Модуль 3 • Связующие местоимения' },
+      formula: 'Noun + who (people) / which (things) / that',
+      example: '"The person who helped me. The book which was recommended."',
+    },
+  ],
+  B2: [
+    {
+      badge: { az: 'Modul 1 • Past Perfect & Regrets', tr: 'Modül 1 • Past Perfect', en: 'Module 1 • Past Perfect', ru: 'Модуль 1 • Предпрошедшее время' },
+      formula: 'Subject + had + V3 | If + had + V3, would have + V3',
+      example: '"When I arrived, the train had already left. If I had known, I would have called."',
+    },
+    {
+      badge: { az: 'Modul 2 • İnversiya (Inversion)', tr: 'Modül 2 • Devrik Cümle', en: 'Module 2 • Inversion', ru: 'Модуль 2 • Инверсия' },
+      formula: 'Negative Word (Never / Rarely / Not only) + Auxiliary + Subject',
+      example: '"Never have I witnessed such determination. Not only did she succeed, but also inspired us."',
+    },
+    {
+      badge: { az: 'Modul 3 • İrəli Feli Frazalar', tr: 'Modül 3 • İleri Deyimler', en: 'Module 3 • Advanced Phrasals', ru: 'Модуль 3 • Продвинутые фразовые глаголы' },
+      formula: 'Sophisticated Idiomatic Combinations & Collocations',
+      example: '"To bring about real change, we must rule out shortcuts and stand out."',
+    },
+  ],
+  C1: [],
+};
 
 export interface GamifiedPathMapProps {
   sections?: CurriculumSection[];
@@ -142,19 +223,46 @@ export function GamifiedPathMap({
     return CEFR_LEVELS.find((l) => l.id === targetLvl) || CEFR_LEVELS[0];
   }, [previewUnit?.level, selectedHandbookLevel, selectedLevel]);
 
+  // Claim chest reward
+  const claimChestReward = async (unit: UnitDisplayItem) => {
+    if (chestClaimedMap[unit.id]) return;
+    setChestClaimedMap((prev) => ({ ...prev, [unit.id]: true }));
+
+    // 1. Award XP
+    await addXP(25, isPremium);
+    // 2. Refill 1 Heart
+    await refillHearts(1).catch(() => {});
+
+    // 3. Mark chest as completed in SQLite
+    await saveUnitProgress({
+      unitId: unit.id,
+      levelId: unit.level,
+      status: 'completed',
+      score: 100,
+      stars: 3,
+      completedAt: Date.now(),
+      unlockedAt: Date.now(),
+    });
+
+    // 4. Find subsequent unit in sequence and unlock it in SQLite
+    const allUnits = (sections || []).flatMap((s) => s.units);
+    const chestIdx = allUnits.findIndex((u) => u.id === unit.id);
+    if (chestIdx >= 0 && chestIdx < allUnits.length - 1) {
+      const nextUnit = allUnits[chestIdx + 1];
+      await unlockUnit(nextUnit.id, nextUnit.level);
+    }
+
+    Alert.alert('🎁', getCurriculumText('chest_opened_reward', activeLang));
+    onUnitRefreshed?.();
+  };
+
   // Handle node tap
   const handleNodePress = (unit: UnitDisplayItem) => {
     if (unit.nodeType === 'chest') {
-      if (unit.status === 'locked') {
-        setPreviewUnit(unit);
-      } else {
-        // Claim chest
-        if (!chestClaimedMap[unit.id]) {
-          addXP(25, isPremium);
-          setChestClaimedMap((prev) => ({ ...prev, [unit.id]: true }));
-        }
-        setPreviewUnit(unit);
+      if (unit.status !== 'locked' && !chestClaimedMap[unit.id]) {
+        claimChestReward(unit);
       }
+      setPreviewUnit(unit);
     } else {
       setPreviewUnit(unit);
     }
@@ -596,10 +704,15 @@ export function GamifiedPathMap({
                 ) : previewUnit.nodeType === 'chest' ? (
                   <Pressable
                     style={[styles.start3DBtn, { backgroundColor: '#f59e0b', borderBottomColor: '#b45309' }]}
-                    onPress={() => setPreviewUnit(null)}
+                    onPress={() => {
+                      if (!chestClaimedMap[previewUnit.id]) {
+                        claimChestReward(previewUnit);
+                      }
+                      setPreviewUnit(null);
+                    }}
                   >
                     <Text style={styles.start3DBtnText}>
-                      {chestClaimedMap[previewUnit.id] ? '✅' : `${getCurriculumText('chest_reward', activeLang)} (+25 XP) 🎁`}
+                      {chestClaimedMap[previewUnit.id] ? '✅' : `${getCurriculumText('chest_reward', activeLang)} (+25 XP & +1 ❤️) 🎁`}
                     </Text>
                   </Pressable>
                 ) : (
@@ -644,7 +757,7 @@ export function GamifiedPathMap({
             <View style={styles.handbookHeaderRow}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.handbookTitle, { color: colors.text }]}>
-                  📖 {getCurriculumText('rules_handbook', activeLang)} ({selectedHandbookLevel})
+                  📖 {getCurriculumText('rules_handbook', activeLang)} ({selectedHandbookLevel || 'A1'})
                 </Text>
                 <Text style={[styles.handbookSub, { color: colors.textMuted }]}>
                   {getLocalizedContent(previewLevelInfo.title, activeLang)} {getCurriculumText('basic_formulas', activeLang)}
@@ -659,35 +772,20 @@ export function GamifiedPathMap({
             </View>
 
             <View style={styles.rulesList}>
-              <View style={[styles.ruleItem, { backgroundColor: colors.isDark ? '#1e293b' : '#f8fafc' }]}>
-                <Text style={styles.ruleBadge}>Modul 1 • To Be</Text>
-                <Text style={[styles.ruleFormula, { color: colors.text }]}>
-                  Subject + am / is / are + Noun / Adj
-                </Text>
-                <Text style={[styles.ruleExample, { color: colors.textMuted }]}>
-                  "I am a student. She is ready."
-                </Text>
-              </View>
-
-              <View style={[styles.ruleItem, { backgroundColor: colors.isDark ? '#1e293b' : '#f8fafc' }]}>
-                <Text style={styles.ruleBadge}>Modul 2 • Would like</Text>
-                <Text style={[styles.ruleFormula, { color: colors.text }]}>
-                  I would like (I'd like) + Noun / Verb
-                </Text>
-                <Text style={[styles.ruleExample, { color: colors.textMuted }]}>
-                  "I'd like a coffee, please. How much is it?"
-                </Text>
-              </View>
-
-              <View style={[styles.ruleItem, { backgroundColor: colors.isDark ? '#1e293b' : '#f8fafc' }]}>
-                <Text style={styles.ruleBadge}>Modul 3 • Present Simple</Text>
-                <Text style={[styles.ruleFormula, { color: colors.text }]}>
-                  He / She / It + Verb-s | I / You / We / They + Verb
-                </Text>
-                <Text style={[styles.ruleExample, { color: colors.textMuted }]}>
-                  "He always works hard. I wake up early."
-                </Text>
-              </View>
+              {(LEVEL_RULES_DATA[selectedHandbookLevel || 'A1'] || LEVEL_RULES_DATA.A1).map((rule, idx) => (
+                <View
+                  key={idx}
+                  style={[styles.ruleItem, { backgroundColor: colors.isDark ? '#1e293b' : '#f8fafc' }]}
+                >
+                  <Text style={styles.ruleBadge}>{getLocalizedContent(rule.badge as any, activeLang)}</Text>
+                  <Text style={[styles.ruleFormula, { color: colors.text }]}>
+                    {rule.formula}
+                  </Text>
+                  <Text style={[styles.ruleExample, { color: colors.textMuted }]}>
+                    {rule.example}
+                  </Text>
+                </View>
+              ))}
             </View>
 
             <Pressable

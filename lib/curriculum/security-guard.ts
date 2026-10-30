@@ -25,8 +25,8 @@ export async function validateUnitAccess(
   isOnline: boolean,
   isBundled: boolean = false
 ): Promise<UnitAccessCheckResult> {
-  // 1. Starter unit (Unit 1) is always accessible to everyone
-  if (unitId === 'a1_unit_01' || unitOrder === 1) {
+  // 1. Starter unit (Unit 1 of A1) is always accessible to everyone
+  if (unitId === 'a1_unit_01' || (unitOrder === 1 && levelId === 'A1')) {
     const hearts = isPremium ? MAX_HEARTS : await getHearts();
     if (!isPremium && hearts <= 0) {
       return {
@@ -112,7 +112,9 @@ export async function handleLessonCompletion(
       targetNextUnitId = `${levelId.toLowerCase()}_unit_${String(unitOrder + 1).padStart(2, '0')}`;
     }
     if (targetNextUnitId) {
-      await unlockUnit(targetNextUnitId, levelId);
+      // Derive target level from id prefix (e.g. 'a2_unit_01' -> 'A2')
+      const targetLevel = (targetNextUnitId.split('_')[0].toUpperCase() as LevelId) || levelId;
+      await unlockUnit(targetNextUnitId, targetLevel);
       return { passed: true, stars, nextUnlockedId: targetNextUnitId };
     }
     return { passed: true, stars };

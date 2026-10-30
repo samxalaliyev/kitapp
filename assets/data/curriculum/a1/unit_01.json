@@ -72,7 +72,9 @@
       "correct": "I am Lisa. (I'm Lisa)",
       "explanation": {
         "az": "Özünüz haqqında danışarkən həmişə 'I am' (və ya qısaca 'I'm') deyin. Heç vaxt 'I is' deməyin.",
-        "en": "Always say 'I am' (or 'I'm') when talking about yourself. Never say 'I is'."
+        "en": "Always say 'I am' (or 'I'm') when talking about yourself. Never say 'I is'.",
+        "tr": "Kendinizden bahsederken her zaman 'I am' (veya kısaca 'I'm') deyin. Asla 'I is' demeyin.",
+        "ru": "Говоря о себе, всегда говорите 'I am' (или 'I'm'). Никогда не говорите 'I is'."
       }
     }
   },

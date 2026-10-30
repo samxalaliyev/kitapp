@@ -61,7 +61,9 @@
       "correct": "I'd like a coffee, please.",
       "explanation": {
         "az": "Həmişə 'I'd like' və cümlənin sonunda 'please' işlətmək mədəni təsir bağışlayır.",
-        "en": "Always prefer 'I'd like' and add 'please' for natural politeness."
+        "en": "Always prefer 'I'd like' and add 'please' for natural politeness.",
+        "tr": "Sipariş verirken her zaman 'I'd like' kullanın ve sonuna nezaket için 'please' ekleyin.",
+        "ru": "При заказе всегда предпочитайте 'I'd like' и добавляйте 'please' для вежливости."
       }
     }
   },

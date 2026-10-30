@@ -181,11 +181,11 @@ export function LessonPlayerModal({
     setIsSpeakingStory(false);
     if (currentStage === 'exercise' && !completedResult) {
       Alert.alert(
-        'Dərsdən çıxmaq istəyirsiniz?',
-        'Dərsdən indi çıxsanız cari irəliləyiş sıfırlanacaq.',
+        getCurriculumText('exit_lesson_title', activeLang),
+        getCurriculumText('exit_lesson_msg', activeLang),
         [
-          { text: 'Qal', style: 'cancel' },
-          { text: 'Çıx', style: 'destructive', onPress: onClose },
+          { text: getCurriculumText('stay_btn', activeLang), style: 'cancel' },
+          { text: getCurriculumText('exit_btn', activeLang), style: 'destructive', onPress: onClose },
         ]
       );
     } else {
@@ -217,8 +217,16 @@ export function LessonPlayerModal({
     let isCorrect = false;
 
     if (currentExercise.type === 'word_scramble') {
-      const assembledSentence = scrambleBuiltWords.join(' ').trim().toLowerCase();
-      const expectedSentence = (currentExercise.correctSentence || (currentExercise.sentenceToBuild || []).join(' ')).trim().toLowerCase();
+      const cleanText = (str: string) =>
+        str
+          .replace(/[.,/#!$%^&*;:{}=\-_`~()?]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toLowerCase();
+      const assembledSentence = cleanText(scrambleBuiltWords.join(' '));
+      const expectedSentence = cleanText(
+        currentExercise.correctSentence || (currentExercise.sentenceToBuild || []).join(' ')
+      );
       isCorrect = assembledSentence === expectedSentence;
     } else {
       // Multiple choice, fill_in_the_blank, listening_dictation
@@ -535,12 +543,26 @@ export function LessonPlayerModal({
                         <Text style={[styles.vocabPhonetic, { color: colors.primary }]}>
                           {item.phonetic}
                         </Text>
-                        <Pressable
-                          style={[styles.bigSpeakerBtn, { backgroundColor: colors.primary + '20' }]}
-                          onPress={() => handleSpeech(item.audioText || item.word)}
-                        >
-                          <Feather name="volume-2" size={26} color={colors.primary} />
-                        </Pressable>
+                        <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                          <Pressable
+                            style={[styles.bigSpeakerBtn, { backgroundColor: colors.primary + '20' }]}
+                            onPress={() => handleSpeech(item.audioText || item.word, 0.9)}
+                          >
+                            <Feather name="volume-2" size={24} color={colors.primary} />
+                          </Pressable>
+                          <Pressable
+                            style={[
+                              styles.turtleSpeakerBtn,
+                              {
+                                backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9',
+                                borderColor: colors.surfaceBorder,
+                              },
+                            ]}
+                            onPress={() => handleSpeech(item.audioText || item.word, 0.55)}
+                          >
+                            <Text style={{ fontSize: 18 }}>🐢</Text>
+                          </Pressable>
+                        </View>
                       </View>
 
                       <View
@@ -849,18 +871,38 @@ export function LessonPlayerModal({
                 {/* Listening Prompt Audio */}
                 {currentExercise.type === 'listening_dictation' && (
                   <View style={styles.listeningWrap}>
-                    <Pressable
-                      style={[styles.bigListeningBtn, { backgroundColor: colors.primary }]}
-                      onPress={() =>
-                        handleSpeech(
-                          currentExercise.audioPrompt || currentExercise.correctSentence || 'Listen'
-                        )
-                      }
-                    >
-                      <Feather name="volume-2" size={32} color="#0d0f17" />
-                    </Pressable>
+                    <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+                      <Pressable
+                        style={[styles.bigListeningBtn, { backgroundColor: colors.primary }]}
+                        onPress={() =>
+                          handleSpeech(
+                            currentExercise.audioPrompt || currentExercise.correctSentence || 'Listen',
+                            0.9
+                          )
+                        }
+                      >
+                        <Feather name="volume-2" size={32} color="#0d0f17" />
+                      </Pressable>
+                      <Pressable
+                        style={[
+                          styles.slowListeningBtn,
+                          {
+                            backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9',
+                            borderColor: colors.surfaceBorder,
+                          },
+                        ]}
+                        onPress={() =>
+                          handleSpeech(
+                            currentExercise.audioPrompt || currentExercise.correctSentence || 'Listen',
+                            0.55
+                          )
+                        }
+                      >
+                        <Text style={{ fontSize: 24 }}>🐢</Text>
+                      </Pressable>
+                    </View>
                     <Text style={[styles.listeningHelp, { color: colors.textMuted }]}>
-                      Toxunaraq audio cümləni dinləyin
+                      {getCurriculumText('listen_sentence_help', activeLang)}
                     </Text>
                   </View>
                 )}
@@ -882,7 +924,7 @@ export function LessonPlayerModal({
                     >
                       {scrambleBuiltWords.length === 0 ? (
                         <Text style={[styles.emptyDropPlaceholder, { color: colors.textMuted }]}>
-                          Aşağıdakı sözlərə toxunaraq cümləni yığın...
+                          {getCurriculumText('scramble_placeholder', activeLang)}
                         </Text>
                       ) : (
                         <View style={styles.scrambleChipsWrap}>
@@ -1839,5 +1881,21 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     marginTop: 2,
     fontWeight: FontWeight.medium,
+  },
+  turtleSpeakerBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  slowListeningBtn: {
+    width: 60,
+    height: 60,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
   },
 });
