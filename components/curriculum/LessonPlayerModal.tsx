@@ -47,6 +47,111 @@ export interface LessonPlayerModalProps {
 
 type StageType = 'theory' | 'vocabulary' | 'story' | 'exercise' | 'victory';
 
+/**
+ * Intelligent formula renderer that breaks down raw grammar rules
+ * into structured syntax blocks (e.g., subject pronouns + verb conjugations)
+ * so learners instantly grasp the pattern without visual clutter.
+ */
+function renderStructuredFormula(formula: string, colors: any) {
+  // 1. If formula has alternatives separated by '|' (e.g. "He/She/It + Verb-s | I/You/We/They + Verb")
+  if (formula.includes('|')) {
+    const branches = formula.split('|').map((b) => b.trim()).filter(Boolean);
+    return (
+      <View style={styles.formulaBranchesWrap}>
+        {branches.map((branch, idx) => {
+          const parts = branch.split('+').map((p) => p.trim()).filter(Boolean);
+          return (
+            <View
+              key={idx}
+              style={[
+                styles.formulaBranchCard,
+                {
+                  backgroundColor: colors.isDark ? '#0f172a' : '#ffffff',
+                  borderColor: colors.isDark ? '#1e293b' : '#e2e8f0',
+                },
+              ]}
+            >
+              <View style={styles.formulaTokenList}>
+                {parts.map((token, tIdx) => (
+                  <React.Fragment key={tIdx}>
+                    <View
+                      style={[
+                        styles.formulaTokenPill,
+                        tIdx === 0
+                          ? {
+                              backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9',
+                              borderColor: colors.isDark ? '#334155' : '#cbd5e1',
+                            }
+                          : {
+                              backgroundColor: colors.isDark ? '#064e3b' : '#ecfdf5',
+                              borderColor: '#10b981',
+                            },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.formulaTokenText,
+                          {
+                            color: tIdx === 0 ? colors.text : '#10b981',
+                            fontWeight: FontWeight.bold,
+                          },
+                        ]}
+                      >
+                        {token}
+                      </Text>
+                    </View>
+                    {tIdx < parts.length - 1 && (
+                      <Text style={[styles.formulaOperatorText, { color: colors.textMuted }]}>+</Text>
+                    )}
+                  </React.Fragment>
+                ))}
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    );
+  }
+
+  // 2. If formula has items separated by '•' (e.g. "have got / has got • my, your, his, her")
+  if (formula.includes('•')) {
+    const chips = formula.split('•').map((c) => c.trim()).filter(Boolean);
+    return (
+      <View style={styles.formulaChipsRow}>
+        {chips.map((chip, idx) => (
+          <View
+            key={idx}
+            style={[
+              styles.formulaPill,
+              {
+                backgroundColor: colors.isDark ? '#0f172a' : '#ffffff',
+                borderColor: colors.isDark ? '#334155' : '#cbd5e1',
+              },
+            ]}
+          >
+            <Text style={[styles.formulaPillText, { color: colors.text }]}>{chip}</Text>
+          </View>
+        ))}
+      </View>
+    );
+  }
+
+  // 3. Standard single formula string
+  return (
+    <View
+      style={[
+        styles.formulaSingleCard,
+        {
+          backgroundColor: colors.isDark ? '#0f172a' : '#ffffff',
+          borderColor: colors.isDark ? '#1e293b' : '#e2e8f0',
+        },
+      ]}
+    >
+      <Text style={[styles.formulaText, { color: colors.text }]}>{formula}</Text>
+    </View>
+  );
+}
+
 export function LessonPlayerModal({
   visible,
   unit,
@@ -351,6 +456,67 @@ export function LessonPlayerModal({
             </Pressable>
           </View>
 
+          {/* 4-Stage Pedagogical Journey Bar */}
+          {currentStage !== 'victory' && (
+            <View style={[styles.stageJourneyBar, { borderColor: colors.surfaceBorder }]}>
+              {[
+                { key: 'theory', icon: 'book-open', label: getCurriculumText('stage_theory', activeLang) },
+                { key: 'vocabulary', icon: 'layers', label: getCurriculumText('stage_vocab', activeLang) },
+                { key: 'story', icon: 'file-text', label: getCurriculumText('stage_story', activeLang) },
+                { key: 'exercise', icon: 'check-circle', label: getCurriculumText('stage_exercise', activeLang) },
+              ].map((s, idx) => {
+                const isCurrent = currentStage === s.key;
+                const isPassed =
+                  (s.key === 'theory' && currentStage !== 'theory') ||
+                  (s.key === 'vocabulary' && (currentStage === 'story' || currentStage === 'exercise')) ||
+                  (s.key === 'story' && currentStage === 'exercise');
+                return (
+                  <View key={s.key} style={styles.stageStepItem}>
+                    <View
+                      style={[
+                        styles.stageStepPill,
+                        isCurrent
+                          ? [styles.stageStepPillActive, { backgroundColor: colors.primary }]
+                          : isPassed
+                          ? [styles.stageStepPillPassed, { backgroundColor: colors.isDark ? '#064e3b' : '#ecfdf5', borderColor: '#10b981' }]
+                          : [styles.stageStepPillUpcoming, { backgroundColor: colors.isDark ? '#141724' : '#f1f5f9' }],
+                      ]}
+                    >
+                      {isPassed ? (
+                        <Feather name="check" size={11} color="#10b981" />
+                      ) : (
+                        <Feather
+                          name={s.icon as any}
+                          size={11}
+                          color={isCurrent ? '#0d0f17' : colors.textMuted}
+                        />
+                      )}
+                      <Text
+                        style={[
+                          styles.stageStepText,
+                          {
+                            color: isCurrent ? '#0d0f17' : isPassed ? '#10b981' : colors.textMuted,
+                            fontWeight: isCurrent ? FontWeight.bold : FontWeight.medium,
+                          },
+                        ]}
+                      >
+                        {s.label}
+                      </Text>
+                    </View>
+                    {idx < 3 && (
+                      <View
+                        style={[
+                          styles.stageStepLine,
+                          { backgroundColor: isPassed ? '#10b981' : colors.surfaceBorder },
+                        ]}
+                      />
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
           {/* Body Content by Stage */}
           <View style={styles.contentWrap}>
             {currentStage === 'theory' && (
@@ -358,138 +524,236 @@ export function LessonPlayerModal({
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.stageScroll}
               >
-                {/* Level & Unit badge */}
-                <View style={styles.unitBadgeRow}>
-                  <View style={[styles.levelTag, { backgroundColor: colors.primary + '20' }]}>
-                    <Text style={[styles.levelTagText, { color: colors.primary }]}>
-                      {unit.level} • {getCurriculumText('lesson', activeLang)} {unit.order}
-                    </Text>
-                  </View>
-                  <Text style={[styles.minutesTag, { color: colors.textMuted }]}>
-                    ⏱️ {unit.estimatedMinutes} {getCurriculumText('min', activeLang)}
-                  </Text>
-                </View>
-
-                {/* Title */}
-                <Text style={[styles.title, { color: colors.text }]}>
-                  {getLocalizedContent(unit.title, activeLang)}
-                </Text>
-                <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                  {getLocalizedContent(unit.grammarRule.title, activeLang)}
-                </Text>
-
-                {/* Formula box / Murphy Rule Breakdown */}
-                {unit.grammarRule.formula && (
-                  <View
-                    style={[
-                      styles.formulaCard,
-                      {
-                        backgroundColor: colors.isDark ? '#141c2e' : '#f0fdf4',
-                        borderColor: colors.isDark ? '#1e3a5f' : '#bbf7d0',
-                      },
-                    ]}
-                  >
-                    <View style={styles.formulaHeader}>
-                      <Feather name="zap" size={15} color="#10b981" />
-                      <Text style={styles.formulaLabel}>{getCurriculumText('quick_rule', activeLang)}</Text>
-                    </View>
-                    {unit.grammarRule.formula.includes('•') ? (
-                      <View style={styles.formulaChipsRow}>
-                        {unit.grammarRule.formula.split('•').map((item, idx) => (
-                          <View
-                            key={idx}
-                            style={[
-                              styles.formulaPill,
-                              {
-                                backgroundColor: colors.isDark ? '#0f172a' : '#ffffff',
-                                borderColor: colors.isDark ? '#334155' : '#86efac',
-                              },
-                            ]}
-                          >
-                            <Text style={[styles.formulaPillText, { color: colors.text }]}>
-                              {item.trim()}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-                    ) : (
-                      <Text style={[styles.formulaText, { color: colors.text }]}>
-                        {unit.grammarRule.formula}
-                      </Text>
-                    )}
-                  </View>
-                )}
-
-                {/* Explanation */}
-                <View
-                  style={[
-                    styles.explanationCard,
-                    {
-                      backgroundColor: colors.surface,
-                      borderColor: colors.surfaceBorder,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.explanationText, { color: colors.text }]}>
-                    {getLocalizedContent(unit.grammarRule.explanation, activeLang)}
-                  </Text>
-                </View>
-
-                {/* Examples */}
-                <Text style={[styles.sectionHeading, { color: colors.text }]}>
-                  {getCurriculumText('examples', activeLang)}
-                </Text>
-                <View style={styles.examplesList}>
-                  {unit.grammarRule.examples.map((ex, idx) => (
+                {/* Hero Header Section */}
+                <View style={styles.heroHeaderSection}>
+                  <View style={styles.unitBadgeRow}>
                     <View
-                      key={idx}
                       style={[
-                        styles.exampleItem,
+                        styles.levelTag,
                         {
-                          backgroundColor: colors.surface,
+                          backgroundColor: colors.isDark ? '#261e12' : '#fef3c7',
+                          borderColor: colors.primary,
+                        },
+                      ]}
+                    >
+                      <Feather name="bookmark" size={12} color={colors.primary} />
+                      <Text style={[styles.levelTagText, { color: colors.primary }]}>
+                        {unit.level} • {getCurriculumText('lesson', activeLang)} {unit.order}
+                      </Text>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.minutesTagPill,
+                        {
+                          backgroundColor: colors.isDark ? '#141724' : '#f1f5f9',
                           borderColor: colors.surfaceBorder,
                         },
                       ]}
                     >
-                      <Pressable
-                        style={styles.speakerBtn}
-                        onPress={() => handleSpeech(ex.english)}
-                        hitSlop={8}
-                      >
-                        <Feather name="volume-2" size={18} color={colors.primary} />
-                      </Pressable>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.exampleEn, { color: colors.text }]}>
-                          {ex.english}
-                        </Text>
-                        <Text style={[styles.exampleTr, { color: colors.textMuted }]}>
-                          {getLocalizedContent(ex.translation, activeLang)}
-                        </Text>
-                      </View>
+                      <Feather name="clock" size={12} color={colors.textMuted} />
+                      <Text style={[styles.minutesTag, { color: colors.textMuted }]}>
+                        {unit.estimatedMinutes} {getCurriculumText('min', activeLang)}
+                      </Text>
                     </View>
-                  ))}
+                  </View>
+
+                  {/* Title */}
+                  <Text style={[styles.title, { color: colors.text }]}>
+                    {getLocalizedContent(unit.title, activeLang)}
+                  </Text>
+
+                  {/* Topic badge capsule */}
+                  <View style={styles.topicBadgeRow}>
+                    <View
+                      style={[
+                        styles.topicPill,
+                        {
+                          backgroundColor: colors.isDark ? '#1a1f33' : '#e0e7ff',
+                          borderColor: colors.isDark ? '#312e81' : '#c7d2fe',
+                        },
+                      ]}
+                    >
+                      <Feather name="zap" size={13} color="#4f46e5" />
+                      <Text style={[styles.topicPillText, { color: colors.isDark ? '#818cf8' : '#4338ca' }]}>
+                        {getLocalizedContent(unit.grammarRule.title, activeLang)}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
 
-                {/* Common Mistake warning */}
+                {/* UNIFIED MASTER GRAMMAR CARD */}
+                <View
+                  style={[
+                    styles.masterGrammarCard,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.isDark ? '#1e293b' : '#e2e8f0',
+                    },
+                  ]}
+                >
+                  <View style={styles.grammarCardHeader}>
+                    <View
+                      style={[
+                        styles.grammarHeaderBadge,
+                        {
+                          backgroundColor: colors.isDark ? '#064e3b' : '#ecfdf5',
+                          borderColor: '#10b981',
+                        },
+                      ]}
+                    >
+                      <Feather name="check-circle" size={13} color="#10b981" />
+                      <Text style={styles.grammarHeaderBadgeText}>
+                        {getCurriculumText('quick_rule', activeLang).toUpperCase()}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Structured Formula Breakdown */}
+                  {unit.grammarRule.formula && (
+                    <View style={styles.formulaSection}>
+                      {renderStructuredFormula(unit.grammarRule.formula, colors)}
+                    </View>
+                  )}
+
+                  {/* Soft Divider */}
+                  <View style={[styles.cardDivider, { backgroundColor: colors.surfaceBorder }]} />
+
+                  {/* Pedagogical Explanation */}
+                  <View style={styles.explanationSection}>
+                    <Text style={[styles.explanationText, { color: colors.text }]}>
+                      {getLocalizedContent(unit.grammarRule.explanation, activeLang)}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* EXAMPLES SECTION */}
+                <View style={styles.examplesSectionWrap}>
+                  <View style={styles.sectionHeaderRow}>
+                    <View style={[styles.sectionHeaderDot, { backgroundColor: colors.primary }]} />
+                    <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                      {getCurriculumText('examples', activeLang)}
+                    </Text>
+                    <Text style={[styles.sectionSublabel, { color: colors.textMuted }]}>
+                      • {getCurriculumText('tap_to_listen', activeLang)}
+                    </Text>
+                  </View>
+
+                  <View style={styles.examplesList}>
+                    {unit.grammarRule.examples.map((ex, idx) => (
+                      <Pressable
+                        key={idx}
+                        style={({ pressed }) => [
+                          styles.exampleItemCard,
+                          {
+                            backgroundColor: colors.surface,
+                            borderColor: colors.surfaceBorder,
+                            transform: [{ scale: pressed ? 0.985 : 1 }],
+                          },
+                        ]}
+                        onPress={() => handleSpeech(ex.english, 0.9)}
+                      >
+                        <View
+                          style={[
+                            styles.exampleSpeakerCircle,
+                            { backgroundColor: colors.isDark ? '#261e12' : '#fef3c7' },
+                          ]}
+                        >
+                          <Feather name="volume-2" size={20} color={colors.primary} />
+                        </View>
+                        <View style={{ flex: 1, paddingRight: 6 }}>
+                          <Text style={[styles.exampleEn, { color: colors.text }]}>
+                            {ex.english}
+                          </Text>
+                          <Text style={[styles.exampleTr, { color: colors.textMuted }]}>
+                            {getLocalizedContent(ex.translation, activeLang)}
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.miniPlayIconWrap,
+                            { backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9' },
+                          ]}
+                        >
+                          <Feather name="play" size={12} color={colors.primary} />
+                        </View>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+
+                {/* PRO-TIP & COMMON PITFALL CARD */}
                 {unit.grammarRule.commonMistake && (
                   <View
                     style={[
-                      styles.mistakeCard,
+                      styles.proTipCard,
                       {
-                        backgroundColor: colors.isDark ? '#261317' : '#fff1f2',
-                        borderColor: colors.isDark ? '#4c1d24' : '#fecdd3',
+                        backgroundColor: colors.isDark ? '#1a1824' : '#fffaf5',
+                        borderColor: colors.isDark ? '#3b2d42' : '#fed7aa',
                       },
                     ]}
                   >
-                    <View style={styles.mistakeHeader}>
-                      <Feather name="alert-triangle" size={16} color="#ef4444" />
-                      <Text style={styles.mistakeHeaderTitle}>{getCurriculumText('common_mistake', activeLang)}</Text>
+                    <View style={styles.proTipHeader}>
+                      <View
+                        style={[
+                          styles.proTipBadge,
+                          { backgroundColor: colors.isDark ? '#431407' : '#ffedd5' },
+                        ]}
+                      >
+                        <Feather name="alert-triangle" size={13} color="#f97316" />
+                        <Text style={styles.proTipBadgeText}>
+                          {getCurriculumText('pro_tip_title', activeLang)}
+                        </Text>
+                      </View>
                     </View>
-                    <View style={styles.mistakeRow}>
-                      <Text style={styles.wrongBadge}>❌ {unit.grammarRule.commonMistake.incorrect}</Text>
-                      <Text style={styles.correctBadge}>✅ {unit.grammarRule.commonMistake.correct}</Text>
+
+                    {/* Comparative blocks */}
+                    <View style={styles.comparisonWrap}>
+                      {/* Incorrect */}
+                      <View
+                        style={[
+                          styles.comparisonCardWrong,
+                          {
+                            backgroundColor: colors.isDark ? '#2a1215' : '#fee2e2',
+                            borderColor: '#fca5a5',
+                          },
+                        ]}
+                      >
+                        <View style={styles.comparisonHeaderRow}>
+                          <Text style={styles.wrongEmoji}>❌</Text>
+                          <Text style={styles.wrongLabel}>
+                            {getCurriculumText('wrong_label', activeLang)}:
+                          </Text>
+                        </View>
+                        <Text style={styles.wrongSentenceText}>
+                          {unit.grammarRule.commonMistake.incorrect}
+                        </Text>
+                      </View>
+
+                      {/* Correct */}
+                      <View
+                        style={[
+                          styles.comparisonCardCorrect,
+                          {
+                            backgroundColor: colors.isDark ? '#06291a' : '#dcfce7',
+                            borderColor: '#86efac',
+                          },
+                        ]}
+                      >
+                        <View style={styles.comparisonHeaderRow}>
+                          <Text style={styles.correctEmoji}>✅</Text>
+                          <Text style={styles.correctLabel}>
+                            {getCurriculumText('correct_label', activeLang)}:
+                          </Text>
+                        </View>
+                        <Text style={styles.correctSentenceText}>
+                          {unit.grammarRule.commonMistake.correct}
+                        </Text>
+                      </View>
                     </View>
-                    <Text style={[styles.mistakeExplanation, { color: colors.textMuted }]}>
+
+                    {/* Explanation note */}
+                    <Text style={[styles.proTipExplanation, { color: colors.textMuted }]}>
                       {getLocalizedContent(unit.grammarRule.commonMistake.explanation, activeLang)}
                     </Text>
                   </View>
@@ -500,9 +764,21 @@ export function LessonPlayerModal({
             {currentStage === 'vocabulary' && (
               <View style={styles.vocabStageWrap}>
                 <View style={styles.vocabCounterRow}>
-                  <Text style={[styles.vocabCounterText, { color: colors.textMuted }]}>
-                    {getCurriculumText('word_counter', activeLang)} {vocabIndex + 1} / {unit.vocabulary.length}
-                  </Text>
+                  <View
+                    style={[
+                      styles.vocabCounterBadge,
+                      {
+                        backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9',
+                        borderColor: colors.surfaceBorder,
+                      },
+                    ]}
+                  >
+                    <Feather name="layers" size={13} color={colors.primary} />
+                    <Text style={[styles.vocabCounterText, { color: colors.text }]}>
+                      {getCurriculumText('word_counter', activeLang)} {vocabIndex + 1} / {unit.vocabulary.length}
+                    </Text>
+                  </View>
+
                   <View style={styles.vocabDots}>
                     {unit.vocabulary.map((_, i) => (
                       <View
@@ -510,12 +786,13 @@ export function LessonPlayerModal({
                         style={[
                           styles.dot,
                           {
+                            width: i === vocabIndex ? 22 : 8,
                             backgroundColor:
                               i === vocabIndex
                                 ? colors.primary
                                 : colors.isDark
-                                ? 'rgba(255, 255, 255, 0.15)'
-                                : 'rgba(0, 0, 0, 0.15)',
+                                ? 'rgba(255, 255, 255, 0.18)'
+                                : 'rgba(0, 0, 0, 0.14)',
                           },
                         ]}
                       />
@@ -543,16 +820,22 @@ export function LessonPlayerModal({
                         <Text style={[styles.vocabPhonetic, { color: colors.primary }]}>
                           {item.phonetic}
                         </Text>
-                        <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                        <View style={styles.vocabAudioRow}>
                           <Pressable
-                            style={[styles.bigSpeakerBtn, { backgroundColor: colors.primary + '20' }]}
+                            style={[
+                              styles.primaryAudioBtn,
+                              { backgroundColor: colors.primary },
+                            ]}
                             onPress={() => handleSpeech(item.audioText || item.word, 0.9)}
                           >
-                            <Feather name="volume-2" size={24} color={colors.primary} />
+                            <Feather name="volume-2" size={18} color="#0d0f17" />
+                            <Text style={styles.primaryAudioBtnText}>
+                              {getCurriculumText('tap_to_listen', activeLang).split(' ')[0] || 'Dinlə'}
+                            </Text>
                           </Pressable>
                           <Pressable
                             style={[
-                              styles.turtleSpeakerBtn,
+                              styles.turtleAudioBtn,
                               {
                                 backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9',
                                 borderColor: colors.surfaceBorder,
@@ -560,7 +843,10 @@ export function LessonPlayerModal({
                             ]}
                             onPress={() => handleSpeech(item.audioText || item.word, 0.55)}
                           >
-                            <Text style={{ fontSize: 18 }}>🐢</Text>
+                            <Text style={{ fontSize: 16 }}>🐢</Text>
+                            <Text style={[styles.turtleAudioBtnText, { color: colors.text }]}>
+                              {getCurriculumText('slow_audio', activeLang)}
+                            </Text>
                           </Pressable>
                         </View>
                       </View>
@@ -571,12 +857,13 @@ export function LessonPlayerModal({
                           {
                             backgroundColor: colors.isDark
                               ? 'rgba(255, 255, 255, 0.04)'
-                              : 'rgba(0, 0, 0, 0.03)',
+                              : '#f8fafc',
+                            borderColor: colors.surfaceBorder,
                           },
                         ]}
                       >
                         <Text style={[styles.translationLabel, { color: colors.textMuted }]}>
-                          {getCurriculumText('translation', activeLang)}
+                          {getCurriculumText('translation', activeLang).toUpperCase()}
                         </Text>
                         <Text style={[styles.translationValue, { color: colors.text }]}>
                           {getLocalizedContent(item.translations, activeLang)}
@@ -1299,66 +1586,174 @@ const styles = StyleSheet.create({
   contentWrap: {
     flex: 1,
   },
+  stageJourneyBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  stageStepItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  stageStepPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: Radius.pill,
+  },
+  stageStepPillActive: {},
+  stageStepPillPassed: {
+    borderWidth: 1,
+  },
+  stageStepPillUpcoming: {},
+  stageStepText: {
+    fontSize: FontSize.xs,
+  },
+  stageStepLine: {
+    flex: 1,
+    height: 2,
+    marginHorizontal: 4,
+    borderRadius: 1,
+  },
   stageScroll: {
     padding: Spacing.lg,
     paddingBottom: 40,
+  },
+  heroHeaderSection: {
+    marginBottom: Spacing.lg,
   },
   unitBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.sm,
+    marginBottom: 8,
   },
   levelTag: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: Radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
   },
   levelTagText: {
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
     letterSpacing: 0.5,
   },
+  minutesTagPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+  },
   minutesTag: {
     fontSize: FontSize.xs,
+    fontWeight: FontWeight.medium,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: FontWeight.bold,
-    marginBottom: 4,
+    lineHeight: 30,
+    marginBottom: 8,
   },
-  subtitle: {
-    fontSize: FontSize.md,
-    marginBottom: Spacing.lg,
+  topicBadgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
-  formulaCard: {
-    borderWidth: 1.5,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  formulaHeader: {
+  topicPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
   },
-  formulaLabel: {
-    color: '#10b981',
+  topicPillText: {
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
-    textTransform: 'uppercase',
+  },
+  masterGrammarCard: {
+    borderWidth: 1.5,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
+    marginBottom: Spacing.xl,
+  },
+  grammarCardHeader: {
+    marginBottom: 12,
+  },
+  grammarHeaderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+  },
+  grammarHeaderBadgeText: {
+    color: '#10b981',
+    fontSize: 11,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.5,
+  },
+  formulaSection: {
+    marginBottom: 12,
+  },
+  formulaBranchesWrap: {
+    gap: 8,
+  },
+  formulaBranchCard: {
+    padding: 10,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+  formulaTokenList: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  formulaTokenPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+  },
+  formulaTokenText: {
+    fontSize: FontSize.sm,
+  },
+  formulaOperatorText: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+    marginHorizontal: 2,
+  },
+  formulaSingleCard: {
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    borderWidth: 1,
   },
   formulaChipsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 4,
   },
   formulaPill: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: Radius.md,
+    borderRadius: Radius.pill,
     borderWidth: 1,
   },
   formulaPillText: {
@@ -1366,88 +1761,162 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   formulaText: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
+    lineHeight: 22,
   },
-  explanationCard: {
-    borderWidth: 1,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.lg,
+  cardDivider: {
+    height: 1,
+    marginVertical: 12,
+    opacity: 0.8,
+  },
+  explanationSection: {
+    paddingTop: 2,
   },
   explanationText: {
-    fontSize: FontSize.md,
+    fontSize: 15,
     lineHeight: 24,
+    fontWeight: FontWeight.medium,
+  },
+  examplesSectionWrap: {
+    marginBottom: Spacing.xl,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: Spacing.md,
+  },
+  sectionHeaderDot: {
+    width: 4,
+    height: 16,
+    borderRadius: 2,
   },
   sectionHeading: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-    marginBottom: Spacing.sm,
+  },
+  sectionSublabel: {
+    fontSize: FontSize.xs,
   },
   examplesList: {
     gap: 10,
-    marginBottom: Spacing.lg,
   },
-  exampleItem: {
+  exampleItemCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.md,
+    padding: 14,
     borderRadius: Radius.lg,
-    borderWidth: 1,
+    borderWidth: 1.5,
     gap: 12,
   },
-  speakerBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(212, 175, 122, 0.15)',
+  exampleSpeakerCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
   },
   exampleEn: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.semibold,
+    fontSize: 15,
+    fontWeight: FontWeight.bold,
+    lineHeight: 22,
     marginBottom: 2,
   },
   exampleTr: {
-    fontSize: FontSize.xs,
+    fontSize: 13,
+    lineHeight: 18,
   },
-  mistakeCard: {
-    borderWidth: 1,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
+  miniPlayIconWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  speakerBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(212, 175, 122, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  proTipCard: {
+    borderWidth: 1.5,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
     marginTop: Spacing.xs,
+    marginBottom: Spacing.md,
   },
-  mistakeHeader: {
+  proTipHeader: {
+    marginBottom: 12,
+  },
+  proTipBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 8,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.pill,
   },
-  mistakeHeaderTitle: {
+  proTipBadgeText: {
+    color: '#ea580c',
+    fontSize: 11,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.5,
+  },
+  comparisonWrap: {
+    gap: 8,
+    marginBottom: 12,
+  },
+  comparisonCardWrong: {
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    padding: 10,
+  },
+  comparisonCardCorrect: {
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    padding: 10,
+  },
+  comparisonHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  wrongEmoji: {
+    fontSize: 12,
+  },
+  wrongLabel: {
     color: '#ef4444',
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
   },
-  mistakeRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 6,
-    flexWrap: 'wrap',
+  wrongSentenceText: {
+    color: '#dc2626',
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
+    textDecorationLine: 'line-through',
   },
-  wrongBadge: {
-    color: '#ef4444',
-    fontWeight: FontWeight.semibold,
-    fontSize: FontSize.sm,
+  correctEmoji: {
+    fontSize: 12,
   },
-  correctBadge: {
+  correctLabel: {
     color: '#10b981',
-    fontWeight: FontWeight.semibold,
-    fontSize: FontSize.sm,
-  },
-  mistakeExplanation: {
     fontSize: FontSize.xs,
-    lineHeight: 18,
+    fontWeight: FontWeight.bold,
+  },
+  correctSentenceText: {
+    color: '#059669',
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
+  },
+  proTipExplanation: {
+    fontSize: 13,
+    lineHeight: 20,
   },
   vocabStageWrap: {
     flex: 1,
@@ -1459,6 +1928,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.md,
+  },
+  vocabCounterBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
   },
   vocabCounterText: {
     fontSize: FontSize.sm,
@@ -1491,6 +1969,45 @@ const styles = StyleSheet.create({
   vocabPhonetic: {
     fontSize: FontSize.md,
     fontWeight: FontWeight.medium,
+  },
+  vocabAudioRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 10,
+  },
+  primaryAudioBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: Radius.pill,
+  },
+  primaryAudioBtnText: {
+    color: '#0d0f17',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+  },
+  turtleAudioBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+  },
+  turtleAudioBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+  },
+  miniSpeakerBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bigSpeakerBtn: {
     width: 56,
@@ -1849,17 +2366,25 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   primaryBtn: {
-    height: 52,
+    height: 56,
     borderRadius: Radius.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    borderBottomWidth: 3,
+    borderBottomColor: 'rgba(0, 0, 0, 0.22)',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   primaryBtnText: {
     color: '#0d0f17',
     fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
+    letterSpacing: 0.3,
   },
   feedbackBanner: {
     borderWidth: 1,

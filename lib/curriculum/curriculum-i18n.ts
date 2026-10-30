@@ -65,7 +65,15 @@ export type CurriculumStringKey =
   | 'stay_btn'
   | 'exit_btn'
   | 'slow_audio'
-  | 'chest_opened_reward';
+  | 'chest_opened_reward'
+  | 'stage_theory'
+  | 'stage_vocab'
+  | 'stage_story'
+  | 'stage_exercise'
+  | 'tap_to_listen'
+  | 'pro_tip_title'
+  | 'wrong_label'
+  | 'correct_label';
 
 const CURRICULUM_STRINGS: Record<CurriculumStringKey, Record<string, string>> = {
   learn_map_title: {
@@ -457,6 +465,54 @@ const CURRICULUM_STRINGS: Record<CurriculumStringKey, Record<string, string>> = 
     az: 'Təbriklər! +25 XP və +1 Can Qazandınız! 🎁',
     en: 'Congratulations! You earned +25 XP and +1 Heart! 🎁',
     ru: 'Поздравляем! Вы получили +25 XP и +1 Жизнь! 🎁',
+  },
+  stage_theory: {
+    tr: 'Kural',
+    az: 'Qayda',
+    en: 'Rule',
+    ru: 'Правило',
+  },
+  stage_vocab: {
+    tr: 'Kelimeler',
+    az: 'Sözlər',
+    en: 'Words',
+    ru: 'Слова',
+  },
+  stage_story: {
+    tr: 'Hikaye',
+    az: 'Hekayə',
+    en: 'Story',
+    ru: 'Рассказ',
+  },
+  stage_exercise: {
+    tr: 'Alıştırma',
+    az: 'Məşq',
+    en: 'Practice',
+    ru: 'Практика',
+  },
+  tap_to_listen: {
+    tr: 'Dinlemek için dokunun',
+    az: 'Dinləmək üçün toxunun',
+    en: 'Tap to listen',
+    ru: 'Нажмите, чтобы слушать',
+  },
+  pro_tip_title: {
+    tr: 'Püf Noktası & Sık Hata',
+    az: 'Püf Nöqtəsi & Əsas Səhv',
+    en: 'Pro Tip & Common Pitfall',
+    ru: 'Совет и частая ошибка',
+  },
+  wrong_label: {
+    tr: 'Yanlış',
+    az: 'Yanlış',
+    en: 'Incorrect',
+    ru: 'Неверно',
+  },
+  correct_label: {
+    tr: 'Doğru',
+    az: 'Düzgün',
+    en: 'Correct',
+    ru: 'Верно',
   },
 };
 
