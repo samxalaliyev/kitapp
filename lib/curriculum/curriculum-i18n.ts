@@ -66,6 +66,10 @@ export type CurriculumStringKey =
   | 'exit_btn'
   | 'slow_audio'
   | 'chest_opened_reward'
+  | 'chest_already_claimed'
+  | 'chest_already_claimed_title'
+  | 'chest_open_btn'
+  | 'already_claimed_btn'
   | 'stage_theory'
   | 'stage_vocab'
   | 'stage_story'
@@ -470,6 +474,30 @@ const CURRICULUM_STRINGS: Record<CurriculumStringKey, Record<string, string>> = 
     az: 'Təbriklər! +25 XP və +1 Can Qazandınız! 🎁',
     en: 'Congratulations! You earned +25 XP and +1 Heart! 🎁',
     ru: 'Поздравляем! Вы получили +25 XP и +1 Жизнь! 🎁',
+  },
+  chest_already_claimed: {
+    tr: 'Bu hediyeyi zaten aldınız! (+25 XP ve +1 Can)',
+    az: 'Bu hədiyyəni artıq əldə etmisiniz! (+25 XP və +1 Can)',
+    en: 'You have already claimed this reward! (+25 XP & +1 Heart)',
+    ru: 'Вы уже получили эту награду! (+25 XP и +1 Жизнь)',
+  },
+  chest_already_claimed_title: {
+    tr: 'Açılmış Sandık',
+    az: 'Açılmış Sandıq',
+    en: 'Claimed Chest',
+    ru: 'Открытый сундук',
+  },
+  chest_open_btn: {
+    tr: 'Sandığı Aç (+25 XP & +1 ❤️) 🎁',
+    az: 'Sandığı Aç (+25 XP & +1 ❤️) 🎁',
+    en: 'Open Chest (+25 XP & +1 ❤️) 🎁',
+    ru: 'Открыть сундук (+25 XP & +1 ❤️) 🎁',
+  },
+  already_claimed_btn: {
+    tr: '✅ Zaten Alındı',
+    az: '✅ Artıq Qazanılıb',
+    en: '✅ Already Claimed',
+    ru: '✅ Уже получено',
   },
   stage_theory: {
     tr: 'Kural',
