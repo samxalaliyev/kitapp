@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
@@ -823,7 +823,7 @@ export function LessonPlayerModal({
                       ]}
                     >
                       <View style={styles.comparisonHeaderRow}>
-                        <Text style={styles.wrongEmoji}>❌</Text>
+                        <Feather name="x-circle" size={15} color="#ef4444" />
                         <Text style={styles.wrongLabel}>
                           {getCurriculumText('wrong_label', activeLang)}:
                         </Text>
@@ -845,7 +845,7 @@ export function LessonPlayerModal({
                       ]}
                     >
                       <View style={styles.comparisonHeaderRow}>
-                        <Text style={styles.correctEmoji}>✅</Text>
+                        <Feather name="check-circle" size={15} color="#10b981" />
                         <Text style={styles.correctLabel}>
                           {getCurriculumText('correct_label', activeLang)}:
                         </Text>
@@ -965,7 +965,7 @@ export function LessonPlayerModal({
                             ]}
                             onPress={() => handleSpeech(item.audioText || item.word, 0.55)}
                           >
-                            <Text style={{ fontSize: 17 }}>🐢</Text>
+                            <MaterialCommunityIcons name="turtle" size={20} color={colors.text} />
                             <Text style={[styles.turtleAudioBtnText, { color: colors.text }]}>
                               {getCurriculumText('slow_audio', activeLang)}
                             </Text>
@@ -1389,7 +1389,7 @@ export function LessonPlayerModal({
                           )
                         }
                       >
-                        <Text style={{ fontSize: 26 }}>🐢</Text>
+                        <MaterialCommunityIcons name="turtle" size={28} color={colors.text} />
                       </Pressable>
                     </View>
                     <Text style={[styles.listeningHelp, { color: colors.textMuted }]}>
@@ -1533,9 +1533,11 @@ export function LessonPlayerModal({
             {currentStage === 'victory' && completedResult && (
               <View style={styles.victoryContainer}>
                 <View style={styles.victoryIconWrap}>
-                  <Text style={styles.victoryEmoji}>
-                    {completedResult.passed ? '🎉' : '💪'}
-                  </Text>
+                  {completedResult.passed ? (
+                    <Feather name="award" size={64} color="#eab308" />
+                  ) : (
+                    <Feather name="rotate-ccw" size={64} color="#ef4444" />
+                  )}
                 </View>
 
                 <Text style={[styles.victoryTitle, { color: colors.text }]}>

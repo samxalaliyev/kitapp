@@ -197,7 +197,11 @@ export default function LearnScreen() {
             ]}
             onPress={() => setPaywallVisible(true)}
           >
-            <Text style={{ fontSize: 13 }}>⚡</Text>
+            <Feather
+              name="zap"
+              size={14}
+              color={isPremium ? (colors.isDark ? '#a5b4fc' : '#4f46e5') : (colors.isDark ? '#fbbf24' : '#d97706')}
+            />
             <Text
               style={[
                 styles.statPillText,

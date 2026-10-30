@@ -301,7 +301,7 @@ export function GamifiedPathMap({
       await unlockUnit(nextUnit.id, nextUnit.level);
     }
 
-    Alert.alert('🎁', getCurriculumText('chest_opened_reward', activeLang));
+    Alert.alert(getCurriculumText('chest_reward', activeLang), getCurriculumText('chest_opened_reward', activeLang));
     onUnitRefreshed?.();
   };
 
@@ -797,7 +797,7 @@ export function GamifiedPathMap({
                           { backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9' },
                         ]}
                       >
-                        <Text style={{ fontSize: 13 }}>⚡</Text>
+                        <Feather name="zap" size={13} color="#10b981" />
                         <Text style={[styles.previewBadgePillText, { color: '#10b981', fontWeight: FontWeight.bold }]}>
                           {previewUnit.nodeType === 'chest' ? '+25 XP' : '+50 XP'}
                         </Text>
@@ -812,7 +812,7 @@ export function GamifiedPathMap({
                         >
                           <Feather name="heart" size={13} color="#ef4444" />
                           <Text style={[styles.previewBadgePillText, { color: '#ef4444', fontWeight: FontWeight.bold }]}>
-                            +1 ❤️
+                            +1
                           </Text>
                         </View>
                       )}
@@ -824,8 +824,9 @@ export function GamifiedPathMap({
                             { backgroundColor: '#10b98120' },
                           ]}
                         >
+                          <Feather name="star" size={13} color="#10b981" />
                           <Text style={{ color: '#10b981', fontSize: 12, fontWeight: FontWeight.bold }}>
-                            ⭐ {previewUnit.score}%
+                            {previewUnit.score}%
                           </Text>
                         </View>
                       )}
@@ -852,6 +853,7 @@ export function GamifiedPathMap({
                             ]}
                             onPress={() => setPreviewUnit(null)}
                           >
+                            <Feather name="check-circle" size={18} color={colors.isDark ? '#94a3b8' : '#64748b'} />
                             <Text style={[styles.start3DBtnText, { color: colors.isDark ? '#94a3b8' : '#64748b' }]}>
                               {getCurriculumText('already_claimed_btn', activeLang)}
                             </Text>
@@ -864,6 +866,7 @@ export function GamifiedPathMap({
                               setPreviewUnit(null);
                             }}
                           >
+                            <Feather name="gift" size={18} color="#ffffff" />
                             <Text style={styles.start3DBtnText}>
                               {getCurriculumText('chest_open_btn', activeLang)}
                             </Text>
@@ -877,10 +880,15 @@ export function GamifiedPathMap({
                           ]}
                           onPress={handleStartFromPreview}
                         >
+                          <Feather
+                            name={previewUnit.status === 'completed' ? 'rotate-ccw' : 'play'}
+                            size={18}
+                            color="#ffffff"
+                          />
                           <Text style={styles.start3DBtnText}>
                             {previewUnit.status === 'completed'
-                              ? `${getCurriculumText('review_lesson', activeLang)} (+50 XP) 🔄`
-                              : `${getCurriculumText('start_lesson', activeLang)} (+50 XP) ▶`}
+                              ? `${getCurriculumText('review_lesson', activeLang)} (+50 XP)`
+                              : `${getCurriculumText('start_lesson', activeLang)} (+50 XP)`}
                           </Text>
                         </Pressable>
                       )}
@@ -913,9 +921,12 @@ export function GamifiedPathMap({
           >
             <View style={styles.handbookHeaderRow}>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.handbookTitle, { color: colors.text }]}>
-                  📖 {getCurriculumText('rules_handbook', activeLang)} ({selectedHandbookLevel || 'A1'})
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                  <Feather name="book-open" size={18} color={colors.text} />
+                  <Text style={[styles.handbookTitle, { color: colors.text }]}>
+                    {getCurriculumText('rules_handbook', activeLang)} ({selectedHandbookLevel || 'A1'})
+                  </Text>
+                </View>
                 <Text style={[styles.handbookSub, { color: colors.textMuted }]}>
                   {getLocalizedContent(previewLevelInfo.title, activeLang)} {getCurriculumText('basic_formulas', activeLang)}
                 </Text>
@@ -949,6 +960,7 @@ export function GamifiedPathMap({
               style={[styles.start3DBtn, { backgroundColor: previewLevelInfo.accentColor, borderBottomColor: '#059669', marginTop: Spacing.md }]}
               onPress={() => setShowHandbookModal(false)}
             >
+              <Feather name="check" size={18} color="#ffffff" />
               <Text style={styles.start3DBtnText}>{getCurriculumText('got_it_back', activeLang)}</Text>
             </Pressable>
           </View>
@@ -1284,6 +1296,8 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: Radius.lg,
     borderBottomWidth: 5,
+    flexDirection: 'row',
+    gap: 8,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
