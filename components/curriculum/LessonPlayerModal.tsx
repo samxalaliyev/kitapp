@@ -66,45 +66,68 @@ function renderStructuredFormula(formula: string, colors: any) {
               style={[
                 styles.formulaBranchCard,
                 {
-                  backgroundColor: colors.isDark ? '#0f172a' : '#ffffff',
-                  borderColor: colors.isDark ? '#1e293b' : '#e2e8f0',
+                  backgroundColor: colors.isDark ? '#141c2b' : '#f8fafc',
+                  borderColor: colors.isDark ? '#243247' : '#e2e8f0',
+                  borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
                 },
               ]}
             >
               <View style={styles.formulaTokenList}>
-                {parts.map((token, tIdx) => (
-                  <React.Fragment key={tIdx}>
-                    <View
-                      style={[
-                        styles.formulaTokenPill,
-                        tIdx === 0
-                          ? {
-                              backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9',
-                              borderColor: colors.isDark ? '#334155' : '#cbd5e1',
-                            }
-                          : {
-                              backgroundColor: colors.isDark ? '#064e3b' : '#ecfdf5',
-                              borderColor: '#10b981',
-                            },
-                      ]}
-                    >
-                      <Text
+                {parts.map((token, tIdx) => {
+                  const isSubject = tIdx === 0;
+                  const isVerb = tIdx === 1;
+                  return (
+                    <React.Fragment key={tIdx}>
+                      <View
                         style={[
-                          styles.formulaTokenText,
-                          {
-                            color: tIdx === 0 ? colors.text : '#10b981',
-                            fontWeight: FontWeight.bold,
-                          },
+                          styles.formulaTokenPill,
+                          isSubject
+                            ? {
+                                backgroundColor: colors.isDark ? '#1e293b' : '#e0e7ff',
+                                borderColor: colors.isDark ? '#3b82f6' : '#818cf8',
+                                borderBottomColor: colors.isDark ? '#1d4ed8' : '#6366f1',
+                              }
+                            : isVerb
+                            ? {
+                                backgroundColor: colors.isDark ? '#291d09' : '#fef3c7',
+                                borderColor: '#f59e0b',
+                                borderBottomColor: '#d97706',
+                              }
+                            : {
+                                backgroundColor: colors.isDark ? '#06291a' : '#dcfce7',
+                                borderColor: '#34d399',
+                                borderBottomColor: '#10b981',
+                              },
                         ]}
                       >
-                        {token}
-                      </Text>
-                    </View>
-                    {tIdx < parts.length - 1 && (
-                      <Text style={[styles.formulaOperatorText, { color: colors.textMuted }]}>+</Text>
-                    )}
-                  </React.Fragment>
-                ))}
+                        <Text
+                          style={[
+                            styles.formulaTokenText,
+                            {
+                              color: isSubject
+                                ? colors.isDark ? '#93c5fd' : '#3730a3'
+                                : isVerb
+                                ? colors.isDark ? '#fcd34d' : '#92400e'
+                                : colors.isDark ? '#86efac' : '#065f46',
+                            },
+                          ]}
+                        >
+                          {token}
+                        </Text>
+                      </View>
+                      {tIdx < parts.length - 1 && (
+                        <View
+                          style={[
+                            styles.formulaOperatorWrap,
+                            { backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9' },
+                          ]}
+                        >
+                          <Text style={[styles.formulaOperatorText, { color: colors.textMuted }]}>+</Text>
+                        </View>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </View>
             </View>
           );
@@ -124,8 +147,9 @@ function renderStructuredFormula(formula: string, colors: any) {
             style={[
               styles.formulaPill,
               {
-                backgroundColor: colors.isDark ? '#0f172a' : '#ffffff',
-                borderColor: colors.isDark ? '#334155' : '#cbd5e1',
+                backgroundColor: colors.isDark ? '#141c2b' : '#ffffff',
+                borderColor: colors.isDark ? '#243247' : '#cbd5e1',
+                borderBottomColor: colors.isDark ? '#0f172a' : '#94a3b8',
               },
             ]}
           >
@@ -142,8 +166,9 @@ function renderStructuredFormula(formula: string, colors: any) {
       style={[
         styles.formulaSingleCard,
         {
-          backgroundColor: colors.isDark ? '#0f172a' : '#ffffff',
-          borderColor: colors.isDark ? '#1e293b' : '#e2e8f0',
+          backgroundColor: colors.isDark ? '#141c2b' : '#ffffff',
+          borderColor: colors.isDark ? '#243247' : '#e2e8f0',
+          borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
         },
       ]}
     >
@@ -429,24 +454,33 @@ export function LessonPlayerModal({
             </Pressable>
 
             {/* Progress track */}
-            <View style={[styles.progressTrack, { backgroundColor: colors.surfaceBorder }]}>
+            <View style={[styles.progressTrack, { backgroundColor: colors.isDark ? '#1e293b' : '#e5e7eb' }]}>
               <Animated.View
                 style={[
                   styles.progressFill,
                   {
-                    backgroundColor: colors.primary,
+                    backgroundColor: '#58cc02',
                     width: progressAnim.interpolate({
                       inputRange: [0, 1],
                       outputRange: ['0%', '100%'],
                     }),
                   },
                 ]}
-              />
+              >
+                <View style={styles.progressShineLine} />
+              </Animated.View>
             </View>
 
             {/* Hearts indicator */}
             <Pressable
-              style={styles.heartsBadge}
+              style={[
+                styles.heartsBadge,
+                {
+                  backgroundColor: colors.isDark ? '#2a1215' : '#fee2e2',
+                  borderColor: '#fca5a5',
+                  borderBottomColor: '#ef4444',
+                },
+              ]}
               onPress={() => {
                 if (!isPremium && hearts <= 1) setShowOutOfHearts(true);
               }}
@@ -458,7 +492,14 @@ export function LessonPlayerModal({
 
           {/* 4-Stage Pedagogical Journey Bar */}
           {currentStage !== 'victory' && (
-            <View style={[styles.stageJourneyBar, { borderColor: colors.surfaceBorder }]}>
+            <View
+              style={[
+                styles.stageJourneyBar,
+                {
+                  borderBottomColor: colors.isDark ? '#1e293b' : '#e5e7eb',
+                },
+              ]}
+            >
               {[
                 { key: 'theory', icon: 'book-open', label: getCurriculumText('stage_theory', activeLang) },
                 { key: 'vocabulary', icon: 'layers', label: getCurriculumText('stage_vocab', activeLang) },
@@ -476,27 +517,52 @@ export function LessonPlayerModal({
                       style={[
                         styles.stageStepPill,
                         isCurrent
-                          ? [styles.stageStepPillActive, { backgroundColor: colors.primary }]
+                          ? [
+                              styles.stageStepPillActive,
+                              {
+                                backgroundColor: colors.isDark ? '#0c2438' : '#e0f2fe',
+                                borderColor: '#1cb0f6',
+                                borderBottomColor: '#0284c7',
+                              },
+                            ]
                           : isPassed
-                          ? [styles.stageStepPillPassed, { backgroundColor: colors.isDark ? '#064e3b' : '#ecfdf5', borderColor: '#10b981' }]
-                          : [styles.stageStepPillUpcoming, { backgroundColor: colors.isDark ? '#141724' : '#f1f5f9' }],
+                          ? [
+                              styles.stageStepPillPassed,
+                              {
+                                backgroundColor: colors.isDark ? '#06291a' : '#dcfce7',
+                                borderColor: '#86efac',
+                                borderBottomColor: '#22c55e',
+                              },
+                            ]
+                          : [
+                              styles.stageStepPillUpcoming,
+                              {
+                                backgroundColor: colors.isDark ? '#141724' : '#f1f5f9',
+                                borderColor: colors.isDark ? '#1e293b' : '#e2e8f0',
+                                borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
+                              },
+                            ],
                       ]}
                     >
                       {isPassed ? (
-                        <Feather name="check" size={11} color="#10b981" />
+                        <Feather name="check" size={11} color="#16a34a" />
                       ) : (
                         <Feather
                           name={s.icon as any}
                           size={11}
-                          color={isCurrent ? '#0d0f17' : colors.textMuted}
+                          color={isCurrent ? '#0284c7' : colors.textMuted}
                         />
                       )}
                       <Text
                         style={[
                           styles.stageStepText,
                           {
-                            color: isCurrent ? '#0d0f17' : isPassed ? '#10b981' : colors.textMuted,
-                            fontWeight: isCurrent ? FontWeight.bold : FontWeight.medium,
+                            color: isCurrent
+                              ? colors.isDark ? '#38bdf8' : '#0369a1'
+                              : isPassed
+                              ? '#16a34a'
+                              : colors.textMuted,
+                            fontWeight: isCurrent ? FontWeight.extrabold : FontWeight.bold,
                           },
                         ]}
                       >
@@ -507,7 +573,11 @@ export function LessonPlayerModal({
                       <View
                         style={[
                           styles.stageStepLine,
-                          { backgroundColor: isPassed ? '#10b981' : colors.surfaceBorder },
+                          {
+                            backgroundColor: isPassed
+                              ? '#22c55e'
+                              : colors.isDark ? '#1e293b' : '#e2e8f0',
+                          },
                         ]}
                       />
                     )}
@@ -533,6 +603,7 @@ export function LessonPlayerModal({
                         {
                           backgroundColor: colors.isDark ? '#261e12' : '#fef3c7',
                           borderColor: colors.primary,
+                          borderBottomColor: '#d97706',
                         },
                       ]}
                     >
@@ -547,7 +618,8 @@ export function LessonPlayerModal({
                         styles.minutesTagPill,
                         {
                           backgroundColor: colors.isDark ? '#141724' : '#f1f5f9',
-                          borderColor: colors.surfaceBorder,
+                          borderColor: colors.isDark ? '#243247' : '#e2e8f0',
+                          borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
                         },
                       ]}
                     >
@@ -569,13 +641,14 @@ export function LessonPlayerModal({
                       style={[
                         styles.topicPill,
                         {
-                          backgroundColor: colors.isDark ? '#1a1f33' : '#e0e7ff',
-                          borderColor: colors.isDark ? '#312e81' : '#c7d2fe',
+                          backgroundColor: colors.isDark ? '#1e1b4b' : '#e0e7ff',
+                          borderColor: colors.isDark ? '#4338ca' : '#818cf8',
+                          borderBottomColor: colors.isDark ? '#312e81' : '#6366f1',
                         },
                       ]}
                     >
-                      <Feather name="zap" size={13} color="#4f46e5" />
-                      <Text style={[styles.topicPillText, { color: colors.isDark ? '#818cf8' : '#4338ca' }]}>
+                      <Feather name="zap" size={13} color={colors.isDark ? '#a5b4fc' : '#4338ca'} />
+                      <Text style={[styles.topicPillText, { color: colors.isDark ? '#c7d2fe' : '#3730a3' }]}>
                         {getLocalizedContent(unit.grammarRule.title, activeLang)}
                       </Text>
                     </View>
@@ -588,7 +661,8 @@ export function LessonPlayerModal({
                     styles.masterGrammarCard,
                     {
                       backgroundColor: colors.surface,
-                      borderColor: colors.isDark ? '#1e293b' : '#e2e8f0',
+                      borderColor: colors.isDark ? '#243247' : '#e2e8f0',
+                      borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
                     },
                   ]}
                 >
@@ -597,8 +671,9 @@ export function LessonPlayerModal({
                       style={[
                         styles.grammarHeaderBadge,
                         {
-                          backgroundColor: colors.isDark ? '#064e3b' : '#ecfdf5',
+                          backgroundColor: colors.isDark ? '#06291a' : '#ecfdf5',
                           borderColor: '#10b981',
+                          borderBottomColor: '#059669',
                         },
                       ]}
                     >
@@ -617,7 +692,7 @@ export function LessonPlayerModal({
                   )}
 
                   {/* Soft Divider */}
-                  <View style={[styles.cardDivider, { backgroundColor: colors.surfaceBorder }]} />
+                  <View style={[styles.cardDivider, { backgroundColor: colors.isDark ? '#1e293b' : '#e2e8f0' }]} />
 
                   {/* Pedagogical Explanation */}
                   <View style={styles.explanationSection}>
@@ -630,7 +705,7 @@ export function LessonPlayerModal({
                 {/* EXAMPLES SECTION */}
                 <View style={styles.examplesSectionWrap}>
                   <View style={styles.sectionHeaderRow}>
-                    <View style={[styles.sectionHeaderDot, { backgroundColor: colors.primary }]} />
+                    <View style={[styles.sectionHeaderDot, { backgroundColor: '#58cc02' }]} />
                     <Text style={[styles.sectionHeading, { color: colors.text }]}>
                       {getCurriculumText('examples', activeLang)}
                     </Text>
@@ -647,8 +722,9 @@ export function LessonPlayerModal({
                           styles.exampleItemCard,
                           {
                             backgroundColor: colors.surface,
-                            borderColor: colors.surfaceBorder,
-                            transform: [{ scale: pressed ? 0.985 : 1 }],
+                            borderColor: colors.isDark ? '#243247' : '#e2e8f0',
+                            borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
+                            transform: [{ translateY: pressed ? 2 : 0 }],
                           },
                         ]}
                         onPress={() => handleSpeech(ex.english, 0.9)}
@@ -656,10 +732,14 @@ export function LessonPlayerModal({
                         <View
                           style={[
                             styles.exampleSpeakerCircle,
-                            { backgroundColor: colors.isDark ? '#261e12' : '#fef3c7' },
+                            {
+                              backgroundColor: '#58cc02',
+                              borderColor: '#46a302',
+                              borderBottomColor: '#368202',
+                            },
                           ]}
                         >
-                          <Feather name="volume-2" size={20} color={colors.primary} />
+                          <Feather name="volume-2" size={20} color="#ffffff" />
                         </View>
                         <View style={{ flex: 1, paddingRight: 6 }}>
                           <Text style={[styles.exampleEn, { color: colors.text }]}>
@@ -675,7 +755,7 @@ export function LessonPlayerModal({
                             { backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9' },
                           ]}
                         >
-                          <Feather name="play" size={12} color={colors.primary} />
+                          <Feather name="play" size={13} color="#58cc02" />
                         </View>
                       </Pressable>
                     ))}
@@ -688,8 +768,9 @@ export function LessonPlayerModal({
                     style={[
                       styles.proTipCard,
                       {
-                        backgroundColor: colors.isDark ? '#1a1824' : '#fffaf5',
-                        borderColor: colors.isDark ? '#3b2d42' : '#fed7aa',
+                        backgroundColor: colors.isDark ? '#1f1610' : '#fffdfa',
+                        borderColor: colors.isDark ? '#7c2d12' : '#fed7aa',
+                        borderBottomColor: colors.isDark ? '#431407' : '#fdba74',
                       },
                     ]}
                   >
@@ -697,12 +778,16 @@ export function LessonPlayerModal({
                       <View
                         style={[
                           styles.proTipBadge,
-                          { backgroundColor: colors.isDark ? '#431407' : '#ffedd5' },
+                          {
+                            backgroundColor: '#f97316',
+                            borderColor: '#ea580c',
+                            borderBottomColor: '#c2410c',
+                          },
                         ]}
                       >
-                        <Feather name="alert-triangle" size={13} color="#f97316" />
+                        <Feather name="alert-triangle" size={13} color="#ffffff" />
                         <Text style={styles.proTipBadgeText}>
-                          {getCurriculumText('pro_tip_title', activeLang)}
+                          {getCurriculumText('pro_tip_title', activeLang).toUpperCase()}
                         </Text>
                       </View>
                     </View>
@@ -714,8 +799,9 @@ export function LessonPlayerModal({
                         style={[
                           styles.comparisonCardWrong,
                           {
-                            backgroundColor: colors.isDark ? '#2a1215' : '#fee2e2',
+                            backgroundColor: colors.isDark ? '#321417' : '#fee2e2',
                             borderColor: '#fca5a5',
+                            borderBottomColor: '#ef4444',
                           },
                         ]}
                       >
@@ -735,8 +821,9 @@ export function LessonPlayerModal({
                         style={[
                           styles.comparisonCardCorrect,
                           {
-                            backgroundColor: colors.isDark ? '#06291a' : '#dcfce7',
+                            backgroundColor: colors.isDark ? '#082f1e' : '#dcfce7',
                             borderColor: '#86efac',
+                            borderBottomColor: '#22c55e',
                           },
                         ]}
                       >
@@ -768,12 +855,13 @@ export function LessonPlayerModal({
                     style={[
                       styles.vocabCounterBadge,
                       {
-                        backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9',
-                        borderColor: colors.surfaceBorder,
+                        backgroundColor: colors.isDark ? '#141c2b' : '#f1f5f9',
+                        borderColor: colors.isDark ? '#243247' : '#e2e8f0',
+                        borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
                       },
                     ]}
                   >
-                    <Feather name="layers" size={13} color={colors.primary} />
+                    <Feather name="layers" size={13} color="#58cc02" />
                     <Text style={[styles.vocabCounterText, { color: colors.text }]}>
                       {getCurriculumText('word_counter', activeLang)} {vocabIndex + 1} / {unit.vocabulary.length}
                     </Text>
@@ -786,10 +874,10 @@ export function LessonPlayerModal({
                         style={[
                           styles.dot,
                           {
-                            width: i === vocabIndex ? 22 : 8,
+                            width: i === vocabIndex ? 24 : 8,
                             backgroundColor:
                               i === vocabIndex
-                                ? colors.primary
+                                ? '#58cc02'
                                 : colors.isDark
                                 ? 'rgba(255, 255, 255, 0.18)'
                                 : 'rgba(0, 0, 0, 0.14)',
@@ -809,7 +897,8 @@ export function LessonPlayerModal({
                         styles.vocabCard,
                         {
                           backgroundColor: colors.surface,
-                          borderColor: colors.surfaceBorder,
+                          borderColor: colors.isDark ? '#243247' : '#e2e8f0',
+                          borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
                         },
                       ]}
                     >
@@ -817,33 +906,50 @@ export function LessonPlayerModal({
                         <Text style={[styles.vocabWord, { color: colors.text }]}>
                           {item.word}
                         </Text>
-                        <Text style={[styles.vocabPhonetic, { color: colors.primary }]}>
-                          {item.phonetic}
-                        </Text>
+                        <View
+                          style={[
+                            styles.phoneticPill,
+                            {
+                              backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9',
+                              borderColor: colors.isDark ? '#334155' : '#e2e8f0',
+                            },
+                          ]}
+                        >
+                          <Text style={[styles.vocabPhonetic, { color: colors.primary }]}>
+                            {item.phonetic}
+                          </Text>
+                        </View>
                         <View style={styles.vocabAudioRow}>
                           <Pressable
-                            style={[
+                            style={({ pressed }) => [
                               styles.primaryAudioBtn,
-                              { backgroundColor: colors.primary },
+                              {
+                                backgroundColor: '#58cc02',
+                                borderColor: '#46a302',
+                                borderBottomColor: '#368202',
+                                transform: [{ translateY: pressed ? 2 : 0 }],
+                              },
                             ]}
                             onPress={() => handleSpeech(item.audioText || item.word, 0.9)}
                           >
-                            <Feather name="volume-2" size={18} color="#0d0f17" />
+                            <Feather name="volume-2" size={20} color="#ffffff" />
                             <Text style={styles.primaryAudioBtnText}>
-                              {getCurriculumText('tap_to_listen', activeLang).split(' ')[0] || 'Dinlə'}
+                              {getCurriculumText('tap_to_listen', activeLang)}
                             </Text>
                           </Pressable>
                           <Pressable
-                            style={[
+                            style={({ pressed }) => [
                               styles.turtleAudioBtn,
                               {
                                 backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9',
-                                borderColor: colors.surfaceBorder,
+                                borderColor: colors.isDark ? '#334155' : '#cbd5e1',
+                                borderBottomColor: colors.isDark ? '#0f172a' : '#94a3b8',
+                                transform: [{ translateY: pressed ? 2 : 0 }],
                               },
                             ]}
                             onPress={() => handleSpeech(item.audioText || item.word, 0.55)}
                           >
-                            <Text style={{ fontSize: 16 }}>🐢</Text>
+                            <Text style={{ fontSize: 18 }}>🐢</Text>
                             <Text style={[styles.turtleAudioBtnText, { color: colors.text }]}>
                               {getCurriculumText('slow_audio', activeLang)}
                             </Text>
@@ -858,7 +964,7 @@ export function LessonPlayerModal({
                             backgroundColor: colors.isDark
                               ? 'rgba(255, 255, 255, 0.04)'
                               : '#f8fafc',
-                            borderColor: colors.surfaceBorder,
+                            borderColor: colors.isDark ? '#243247' : '#e2e8f0',
                           },
                         ]}
                       >
@@ -871,7 +977,12 @@ export function LessonPlayerModal({
                       </View>
 
                       {/* Example sentence */}
-                      <View style={styles.exampleSentenceBox}>
+                      <View
+                        style={[
+                          styles.exampleSentenceBox,
+                          { borderTopColor: colors.isDark ? '#243247' : '#e2e8f0' },
+                        ]}
+                      >
                         <View style={styles.exampleSentenceHeader}>
                           <Text style={[styles.exampleSentenceLabel, { color: colors.textMuted }]}>
                             {getCurriculumText('example_sentence', activeLang)}:
@@ -880,7 +991,7 @@ export function LessonPlayerModal({
                             onPress={() => handleSpeech(item.exampleSentence)}
                             hitSlop={8}
                           >
-                            <Feather name="volume-1" size={16} color={colors.primary} />
+                            <Feather name="volume-1" size={18} color="#58cc02" />
                           </Pressable>
                         </View>
                         <Text style={[styles.exampleSentenceEn, { color: colors.text }]}>
@@ -897,23 +1008,33 @@ export function LessonPlayerModal({
                 {/* Prev / Next controls */}
                 <View style={styles.vocabNavRow}>
                   <Pressable
-                    style={[
+                    style={({ pressed }) => [
                       styles.vocabNavBtn,
                       {
                         backgroundColor: colors.surface,
-                        borderColor: colors.surfaceBorder,
+                        borderColor: colors.isDark ? '#334155' : '#cbd5e1',
+                        borderBottomColor: colors.isDark ? '#0f172a' : '#94a3b8',
                         opacity: vocabIndex === 0 ? 0.4 : 1,
+                        transform: [{ translateY: pressed && vocabIndex > 0 ? 2 : 0 }],
                       },
                     ]}
                     onPress={() => setVocabIndex((p) => Math.max(0, p - 1))}
                     disabled={vocabIndex === 0}
                   >
                     <Feather name="arrow-left" size={18} color={colors.text} />
-                    <Text style={[styles.vocabNavBtnText, { color: colors.text }]}>{getCurriculumText('previous', activeLang)}</Text>
+                    <Text style={[styles.vocabNavBtnText, { color: colors.text }]}>
+                      {getCurriculumText('previous', activeLang)}
+                    </Text>
                   </Pressable>
 
                   <Pressable
-                    style={[styles.vocabNavBtn, { backgroundColor: colors.primary }]}
+                    style={({ pressed }) => [
+                      styles.vocabNavBtn,
+                      styles.duoPrimaryGreenBtn,
+                      {
+                        transform: [{ translateY: pressed ? 2 : 0 }],
+                      },
+                    ]}
                     onPress={() => {
                       if (vocabIndex + 1 < unit.vocabulary.length) {
                         setVocabIndex((p) => p + 1);
@@ -928,7 +1049,7 @@ export function LessonPlayerModal({
                         ? getCurriculumText('next_word', activeLang)
                         : getCurriculumText('continue_to_story', activeLang)}
                     </Text>
-                    <Feather name="arrow-right" size={18} color="#0d0f17" />
+                    <Feather name="arrow-right" size={18} color="#ffffff" />
                   </Pressable>
                 </View>
               </View>
@@ -940,7 +1061,16 @@ export function LessonPlayerModal({
                 contentContainerStyle={styles.stageScroll}
               >
                 <View style={styles.storyHeader}>
-                  <View style={[styles.storyTag, { backgroundColor: colors.primary + '20' }]}>
+                  <View
+                    style={[
+                      styles.storyTag,
+                      {
+                        backgroundColor: colors.isDark ? '#261e12' : '#fef3c7',
+                        borderColor: colors.primary,
+                        borderBottomColor: '#d97706',
+                      },
+                    ]}
+                  >
                     <Text style={[styles.storyTagText, { color: colors.primary }]}>
                       {getCurriculumText('graded_reading', activeLang)} • {unit.story.cefr} ({unit.story.wordCount} {getCurriculumText('words', activeLang)})
                     </Text>
@@ -955,21 +1085,26 @@ export function LessonPlayerModal({
 
                 {/* Listen story button */}
                 <Pressable
-                  style={[
+                  style={({ pressed }) => [
                     styles.listenStoryBtn,
-                    {
-                      backgroundColor: isSpeakingStory
-                        ? '#ef4444'
-                        : colors.isDark
-                        ? '#1e293b'
-                        : '#e2e8f0',
-                    },
+                    isSpeakingStory
+                      ? {
+                          backgroundColor: '#ef4444',
+                          borderColor: '#dc2626',
+                          borderBottomColor: '#b91c1c',
+                        }
+                      : {
+                          backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9',
+                          borderColor: colors.isDark ? '#334155' : '#cbd5e1',
+                          borderBottomColor: colors.isDark ? '#0f172a' : '#94a3b8',
+                        },
+                    { transform: [{ translateY: pressed ? 2 : 0 }] },
                   ]}
                   onPress={toggleStorySpeech}
                 >
                   <Feather
                     name={isSpeakingStory ? 'square' : 'play-circle'}
-                    size={20}
+                    size={22}
                     color={isSpeakingStory ? '#ffffff' : colors.text}
                   />
                   <Text
@@ -978,7 +1113,9 @@ export function LessonPlayerModal({
                       { color: isSpeakingStory ? '#ffffff' : colors.text },
                     ]}
                   >
-                    {isSpeakingStory ? getCurriculumText('stop_audio', activeLang) : getCurriculumText('listen_story', activeLang)}
+                    {isSpeakingStory
+                      ? getCurriculumText('stop_audio', activeLang)
+                      : getCurriculumText('listen_story', activeLang)}
                   </Text>
                 </Pressable>
 
@@ -988,7 +1125,8 @@ export function LessonPlayerModal({
                     styles.storyCard,
                     {
                       backgroundColor: colors.surface,
-                      borderColor: colors.surfaceBorder,
+                      borderColor: colors.isDark ? '#243247' : '#e2e8f0',
+                      borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
                     },
                   ]}
                 >
@@ -998,24 +1136,26 @@ export function LessonPlayerModal({
                 </View>
 
                 {/* Highlighted words list */}
-                <Text style={[styles.sectionHeading, { color: colors.text, marginTop: Spacing.lg }]}>
+                <Text style={[styles.sectionHeading, { color: colors.text, marginTop: Spacing.xl }]}>
                   {getCurriculumText('learned_keywords', activeLang)}
                 </Text>
                 <View style={styles.chipsWrap}>
                   {unit.story.vocabularyHighlights.map((w, idx) => (
                     <Pressable
                       key={idx}
-                      style={[
+                      style={({ pressed }) => [
                         styles.highlightChip,
                         {
-                          backgroundColor: colors.isDark ? '#2b2413' : '#fef9c3',
-                          borderColor: colors.primary,
+                          backgroundColor: colors.isDark ? '#2a2210' : '#fef9c3',
+                          borderColor: '#f59e0b',
+                          borderBottomColor: '#d97706',
+                          transform: [{ translateY: pressed ? 2 : 0 }],
                         },
                       ]}
                       onPress={() => handleSpeech(w)}
                     >
-                      <Feather name="volume-1" size={13} color={colors.primary} />
-                      <Text style={[styles.highlightChipText, { color: colors.primary }]}>
+                      <Feather name="volume-1" size={14} color="#b45309" />
+                      <Text style={[styles.highlightChipText, { color: colors.isDark ? '#fcd34d' : '#92400e' }]}>
                         {w}
                       </Text>
                     </Pressable>
@@ -1070,7 +1210,8 @@ export function LessonPlayerModal({
                           styles.blankSentenceCard,
                           {
                             backgroundColor: colors.surface,
-                            borderColor: colors.surfaceBorder,
+                            borderColor: colors.isDark ? '#243247' : '#e2e8f0',
+                            borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
                           },
                         ]}
                       >
@@ -1080,7 +1221,7 @@ export function LessonPlayerModal({
                             onPress={() => handleSpeech(fullSentence, 0.9)}
                             hitSlop={8}
                           >
-                            <Feather name="volume-2" size={18} color={colors.primary} />
+                            <Feather name="volume-2" size={20} color="#58cc02" />
                           </Pressable>
                           <Text style={[styles.blankInstructionLabel, { color: colors.textMuted }]}>
                             {getCurriculumText('fill_blank_instruction', activeLang)}
@@ -1098,14 +1239,19 @@ export function LessonPlayerModal({
                               styles.blankInteractiveSlot,
                               {
                                 borderColor: chosenOption
-                                  ? colors.primary
+                                  ? '#1cb0f6'
                                   : colors.isDark
                                   ? '#475569'
                                   : '#cbd5e1',
+                                borderBottomColor: chosenOption
+                                  ? '#0284c7'
+                                  : colors.isDark
+                                  ? '#334155'
+                                  : '#94a3b8',
                                 backgroundColor: chosenOption
                                   ? colors.isDark
-                                    ? '#2e2615'
-                                    : '#fef3c7'
+                                    ? '#0c2438'
+                                    : '#e0f2fe'
                                   : colors.isDark
                                   ? '#0f172a'
                                   : '#f1f5f9',
@@ -1116,8 +1262,10 @@ export function LessonPlayerModal({
                               style={[
                                 styles.blankInteractiveSlotText,
                                 {
-                                  color: chosenOption ? colors.primary : colors.textMuted,
-                                  fontWeight: chosenOption ? FontWeight.bold : FontWeight.medium,
+                                  color: chosenOption
+                                    ? colors.isDark ? '#38bdf8' : '#0369a1'
+                                    : colors.textMuted,
+                                  fontWeight: FontWeight.extrabold,
                                 },
                               ]}
                             >
@@ -1141,7 +1289,8 @@ export function LessonPlayerModal({
                           styles.instructionCard,
                           {
                             backgroundColor: colors.surface,
-                            borderColor: colors.surfaceBorder,
+                            borderColor: colors.isDark ? '#243247' : '#e2e8f0',
+                            borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
                           },
                         ]}
                       >
@@ -1160,7 +1309,11 @@ export function LessonPlayerModal({
                   <View style={styles.listeningWrap}>
                     <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
                       <Pressable
-                        style={[styles.bigListeningBtn, { backgroundColor: colors.primary }]}
+                        style={({ pressed }) => [
+                          styles.bigListeningBtn,
+                          styles.duoPrimaryGreenBtn,
+                          { transform: [{ translateY: pressed ? 2 : 0 }] },
+                        ]}
                         onPress={() =>
                           handleSpeech(
                             currentExercise.audioPrompt || currentExercise.correctSentence || 'Listen',
@@ -1168,14 +1321,16 @@ export function LessonPlayerModal({
                           )
                         }
                       >
-                        <Feather name="volume-2" size={32} color="#0d0f17" />
+                        <Feather name="volume-2" size={34} color="#ffffff" />
                       </Pressable>
                       <Pressable
-                        style={[
+                        style={({ pressed }) => [
                           styles.slowListeningBtn,
                           {
                             backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9',
-                            borderColor: colors.surfaceBorder,
+                            borderColor: colors.isDark ? '#334155' : '#cbd5e1',
+                            borderBottomColor: colors.isDark ? '#0f172a' : '#94a3b8',
+                            transform: [{ translateY: pressed ? 2 : 0 }],
                           },
                         ]}
                         onPress={() =>
@@ -1185,7 +1340,7 @@ export function LessonPlayerModal({
                           )
                         }
                       >
-                        <Text style={{ fontSize: 24 }}>🐢</Text>
+                        <Text style={{ fontSize: 26 }}>🐢</Text>
                       </Pressable>
                     </View>
                     <Text style={[styles.listeningHelp, { color: colors.textMuted }]}>
@@ -1202,10 +1357,10 @@ export function LessonPlayerModal({
                       style={[
                         styles.scrambleDropZone,
                         {
-                          borderColor: colors.primary,
+                          borderColor: '#1cb0f6',
                           backgroundColor: colors.isDark
-                            ? 'rgba(255, 255, 255, 0.03)'
-                            : 'rgba(0, 0, 0, 0.02)',
+                            ? 'rgba(28, 176, 246, 0.05)'
+                            : 'rgba(28, 176, 246, 0.04)',
                         },
                       ]}
                     >
@@ -1218,7 +1373,10 @@ export function LessonPlayerModal({
                           {scrambleBuiltWords.map((word, idx) => (
                             <Pressable
                               key={`${word}-${idx}`}
-                              style={[styles.scrambleChipBuilt, { backgroundColor: colors.primary }]}
+                              style={({ pressed }) => [
+                                styles.scrambleChipBuilt,
+                                { transform: [{ translateY: pressed ? 2 : 0 }] },
+                              ]}
                               onPress={() => handleRemoveScrambleWord(word, idx)}
                             >
                               <Text style={styles.scrambleChipBuiltText}>{word}</Text>
@@ -1233,11 +1391,13 @@ export function LessonPlayerModal({
                       {scrambleAvailablePool.map((word, idx) => (
                         <Pressable
                           key={`${word}-${idx}`}
-                          style={[
+                          style={({ pressed }) => [
                             styles.scrambleChipAvailable,
                             {
                               backgroundColor: colors.surface,
-                              borderColor: colors.surfaceBorder,
+                              borderColor: colors.isDark ? '#334155' : '#e5e7eb',
+                              borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
+                              transform: [{ translateY: pressed ? 2 : 0 }],
                             },
                           ]}
                           onPress={() => handleAddScrambleWord(word, idx)}
@@ -1261,15 +1421,21 @@ export function LessonPlayerModal({
                       return (
                         <Pressable
                           key={opt.id}
-                          style={[
+                          style={({ pressed }) => [
                             styles.optionCard,
+                            isSelected
+                              ? {
+                                  backgroundColor: colors.isDark ? '#0c2438' : '#e0f2fe',
+                                  borderColor: '#1cb0f6',
+                                  borderBottomColor: '#0284c7',
+                                }
+                              : {
+                                  backgroundColor: colors.surface,
+                                  borderColor: colors.isDark ? '#243247' : '#e5e7eb',
+                                  borderBottomColor: colors.isDark ? '#0f172a' : '#d1d5db',
+                                },
                             {
-                              backgroundColor: isSelected
-                                ? colors.isDark
-                                  ? '#1e293b'
-                                  : '#e0e7ff'
-                                : colors.surface,
-                              borderColor: isSelected ? colors.primary : colors.surfaceBorder,
+                              transform: [{ translateY: pressed ? 2 : 0 }],
                             },
                           ]}
                           onPress={() => {
@@ -1282,19 +1448,25 @@ export function LessonPlayerModal({
                             style={[
                               styles.radioCircle,
                               {
-                                borderColor: isSelected ? colors.primary : colors.textMuted,
-                                backgroundColor: isSelected ? colors.primary : 'transparent',
+                                borderColor: isSelected
+                                  ? '#1cb0f6'
+                                  : colors.isDark
+                                  ? '#475569'
+                                  : '#cbd5e1',
+                                backgroundColor: isSelected ? '#1cb0f6' : 'transparent',
                               },
                             ]}
                           >
-                            {isSelected && <View style={styles.radioDot} />}
+                            {isSelected && <Feather name="check" size={14} color="#ffffff" />}
                           </View>
                           <Text
                             style={[
                               styles.optionText,
                               {
-                                color: colors.text,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.medium,
+                                color: isSelected
+                                  ? colors.isDark ? '#38bdf8' : '#0369a1'
+                                  : colors.text,
+                                fontWeight: isSelected ? FontWeight.extrabold : FontWeight.bold,
                               },
                             ]}
                           >
@@ -1344,7 +1516,8 @@ export function LessonPlayerModal({
                     styles.victoryStatsCard,
                     {
                       backgroundColor: colors.surface,
-                      borderColor: colors.surfaceBorder,
+                      borderColor: colors.isDark ? '#243247' : '#e2e8f0',
+                      borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
                     },
                   ]}
                 >
@@ -1354,9 +1527,9 @@ export function LessonPlayerModal({
                       {getCurriculumText('earned_xp', activeLang)}
                     </Text>
                   </View>
-                  <View style={[styles.victoryDivider, { backgroundColor: colors.surfaceBorder }]} />
+                  <View style={[styles.victoryDivider, { backgroundColor: colors.isDark ? '#243247' : '#e2e8f0' }]} />
                   <View style={styles.victoryStatCol}>
-                    <Text style={[styles.victoryStatVal, { color: colors.primary }]}>
+                    <Text style={[styles.victoryStatVal, { color: '#58cc02' }]}>
                       %{completedResult.score}
                     </Text>
                     <Text style={[styles.victoryStatLbl, { color: colors.textMuted }]}>
@@ -1374,7 +1547,7 @@ export function LessonPlayerModal({
               styles.footer,
               {
                 backgroundColor: colors.bg,
-                borderColor: colors.surfaceBorder,
+                borderTopColor: colors.isDark ? '#1e293b' : '#e5e7eb',
                 paddingBottom: Math.max(insets.bottom, 16),
               },
             ]}
@@ -1384,33 +1557,44 @@ export function LessonPlayerModal({
               <View
                 style={[
                   styles.feedbackBanner,
-                  {
-                    backgroundColor:
-                      feedbackState === 'correct'
-                        ? colors.isDark
-                          ? '#064e3b'
-                          : '#dcfce7'
-                        : colors.isDark
-                        ? '#7f1d1d'
-                        : '#fee2e2',
-                    borderColor: feedbackState === 'correct' ? '#10b981' : '#ef4444',
-                  },
+                  feedbackState === 'correct'
+                    ? {
+                        backgroundColor: colors.isDark ? '#06291a' : '#dcfce7',
+                        borderColor: '#86efac',
+                        borderBottomColor: '#22c55e',
+                      }
+                    : {
+                        backgroundColor: colors.isDark ? '#2a1215' : '#fee2e2',
+                        borderColor: '#fca5a5',
+                        borderBottomColor: '#ef4444',
+                      },
                 ]}
               >
                 <View style={styles.feedbackTextRow}>
-                  <Feather
-                    name={feedbackState === 'correct' ? 'check-circle' : 'alert-circle'}
-                    size={22}
-                    color={feedbackState === 'correct' ? '#10b981' : '#ef4444'}
-                  />
+                  <View
+                    style={[
+                      styles.feedbackIconCircle,
+                      {
+                        backgroundColor: feedbackState === 'correct' ? '#22c55e' : '#ef4444',
+                      },
+                    ]}
+                  >
+                    <Feather
+                      name={feedbackState === 'correct' ? 'check' : 'x'}
+                      size={20}
+                      color="#ffffff"
+                    />
+                  </View>
                   <View style={{ flex: 1 }}>
                     <Text
                       style={[
                         styles.feedbackTitle,
-                        { color: feedbackState === 'correct' ? '#047857' : '#b91c1c' },
+                        { color: feedbackState === 'correct' ? '#15803d' : '#b91c1c' },
                       ]}
                     >
-                      {feedbackState === 'correct' ? getCurriculumText('feedback_correct', activeLang) : getCurriculumText('feedback_wrong', activeLang)}
+                      {feedbackState === 'correct'
+                        ? getCurriculumText('feedback_correct', activeLang)
+                        : getCurriculumText('feedback_wrong', activeLang)}
                     </Text>
                     {feedbackState === 'wrong' && (
                       <Text
@@ -1437,17 +1621,21 @@ export function LessonPlayerModal({
                 </View>
 
                 <Pressable
-                  style={[
+                  style={({ pressed }) => [
                     styles.primaryBtn,
                     {
-                      backgroundColor: feedbackState === 'correct' ? '#10b981' : '#ef4444',
+                      backgroundColor: feedbackState === 'correct' ? '#58cc02' : '#ff4b4b',
+                      borderBottomColor: feedbackState === 'correct' ? '#46a302' : '#dc2626',
                       marginTop: Spacing.sm,
+                      transform: [{ translateY: pressed ? 2 : 0 }],
                     },
                   ]}
                   onPress={handleContinueAfterFeedback}
                 >
-                  <Text style={styles.primaryBtnText}>{getCurriculumText('continue_btn', activeLang)}</Text>
-                  <Feather name="arrow-right" size={18} color="#ffffff" />
+                  <Text style={styles.primaryBtnWhiteText}>
+                    {getCurriculumText('continue_btn', activeLang)}
+                  </Text>
+                  <Feather name="arrow-right" size={20} color="#ffffff" />
                 </Pressable>
               </View>
             )}
@@ -1457,65 +1645,98 @@ export function LessonPlayerModal({
               <>
                 {currentStage === 'theory' && (
                   <Pressable
-                    style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
+                    style={({ pressed }) => [
+                      styles.primaryBtn,
+                      styles.duoPrimaryGreenBtn,
+                      { transform: [{ translateY: pressed ? 2 : 0 }] },
+                    ]}
                     onPress={() => setCurrentStage('vocabulary')}
                   >
-                    <Text style={styles.primaryBtnText}>{getCurriculumText('continue_to_words', activeLang)}</Text>
-                    <Feather name="arrow-right" size={18} color="#0d0f17" />
+                    <Text style={styles.primaryBtnWhiteText}>
+                      {getCurriculumText('continue_to_words', activeLang)}
+                    </Text>
+                    <Feather name="arrow-right" size={20} color="#ffffff" />
                   </Pressable>
                 )}
 
                 {currentStage === 'story' && (
                   <Pressable
-                    style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
+                    style={({ pressed }) => [
+                      styles.primaryBtn,
+                      styles.duoPrimaryGreenBtn,
+                      { transform: [{ translateY: pressed ? 2 : 0 }] },
+                    ]}
                     onPress={() => {
                       Speech.stop().catch(() => {});
                       setIsSpeakingStory(false);
                       setCurrentStage('exercise');
                     }}
                   >
-                    <Text style={styles.primaryBtnText}>{getCurriculumText('start_exercises', activeLang)}</Text>
-                    <Feather name="play" size={18} color="#0d0f17" />
+                    <Text style={styles.primaryBtnWhiteText}>
+                      {getCurriculumText('start_exercises', activeLang)}
+                    </Text>
+                    <Feather name="play" size={18} color="#ffffff" />
                   </Pressable>
                 )}
 
-                {currentStage === 'exercise' && (
-                  <Pressable
-                    style={[
-                      styles.primaryBtn,
-                      {
-                        backgroundColor: colors.primary,
-                        opacity:
-                          currentExercise?.type === 'word_scramble'
-                            ? scrambleBuiltWords.length === 0
-                              ? 0.5
-                              : 1
-                            : !selectedOptionId
-                            ? 0.5
-                            : 1,
-                      },
-                    ]}
-                    disabled={
-                      currentExercise?.type === 'word_scramble'
-                        ? scrambleBuiltWords.length === 0
-                        : !selectedOptionId
-                    }
-                    onPress={handleCheckAnswer}
-                  >
-                    <Text style={styles.primaryBtnText}>{getCurriculumText('check_answer', activeLang)}</Text>
-                    <Feather name="check" size={18} color="#0d0f17" />
-                  </Pressable>
-                )}
+                {currentStage === 'exercise' && (() => {
+                  const isReady =
+                    currentExercise?.type === 'word_scramble'
+                      ? scrambleBuiltWords.length > 0
+                      : !!selectedOptionId;
+
+                  return (
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.primaryBtn,
+                        isReady
+                          ? styles.duoPrimaryGreenBtn
+                          : [
+                              styles.duoDisabledBtn,
+                              {
+                                backgroundColor: colors.isDark ? '#1e293b' : '#e5e7eb',
+                                borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
+                              },
+                            ],
+                        { transform: [{ translateY: pressed && isReady ? 2 : 0 }] },
+                      ]}
+                      disabled={!isReady}
+                      onPress={handleCheckAnswer}
+                    >
+                      <Text
+                        style={[
+                          styles.primaryBtnText,
+                          isReady
+                            ? { color: '#ffffff' }
+                            : { color: colors.isDark ? '#64748b' : '#9ca3af' },
+                        ]}
+                      >
+                        {getCurriculumText('check_answer', activeLang)}
+                      </Text>
+                      <Feather
+                        name="check"
+                        size={20}
+                        color={isReady ? '#ffffff' : colors.isDark ? '#64748b' : '#9ca3af'}
+                      />
+                    </Pressable>
+                  );
+                })()}
 
                 {currentStage === 'victory' && completedResult && (
                   <Pressable
-                    style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
+                    style={({ pressed }) => [
+                      styles.primaryBtn,
+                      styles.duoPrimaryGreenBtn,
+                      { transform: [{ translateY: pressed ? 2 : 0 }] },
+                    ]}
                     onPress={onClose}
                   >
-                    <Text style={styles.primaryBtnText}>
-                      {completedResult.passed ? getCurriculumText('return_to_map', activeLang) : getCurriculumText('try_again', activeLang)}
+                    <Text style={styles.primaryBtnWhiteText}>
+                      {completedResult.passed
+                        ? getCurriculumText('return_to_map', activeLang)
+                        : getCurriculumText('try_again', activeLang)}
                     </Text>
-                    <Feather name="check" size={18} color="#0d0f17" />
+                    <Feather name="check" size={20} color="#ffffff" />
                   </Pressable>
                 )}
               </>
@@ -1553,30 +1774,39 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
   },
   progressTrack: {
     flex: 1,
-    height: 10,
-    borderRadius: 5,
+    height: 16,
+    borderRadius: 8,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 5,
+    borderRadius: 8,
+    justifyContent: 'flex-start',
+  },
+  progressShineLine: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    marginHorizontal: 4,
+    marginTop: 2,
   },
   heartsBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 14,
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
   },
   heartsText: {
     color: '#ef4444',
@@ -1592,7 +1822,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
     paddingVertical: 10,
-    borderBottomWidth: 1,
+    borderBottomWidth: 1.5,
   },
   stageStepItem: {
     flex: 1,
@@ -1602,24 +1832,24 @@ const styles = StyleSheet.create({
   stageStepPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: Radius.pill,
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
   },
   stageStepPillActive: {},
-  stageStepPillPassed: {
-    borderWidth: 1,
-  },
+  stageStepPillPassed: {},
   stageStepPillUpcoming: {},
   stageStepText: {
-    fontSize: FontSize.xs,
+    fontSize: 11,
   },
   stageStepLine: {
     flex: 1,
-    height: 2,
-    marginHorizontal: 4,
-    borderRadius: 1,
+    height: 3,
+    marginHorizontal: 3,
+    borderRadius: 1.5,
   },
   stageScroll: {
     padding: Spacing.lg,
@@ -1632,16 +1862,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   levelTag: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingVertical: 6,
     borderRadius: Radius.pill,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
   },
   levelTagText: {
     fontSize: FontSize.xs,
@@ -1653,18 +1884,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 6,
     borderRadius: Radius.pill,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
   },
   minutesTag: {
     fontSize: FontSize.xs,
-    fontWeight: FontWeight.medium,
+    fontWeight: FontWeight.bold,
   },
   title: {
-    fontSize: 22,
-    fontWeight: FontWeight.bold,
-    lineHeight: 30,
+    fontSize: 24,
+    fontWeight: FontWeight.extrabold,
+    lineHeight: 32,
     marginBottom: 8,
   },
   topicBadgeRow: {
@@ -1675,75 +1907,93 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: Radius.pill,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
   },
   topicPillText: {
-    fontSize: FontSize.xs,
+    fontSize: 12,
     fontWeight: FontWeight.bold,
   },
   masterGrammarCard: {
-    borderWidth: 1.5,
-    borderRadius: Radius.xl,
+    borderWidth: 2,
+    borderBottomWidth: 5,
+    borderRadius: 24,
     padding: Spacing.lg,
     marginBottom: Spacing.xl,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
   },
   grammarCardHeader: {
-    marginBottom: 12,
+    marginBottom: 14,
   },
   grammarHeaderBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: Radius.pill,
-    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
   },
   grammarHeaderBadgeText: {
-    color: '#10b981',
-    fontSize: 11,
-    fontWeight: FontWeight.bold,
-    letterSpacing: 0.5,
+    color: '#059669',
+    fontSize: 12,
+    fontWeight: FontWeight.extrabold,
+    letterSpacing: 0.6,
   },
   formulaSection: {
     marginBottom: 12,
   },
   formulaBranchesWrap: {
-    gap: 8,
+    gap: 10,
   },
   formulaBranchCard: {
-    padding: 10,
-    borderRadius: Radius.md,
-    borderWidth: 1,
+    padding: 12,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderBottomWidth: 4,
   },
   formulaTokenList: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 8,
   },
   formulaTokenPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: Radius.sm,
-    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
   },
   formulaTokenText: {
-    fontSize: FontSize.sm,
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
+  },
+  formulaOperatorWrap: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   formulaOperatorText: {
-    fontSize: FontSize.md,
+    fontSize: 15,
     fontWeight: FontWeight.bold,
-    marginHorizontal: 2,
   },
   formulaSingleCard: {
-    padding: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
+    padding: 14,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderBottomWidth: 4,
   },
   formulaChipsRow: {
     flexDirection: 'row',
@@ -1751,31 +2001,32 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   formulaPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: Radius.pill,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
   },
   formulaPillText: {
-    fontSize: FontSize.sm,
+    fontSize: 14,
     fontWeight: FontWeight.bold,
   },
   formulaText: {
-    fontSize: FontSize.md,
+    fontSize: 16,
     fontWeight: FontWeight.bold,
-    lineHeight: 22,
+    lineHeight: 24,
   },
   cardDivider: {
-    height: 1,
-    marginVertical: 12,
-    opacity: 0.8,
+    height: 1.5,
+    marginVertical: 14,
+    opacity: 0.6,
   },
   explanationSection: {
-    paddingTop: 2,
+    paddingTop: 4,
   },
   explanationText: {
-    fontSize: 15,
-    lineHeight: 24,
+    fontSize: 16,
+    lineHeight: 26,
     fontWeight: FontWeight.medium,
   },
   examplesSectionWrap: {
@@ -1788,9 +2039,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   sectionHeaderDot: {
-    width: 4,
-    height: 16,
-    borderRadius: 2,
+    width: 5,
+    height: 18,
+    borderRadius: 2.5,
   },
   sectionHeading: {
     fontSize: FontSize.lg,
@@ -1798,56 +2049,63 @@ const styles = StyleSheet.create({
   },
   sectionSublabel: {
     fontSize: FontSize.xs,
+    fontWeight: FontWeight.medium,
   },
   examplesList: {
-    gap: 10,
+    gap: 12,
   },
   exampleItemCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: Radius.lg,
-    borderWidth: 1.5,
-    gap: 12,
+    padding: 16,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderBottomWidth: 4.5,
+    gap: 14,
+    elevation: 2,
   },
   exampleSpeakerCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderBottomWidth: 3.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
   exampleEn: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: FontWeight.bold,
-    lineHeight: 22,
-    marginBottom: 2,
+    lineHeight: 24,
+    marginBottom: 3,
   },
   exampleTr: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: FontWeight.medium,
   },
   miniPlayIconWrap: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   speakerBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(212, 175, 122, 0.15)',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(88, 204, 2, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   proTipCard: {
-    borderWidth: 1.5,
-    borderRadius: Radius.xl,
+    borderWidth: 2,
+    borderBottomWidth: 5,
+    borderRadius: 24,
     padding: Spacing.lg,
-    marginTop: Spacing.xs,
-    marginBottom: Spacing.md,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.lg,
   },
   proTipHeader: {
     marginBottom: 12,
@@ -1857,29 +2115,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: Radius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
   },
   proTipBadgeText: {
-    color: '#ea580c',
+    color: '#ffffff',
     fontSize: 11,
-    fontWeight: FontWeight.bold,
-    letterSpacing: 0.5,
+    fontWeight: FontWeight.extrabold,
+    letterSpacing: 0.6,
   },
   comparisonWrap: {
-    gap: 8,
+    gap: 10,
     marginBottom: 12,
   },
   comparisonCardWrong: {
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: 10,
+    borderWidth: 2,
+    borderBottomWidth: 4,
+    borderRadius: 16,
+    padding: 12,
   },
   comparisonCardCorrect: {
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: 10,
+    borderWidth: 2,
+    borderBottomWidth: 4,
+    borderRadius: 16,
+    padding: 12,
   },
   comparisonHeaderRow: {
     flexDirection: 'row',
@@ -1888,7 +2150,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   wrongEmoji: {
-    fontSize: 12,
+    fontSize: 14,
   },
   wrongLabel: {
     color: '#ef4444',
@@ -1897,12 +2159,12 @@ const styles = StyleSheet.create({
   },
   wrongSentenceText: {
     color: '#dc2626',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: FontWeight.bold,
     textDecorationLine: 'line-through',
   },
   correctEmoji: {
-    fontSize: 12,
+    fontSize: 14,
   },
   correctLabel: {
     color: '#10b981',
@@ -1911,12 +2173,13 @@ const styles = StyleSheet.create({
   },
   correctSentenceText: {
     color: '#059669',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: FontWeight.bold,
   },
   proTipExplanation: {
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: FontWeight.medium,
   },
   vocabStageWrap: {
     flex: 1,
@@ -1933,14 +2196,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: Radius.pill,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
   },
   vocabCounterText: {
     fontSize: FontSize.sm,
-    fontWeight: FontWeight.medium,
+    fontWeight: FontWeight.bold,
   },
   vocabDots: {
     flexDirection: 'row',
@@ -1952,55 +2216,66 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   vocabCard: {
-    borderRadius: Radius.xl,
-    borderWidth: 1.5,
-    padding: Spacing.xl,
-    gap: 16,
+    borderRadius: 28,
+    borderWidth: 2.5,
+    borderBottomWidth: 6,
+    padding: 22,
+    gap: 18,
+    elevation: 3,
   },
   wordHeader: {
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   vocabWord: {
-    fontSize: 32,
-    fontWeight: FontWeight.bold,
+    fontSize: 36,
+    fontWeight: FontWeight.extrabold,
     textAlign: 'center',
+    letterSpacing: -0.5,
+  },
+  phoneticPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
   },
   vocabPhonetic: {
     fontSize: FontSize.md,
-    fontWeight: FontWeight.medium,
+    fontWeight: FontWeight.semibold,
   },
   vocabAudioRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginTop: 10,
+    marginTop: 8,
   },
   primaryAudioBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: Radius.pill,
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderBottomWidth: 4,
   },
   primaryAudioBtnText: {
-    color: '#0d0f17',
-    fontSize: FontSize.sm,
+    color: '#ffffff',
+    fontSize: 15,
     fontWeight: FontWeight.bold,
   },
   turtleAudioBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: Radius.pill,
-    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderBottomWidth: 4,
   },
   turtleAudioBtnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.medium,
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
   },
   miniSpeakerBtn: {
     width: 32,
@@ -2018,24 +2293,26 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   translationBox: {
-    padding: Spacing.md,
-    borderRadius: Radius.md,
+    padding: 16,
+    borderRadius: 18,
     alignItems: 'center',
     gap: 4,
+    borderWidth: 1.5,
   },
   translationLabel: {
-    fontSize: FontSize.xs,
-    textTransform: 'uppercase',
+    fontSize: 11,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.8,
   },
   translationValue: {
-    fontSize: FontSize.xl,
+    fontSize: 22,
     fontWeight: FontWeight.bold,
+    textAlign: 'center',
   },
   exampleSentenceBox: {
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-    gap: 4,
+    paddingTop: 12,
+    borderTopWidth: 1.5,
+    gap: 6,
   },
   exampleSentenceHeader: {
     flexDirection: 'row',
@@ -2043,14 +2320,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   exampleSentenceLabel: {
-    fontSize: FontSize.xs,
-  },
-  exampleSentenceEn: {
-    fontSize: FontSize.md,
+    fontSize: 12,
     fontWeight: FontWeight.semibold,
   },
+  exampleSentenceEn: {
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    lineHeight: 24,
+  },
   exampleSentenceTr: {
-    fontSize: FontSize.xs,
+    fontSize: 13,
+    lineHeight: 18,
   },
   vocabNavRow: {
     flexDirection: 'row',
@@ -2058,21 +2338,22 @@ const styles = StyleSheet.create({
   },
   vocabNavBtn: {
     flex: 1,
-    height: 52,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
+    height: 54,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderBottomWidth: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
   vocabNavBtnText: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.semibold,
+    fontSize: 15,
+    fontWeight: FontWeight.bold,
   },
   vocabNavBtnPrimaryText: {
-    color: '#0d0f17',
-    fontSize: FontSize.md,
+    color: '#ffffff',
+    fontSize: 15,
     fontWeight: FontWeight.bold,
   },
   storyHeader: {
@@ -2080,10 +2361,12 @@ const styles = StyleSheet.create({
   },
   storyTag: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: Radius.md,
-    marginBottom: 6,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
+    marginBottom: 8,
   },
   storyTagText: {
     fontSize: FontSize.xs,
@@ -2091,7 +2374,8 @@ const styles = StyleSheet.create({
   },
   storyTitle: {
     fontSize: 24,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.extrabold,
+    marginBottom: 4,
   },
   storyTitleTr: {
     fontSize: FontSize.sm,
@@ -2100,23 +2384,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 48,
-    borderRadius: Radius.lg,
-    gap: 8,
+    height: 52,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderBottomWidth: 4,
+    gap: 10,
     marginBottom: Spacing.md,
   },
   listenStoryBtnText: {
-    fontSize: FontSize.sm,
+    fontSize: 15,
     fontWeight: FontWeight.bold,
   },
   storyCard: {
-    padding: Spacing.lg,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
+    padding: 22,
+    borderRadius: 26,
+    borderWidth: 2,
+    borderBottomWidth: 5,
   },
   storyBodyText: {
-    fontSize: 17,
-    lineHeight: 28,
+    fontSize: 18,
+    lineHeight: 30,
+    fontWeight: FontWeight.medium,
   },
   chipsWrap: {
     flexDirection: 'row',
@@ -2126,15 +2414,16 @@ const styles = StyleSheet.create({
   highlightChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: Radius.pill,
-    borderWidth: 1,
+    borderWidth: 2,
+    borderBottomWidth: 3.5,
     gap: 6,
   },
   highlightChipText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
   },
   exerciseScroll: {
     padding: Spacing.lg,
@@ -2148,47 +2437,64 @@ const styles = StyleSheet.create({
   },
   exerciseCountText: {
     fontSize: FontSize.xs,
-    fontWeight: FontWeight.medium,
+    fontWeight: FontWeight.bold,
   },
   xpBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: Radius.pill,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
+    borderColor: '#86efac',
+    borderBottomColor: '#22c55e',
+    backgroundColor: 'rgba(34, 197, 94, 0.12)',
   },
   xpBadgeText: {
-    color: '#10b981',
+    color: '#15803d',
     fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.extrabold,
   },
   exercisePrompt: {
-    fontSize: 20,
-    fontWeight: FontWeight.bold,
-    marginBottom: Spacing.xl,
-    lineHeight: 28,
+    fontSize: 22,
+    fontWeight: FontWeight.extrabold,
+    marginBottom: Spacing.lg,
+    lineHeight: 30,
   },
   listeningWrap: {
     alignItems: 'center',
     marginVertical: Spacing.xl,
-    gap: 12,
+    gap: 14,
   },
   bigListeningBtn: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4,
+    borderWidth: 2,
+    borderBottomWidth: 5,
+    borderColor: '#46a302',
+  },
+  slowListeningBtn: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderBottomWidth: 4,
   },
   listeningHelp: {
     fontSize: FontSize.xs,
+    fontWeight: FontWeight.medium,
   },
   scrambleContainer: {
     gap: 16,
   },
   scrambleDropZone: {
-    minHeight: 110,
-    borderRadius: Radius.lg,
-    borderWidth: 1.5,
+    minHeight: 120,
+    borderRadius: 22,
+    borderWidth: 2.5,
     borderStyle: 'dashed',
     padding: Spacing.md,
     justifyContent: 'center',
@@ -2196,6 +2502,7 @@ const styles = StyleSheet.create({
   emptyDropPlaceholder: {
     fontSize: FontSize.sm,
     textAlign: 'center',
+    fontWeight: FontWeight.medium,
   },
   scrambleChipsWrap: {
     flexDirection: 'row',
@@ -2203,13 +2510,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   scrambleChipBuilt: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: Radius.md,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    backgroundColor: '#58cc02',
+    borderBottomWidth: 4,
+    borderBottomColor: '#46a302',
   },
   scrambleChipBuiltText: {
-    color: '#0d0f17',
-    fontSize: FontSize.md,
+    color: '#ffffff',
+    fontSize: 16,
     fontWeight: FontWeight.bold,
   },
   scramblePoolWrap: {
@@ -2219,19 +2529,21 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.md,
   },
   scrambleChipAvailable: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: Radius.md,
-    borderWidth: 1.5,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderBottomWidth: 4,
   },
   scrambleChipAvailableText: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.semibold,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
   },
   blankSentenceCard: {
-    borderWidth: 1.5,
-    borderRadius: Radius.xl,
-    padding: Spacing.lg,
+    borderWidth: 2,
+    borderBottomWidth: 5,
+    borderRadius: 24,
+    padding: 20,
     marginBottom: Spacing.lg,
   },
   blankCardTop: {
@@ -2242,39 +2554,41 @@ const styles = StyleSheet.create({
   },
   blankInstructionLabel: {
     fontSize: FontSize.xs,
-    fontWeight: FontWeight.medium,
+    fontWeight: FontWeight.semibold,
     flex: 1,
   },
   blankTokensRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    minHeight: 44,
+    minHeight: 48,
   },
   blankTokenText: {
     fontSize: 20,
-    fontWeight: FontWeight.semibold,
+    fontWeight: FontWeight.bold,
   },
   blankInteractiveSlot: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: Radius.md,
-    borderWidth: 2,
-    borderStyle: 'dashed',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 2.5,
+    borderBottomWidth: 4,
     marginHorizontal: 4,
   },
   blankInteractiveSlotText: {
     fontSize: 20,
+    fontWeight: FontWeight.extrabold,
   },
   instructionCard: {
-    borderWidth: 1,
-    borderRadius: Radius.lg,
+    borderWidth: 2,
+    borderBottomWidth: 4,
+    borderRadius: 18,
     padding: Spacing.md,
     marginBottom: Spacing.lg,
   },
   instructionCardText: {
     fontSize: FontSize.md,
-    fontWeight: FontWeight.medium,
+    fontWeight: FontWeight.semibold,
     lineHeight: 22,
   },
   optionsList: {
@@ -2283,28 +2597,31 @@ const styles = StyleSheet.create({
   optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.lg,
-    borderRadius: Radius.xl,
-    borderWidth: 1.5,
-    gap: 14,
+    padding: 18,
+    borderRadius: 22,
+    borderWidth: 2.5,
+    borderBottomWidth: 5,
+    gap: 16,
+    minHeight: 64,
   },
   radioCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#0d0f17',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#ffffff',
   },
   optionText: {
-    fontSize: FontSize.md,
+    fontSize: 17,
     flex: 1,
+    lineHeight: 24,
   },
   victoryContainer: {
     flex: 1,
@@ -2316,29 +2633,30 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   victoryEmoji: {
-    fontSize: 64,
+    fontSize: 72,
   },
   victoryTitle: {
-    fontSize: 26,
-    fontWeight: FontWeight.bold,
+    fontSize: 28,
+    fontWeight: FontWeight.extrabold,
     textAlign: 'center',
     marginBottom: 6,
   },
   victorySubtitle: {
-    fontSize: FontSize.sm,
+    fontSize: FontSize.md,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
     marginBottom: Spacing.xl,
   },
   starsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 14,
     marginBottom: Spacing.xl,
   },
   victoryStatsCard: {
     flexDirection: 'row',
-    borderWidth: 1,
-    borderRadius: Radius.xl,
+    borderWidth: 2,
+    borderBottomWidth: 5,
+    borderRadius: 24,
     padding: Spacing.lg,
     width: '100%',
     maxWidth: 320,
@@ -2348,64 +2666,84 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   victoryStatVal: {
-    fontSize: 26,
-    fontWeight: FontWeight.bold,
+    fontSize: 28,
+    fontWeight: FontWeight.extrabold,
     color: '#10b981',
   },
   victoryStatLbl: {
     fontSize: FontSize.xs,
     marginTop: 2,
+    fontWeight: FontWeight.semibold,
   },
   victoryDivider: {
-    width: 1,
+    width: 1.5,
     height: '100%',
   },
   footer: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
-    borderTopWidth: 1,
+    borderTopWidth: 1.5,
   },
   primaryBtn: {
-    height: 56,
-    borderRadius: Radius.lg,
+    height: 58,
+    borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    borderBottomWidth: 3,
-    borderBottomColor: 'rgba(0, 0, 0, 0.22)',
-    elevation: 3,
+    gap: 10,
+    borderBottomWidth: 5,
+    elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
   },
+  duoPrimaryGreenBtn: {
+    backgroundColor: '#58cc02',
+    borderBottomColor: '#46a302',
+  },
+  duoDisabledBtn: {
+    borderBottomWidth: 5,
+  },
   primaryBtnText: {
-    color: '#0d0f17',
-    fontSize: FontSize.md,
+    fontSize: 17,
     fontWeight: FontWeight.bold,
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
+  },
+  primaryBtnWhiteText: {
+    color: '#ffffff',
+    fontSize: 17,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.4,
   },
   feedbackBanner: {
-    borderWidth: 1,
-    borderRadius: Radius.xl,
-    padding: Spacing.md,
-    marginBottom: 4,
+    borderWidth: 2,
+    borderBottomWidth: 5,
+    borderRadius: 24,
+    padding: 18,
+    marginBottom: 6,
+  },
+  feedbackIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   feedbackTextRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 12,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   feedbackTitle: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.bold,
+    fontSize: 19,
+    fontWeight: FontWeight.extrabold,
   },
   feedbackSub: {
-    fontSize: FontSize.xs,
+    fontSize: 15,
     marginTop: 2,
-    fontWeight: FontWeight.medium,
+    fontWeight: FontWeight.bold,
   },
   turtleSpeakerBtn: {
     width: 44,
@@ -2413,14 +2751,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-  },
-  slowListeningBtn: {
-    width: 60,
-    height: 60,
-    borderRadius: Radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
   },
 });
