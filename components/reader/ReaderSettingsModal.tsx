@@ -67,7 +67,6 @@ export function ReaderSettingsModal({
   const [currentSettings, setCurrentSettings] = useState<ReaderSettings>(settings);
   const saveTimerRef = useRef<any>(null);
   const pendingSaveRef = useRef<Partial<ReaderSettings>>({});
-  const updateTimerRef = useRef<any>(null);
 
   // Sync when prop settings change
   useEffect(() => {
@@ -77,7 +76,6 @@ export function ReaderSettingsModal({
   // Clean up and flush pending storage on unmount
   useEffect(() => {
     return () => {
-      if (updateTimerRef.current) cancelAnimationFrame(updateTimerRef.current);
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
         if (Object.keys(pendingSaveRef.current).length > 0) {
@@ -96,19 +94,14 @@ export function ReaderSettingsModal({
     }, 350);
   };
 
-  // Immediate 0ms local state update + next-frame parent update + debounced storage
+  // Immediate 0ms local state update + synchronous parent update + debounced storage
   const update = (partial: Partial<ReaderSettings>) => {
     const next: ReaderSettings = { ...currentSettings, ...partial };
     // 1. Instant local feedback in < 1ms
     setCurrentSettings(next);
 
-    // 2. Schedule parent reader re-layout non-blockingly so button tap state paints first
-    if (updateTimerRef.current) {
-      cancelAnimationFrame(updateTimerRef.current);
-    }
-    updateTimerRef.current = requestAnimationFrame(() => {
-      onUpdateSettings(next);
-    });
+    // 2. Synchronous reader screen update (no Android Dialog frame throttling or starvation)
+    onUpdateSettings(next);
 
     // 3. Debounced background persistence
     debouncedSaveSettings(partial);
