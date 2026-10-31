@@ -529,11 +529,7 @@ export default function SettingsScreen() {
                     watchRewardedAd({
                       type: 'energy_reward',
                       onSuccess: async () => {
-                        const next = await refillEnergy(REWARD_AD_ENERGY);
-                        Alert.alert(
-                          t('rewarded_ad_completed'),
-                          `+${REWARD_AD_ENERGY} ⚡ ${t('energy_added_msg')} ${next} ⚡`
-                        );
+                        await refillEnergy(REWARD_AD_ENERGY);
                       },
                       onFallback: () => {
                         setRewardAdVisible(true);

@@ -108,27 +108,49 @@ async function readRegenerated(isGuest: boolean): Promise<EnergyState> {
   return next;
 }
 
+async function getEnergyInfoInternal(isPremium = false, isGuest = false): Promise<EnergyInfo> {
+  const cap = getEnergyCap(isGuest);
+  if (isPremium) return { balance: Infinity, cap, nextRegenAt: null };
+  try {
+    const s = await readRegenerated(isGuest);
+    return {
+      balance: s.balance,
+      cap,
+      nextRegenAt: s.balance >= cap ? null : s.lastRegenAt + REGEN_INTERVAL_MS,
+    };
+  } catch {
+    return { balance: cap, cap, nextRegenAt: null };
+  }
+}
+
 /** Full energy info including the next regen timestamp (for UI countdowns). */
 export function getEnergyInfo(isPremium = false, isGuest = false): Promise<EnergyInfo> {
-  const cap = getEnergyCap(isGuest);
-  if (isPremium) return Promise.resolve({ balance: Infinity, cap, nextRegenAt: null });
-  return withLock(async () => {
-    try {
-      const s = await readRegenerated(isGuest);
-      return {
-        balance: s.balance,
-        cap,
-        nextRegenAt: s.balance >= cap ? null : s.lastRegenAt + REGEN_INTERVAL_MS,
-      };
-    } catch {
-      return { balance: cap, cap, nextRegenAt: null };
-    }
-  });
+  return withLock(() => getEnergyInfoInternal(isPremium, isGuest));
 }
 
 /** Returns the current (regenerated) energy balance. */
 export async function getEnergyBalance(isPremium = false, isGuest = false): Promise<number> {
   return (await getEnergyInfo(isPremium, isGuest)).balance;
+}
+
+async function consumeEnergyInternal(
+  amount: number,
+  isPremium = false,
+  isGuest = false,
+): Promise<{ success: boolean; remaining: number }> {
+  if (isPremium) return { success: true, remaining: Infinity };
+  try {
+    const cap = getEnergyCap(isGuest);
+    const s = await readRegenerated(isGuest);
+    if (s.balance < amount) return { success: false, remaining: s.balance };
+    const balance = s.balance - amount;
+    // If we just dropped below the cap, regen starts counting from now
+    const lastRegenAt = s.balance >= cap && balance < cap ? Date.now() : s.lastRegenAt;
+    await AsyncStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify({ balance, lastRegenAt }));
+    return { success: true, remaining: balance };
+  } catch {
+    return { success: false, remaining: 0 };
+  }
 }
 
 /** Atomically consumes energy. Returns success=false if insufficient. */
@@ -137,21 +159,25 @@ export function consumeEnergy(
   isPremium = false,
   isGuest = false,
 ): Promise<{ success: boolean; remaining: number }> {
-  if (isPremium) return Promise.resolve({ success: true, remaining: Infinity });
-  return withLock(async () => {
-    try {
-      const cap = getEnergyCap(isGuest);
-      const s = await readRegenerated(isGuest);
-      if (s.balance < amount) return { success: false, remaining: s.balance };
-      const balance = s.balance - amount;
-      // If we just dropped below the cap, regen starts counting from now
-      const lastRegenAt = s.balance >= cap && balance < cap ? Date.now() : s.lastRegenAt;
-      await AsyncStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify({ balance, lastRegenAt }));
-      return { success: true, remaining: balance };
-    } catch {
-      return { success: false, remaining: 0 };
-    }
-  });
+  return withLock(() => consumeEnergyInternal(amount, isPremium, isGuest));
+}
+
+async function refillEnergyWithAdInternal(
+  amount: number = REWARD_AD_ENERGY,
+  isPremium = false,
+  isGuest = false,
+): Promise<number> {
+  if (isPremium) return Infinity;
+  try {
+    const cap = getEnergyCap(isGuest);
+    const s = await readRegenerated(isGuest);
+    const balance = Math.max(s.balance, Math.min(cap, s.balance + amount));
+    const lastRegenAt = balance >= cap ? Date.now() : s.lastRegenAt;
+    await AsyncStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify({ balance, lastRegenAt }));
+    return balance;
+  } catch {
+    return 0;
+  }
 }
 
 /**
@@ -163,19 +189,7 @@ export function refillEnergyWithAd(
   isPremium = false,
   isGuest = false,
 ): Promise<number> {
-  if (isPremium) return Promise.resolve(Infinity);
-  return withLock(async () => {
-    try {
-      const cap = getEnergyCap(isGuest);
-      const s = await readRegenerated(isGuest);
-      const balance = Math.max(s.balance, Math.min(cap, s.balance + amount));
-      const lastRegenAt = balance >= cap ? Date.now() : s.lastRegenAt;
-      await AsyncStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify({ balance, lastRegenAt }));
-      return balance;
-    } catch {
-      return 0;
-    }
-  });
+  return withLock(() => refillEnergyWithAdInternal(amount, isPremium, isGuest));
 }
 
 // ─── Daily book sessions: each book is charged at most once per local day ───
@@ -198,11 +212,7 @@ export async function isBookUnlockedToday(bookId: string, isPremium = false): Pr
   return (await getTodaySessions()).includes(bookId);
 }
 
-/**
- * Charges BOOK_READING_SESSION energy only on the first open of a book each day.
- * Re-entries, reloads and screen remounts on the same day are free.
- */
-export async function ensureDailyBookAccess(
+async function ensureDailyBookAccessInternal(
   bookId: string,
   isPremium = false,
   isGuest = false,
@@ -211,10 +221,11 @@ export async function ensureDailyBookAccess(
 
   const ids = await getTodaySessions();
   if (ids.includes(bookId)) {
-    return { granted: true, alreadyUnlocked: true, remaining: await getEnergyBalance(false, isGuest) };
+    const info = await getEnergyInfoInternal(false, isGuest);
+    return { granted: true, alreadyUnlocked: true, remaining: info.balance };
   }
 
-  const { success, remaining } = await consumeEnergy(ENERGY_COSTS.BOOK_READING_SESSION, false, isGuest);
+  const { success, remaining } = await consumeEnergyInternal(ENERGY_COSTS.BOOK_READING_SESSION, false, isGuest);
   if (!success) return { granted: false, alreadyUnlocked: false, remaining };
 
   try {
@@ -224,4 +235,16 @@ export async function ensureDailyBookAccess(
     );
   } catch {}
   return { granted: true, alreadyUnlocked: false, remaining };
+}
+
+/**
+ * Charges BOOK_READING_SESSION energy only on the first open of a book each day.
+ * Re-entries, reloads and screen remounts on the same day are free.
+ */
+export function ensureDailyBookAccess(
+  bookId: string,
+  isPremium = false,
+  isGuest = false,
+): Promise<{ granted: boolean; alreadyUnlocked: boolean; remaining: number }> {
+  return withLock(() => ensureDailyBookAccessInternal(bookId, isPremium, isGuest));
 }
