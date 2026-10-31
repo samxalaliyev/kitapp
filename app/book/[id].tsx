@@ -403,7 +403,7 @@ export default function BookReaderScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const { colors } = useAppTheme();
   const { t, targetLang } = useLanguage();
-  const { role, subscriptionPlan, energy, consumeEnergy } = useAuth();
+  const { role, subscriptionPlan, energy, consumeEnergy, openBookSession } = useAuth();
   const isPremium = isPremiumMember(role, subscriptionPlan);
 
   const [loading, setLoading] = useState(true);
@@ -411,6 +411,7 @@ export default function BookReaderScreen() {
   const [bookData, setBookData] = useState<ParsedBookData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [outOfEnergyVisible, setOutOfEnergyVisible] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Settings & Theme (Synchronized directly in state)
   const [settings, setSettings] = useState<ReaderSettings>({
@@ -619,9 +620,9 @@ export default function BookReaderScreen() {
         const parsed = await parseEpubFile(filePath);
         if (cancelled) return;
 
-        // Energy deduction for non-premium reading session (10 ⚡)
+        // Energy deduction for non-premium reading session (charged only once per book per day)
         if (!isPremium) {
-          const hasEnergy = await consumeEnergy(ENERGY_COSTS.BOOK_READING_SESSION);
+          const hasEnergy = await openBookSession(id);
           if (!hasEnergy) {
             if (!cancelled) {
               setOutOfEnergyVisible(true);
@@ -664,7 +665,7 @@ export default function BookReaderScreen() {
       if (speechIntervalRef.current) clearInterval(speechIntervalRef.current);
       Speech.stop().catch(() => {});
     };
-  }, [id]);
+  }, [id, reloadKey]);
 
   // Debounced auto-save reading progress to SQLite (400ms debounce)
   const saveProgressTimerRef = useRef<any>(null);
@@ -1022,6 +1023,30 @@ export default function BookReaderScreen() {
         <Text style={[styles.loadingText, { color: activeTheme.text }]}>
           {t('reading_loading')}
         </Text>
+      </View>
+    );
+  }
+
+  if (outOfEnergyVisible) {
+    return (
+      <View style={[styles.centerContainer, { backgroundColor: activeTheme.bg }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <OutOfEnergyModal
+          visible={outOfEnergyVisible}
+          onClose={() => {
+            setOutOfEnergyVisible(false);
+            router.back();
+          }}
+          onOpenPaywall={() => {
+            setOutOfEnergyVisible(false);
+            setPaywallVisible(true);
+          }}
+          onEnergyRefilled={() => {
+            setOutOfEnergyVisible(false);
+            setReloadKey((prev) => prev + 1);
+          }}
+          requiredEnergy={ENERGY_COSTS.BOOK_READING_SESSION}
+        />
       </View>
     );
   }
@@ -1417,6 +1442,7 @@ export default function BookReaderScreen() {
         }}
         onEnergyRefilled={() => {
           setOutOfEnergyVisible(false);
+          setReloadKey((prev) => prev + 1);
         }}
         requiredEnergy={ENERGY_COSTS.BOOK_READING_SESSION}
       />

@@ -32,9 +32,12 @@ import { crashReporter } from '@/lib/crash-reporter';
 import { validateRegistrationEmail } from '@/lib/auth/email-validator';
 
 import {
-  getEnergyBalance,
+  getEnergyInfo,
+  getEnergyCap,
   consumeEnergy as consumeEnergyFromStore,
   refillEnergyWithAd,
+  ensureDailyBookAccess,
+  REWARD_AD_ENERGY,
 } from '@/lib/gamification/energy';
 import {
   getUserXp,
@@ -63,8 +66,15 @@ interface AuthContextValue {
   weeklyXp: number;
   addXp: (amount: number) => Promise<{ added: number; newTotal: number; newWeekly: number }>;
   flushXpSync: () => Promise<void>;
+  /** Max energy that regenerates over time (60 registered / 40 guest) */
+  energyCap: number;
+  /** epoch ms of the next +1 regen tick, null when full */
+  nextEnergyAt: number | null;
   consumeEnergy: (amount: number) => Promise<boolean>;
   refillEnergy: (amount?: number) => Promise<number>;
+  refreshEnergy: () => Promise<number>;
+  /** Charges the book session cost only once per book per day */
+  openBookSession: (bookId: string) => Promise<boolean>;
   usedTranslationsToday: number;
   bonusTranslationsToday: number;
   downloadedBooksCount: number;
@@ -108,8 +118,12 @@ const AuthContext = createContext<AuthContextValue>({
   weeklyXp: 0,
   addXp: async () => ({ added: 0, newTotal: 0, newWeekly: 0 }),
   flushXpSync: async () => {},
+  energyCap: 60,
+  nextEnergyAt: null,
   consumeEnergy: async () => true,
   refillEnergy: async () => 100,
+  refreshEnergy: async () => 100,
+  openBookSession: async () => true,
   usedTranslationsToday: 0,
   bonusTranslationsToday: 0,
   downloadedBooksCount: 0,
@@ -138,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [downloadedBooksCount, setDownloadedBooksCount] = useState(0);
   const [displayName, setDisplayNameState] = useState<string>('');
   const [energy, setEnergyState] = useState<number>(100);
+  const [nextEnergyAt, setNextEnergyAt] = useState<number | null>(null);
   const [totalXp, setTotalXp] = useState<number>(0);
   const [weeklyXp, setWeeklyXp] = useState<number>(0);
 
@@ -414,26 +429,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [role, subscriptionPlan, bonusTranslationsToday],
   );
 
-  // Load energy balance
-  useEffect(() => {
-    const loadEnergy = async () => {
-      const bal = await getEnergyBalance(isPremium, !user);
-      setEnergyState(bal);
-    };
-    loadEnergy();
+  const energyCap = getEnergyCap(!user);
+
+  // Energy regenerates over time — re-read the balance (applies regen ticks)
+  const refreshEnergy = useCallback(async (): Promise<number> => {
+    const info = await getEnergyInfo(isPremium, !user);
+    setEnergyState(info.balance);
+    setNextEnergyAt(info.nextRegenAt);
+    return info.balance;
   }, [isPremium, user]);
+
+  // Keep balance live: on mount/auth change, every 30s while active, and on foreground
+  useEffect(() => {
+    refreshEnergy();
+    if (isPremium) return;
+    const interval = setInterval(() => {
+      if (AppState.currentState === 'active') refreshEnergy();
+    }, 30_000);
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') refreshEnergy();
+    });
+    return () => {
+      clearInterval(interval);
+      sub.remove();
+    };
+  }, [isPremium, refreshEnergy]);
 
   const consumeEnergy = useCallback(async (amount: number): Promise<boolean> => {
     const res = await consumeEnergyFromStore(amount, isPremium, !user);
-    setEnergyState(res.remaining);
+    await refreshEnergy();
     return res.success;
-  }, [isPremium, user]);
+  }, [isPremium, user, refreshEnergy]);
 
-  const refillEnergy = useCallback(async (amount: number = 10): Promise<number> => {
-    const next = await refillEnergyWithAd(amount, isPremium, !user);
-    setEnergyState(next);
-    return next;
-  }, [isPremium, user]);
+  const refillEnergy = useCallback(async (amount: number = REWARD_AD_ENERGY): Promise<number> => {
+    await refillEnergyWithAd(amount, isPremium, !user);
+    return refreshEnergy();
+  }, [isPremium, user, refreshEnergy]);
+
+  const openBookSession = useCallback(async (bookId: string): Promise<boolean> => {
+    const res = await ensureDailyBookAccess(bookId, isPremium, !user);
+    await refreshEnergy();
+    return res.granted;
+  }, [isPremium, user, refreshEnergy]);
 
   const login = useCallback(async (email: string, pass: string) => {
     if (!isSupabaseConfigured) {
@@ -878,8 +915,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       weeklyXp,
       addXp,
       flushXpSync,
+      energyCap,
+      nextEnergyAt,
       consumeEnergy,
       refillEnergy,
+      refreshEnergy,
+      openBookSession,
       usedTranslationsToday,
       bonusTranslationsToday,
       downloadedBooksCount,
@@ -913,8 +954,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       weeklyXp,
       addXp,
       flushXpSync,
+      energyCap,
+      nextEnergyAt,
       consumeEnergy,
       refillEnergy,
+      refreshEnergy,
+      openBookSession,
       usedTranslationsToday,
       bonusTranslationsToday,
       downloadedBooksCount,

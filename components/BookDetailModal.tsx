@@ -25,7 +25,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { EnergyActionModal } from '@/components/EnergyActionModal';
 import { OutOfEnergyModal } from '@/components/OutOfEnergyModal';
 import { SubscriptionPaywallModal } from '@/components/SubscriptionPaywallModal';
-import { ENERGY_COSTS } from '@/lib/gamification/energy';
+import { ENERGY_COSTS, isBookUnlockedToday } from '@/lib/gamification/energy';
 
 export interface BookDetailModalProps {
   visible: boolean;
@@ -80,9 +80,12 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
   const handleStartReading = async () => {
     if (downloading) return;
 
-    if (!isPremium && energy < ENERGY_COSTS.BOOK_READING_SESSION) {
-      setOutOfEnergyVisible(true);
-      return;
+    if (!isPremium) {
+      const alreadyUnlocked = await isBookUnlockedToday(book.id, isPremium);
+      if (!alreadyUnlocked && energy < ENERGY_COSTS.BOOK_READING_SESSION) {
+        setOutOfEnergyVisible(true);
+        return;
+      }
     }
 
     setDownloading(true);
@@ -209,9 +212,14 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
                 downloading && styles.btnDisabled,
                 pressed && styles.pressed,
               ]}
-              onPress={() => {
+              onPress={async () => {
                 if (downloading) return;
                 if (!isPremium) {
+                  const alreadyUnlocked = await isBookUnlockedToday(book.id, isPremium);
+                  if (alreadyUnlocked) {
+                    handleStartReading();
+                    return;
+                  }
                   if (energy < ENERGY_COSTS.BOOK_READING_SESSION) {
                     setOutOfEnergyVisible(true);
                     return;

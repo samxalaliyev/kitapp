@@ -16,6 +16,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AdBannerContainer } from '@/components/AdBannerContainer';
 import { FullscreenAdModal } from '@/components/FullscreenAdModal';
+import { RewardedVideoPlayerModal } from '@/components/RewardedVideoPlayerModal';
+import { watchRewardedAd } from '@/lib/monetization/rewarded-ads';
+import { REWARD_AD_ENERGY } from '@/lib/gamification/energy';
 import {
   LeaderboardModal,
   ReadingChallengesModal,
@@ -161,6 +164,7 @@ export default function SettingsScreen() {
     isPremium,
     isAdmin,
     energy,
+    energyCap,
     refillEnergy,
     logout,
     deleteAccount,
@@ -504,7 +508,7 @@ export default function SettingsScreen() {
                     </Text>
                   </View>
                   <Text style={[styles.usageCount, { color: '#f59e0b', fontWeight: FontWeight.bold }]}>
-                    {energy} / 60 ⚡
+                    {energy} / {energyCap} ⚡
                   </Text>
                 </View>
 
@@ -513,7 +517,7 @@ export default function SettingsScreen() {
                     style={[
                       styles.progressFill,
                       {
-                        width: `${Math.min(100, Math.max(5, Math.round((energy / 60) * 100)))}%`,
+                        width: `${Math.min(100, Math.max(5, Math.round((energy / energyCap) * 100)))}%`,
                         backgroundColor: energy <= 10 ? colors.danger : '#f59e0b',
                       },
                     ]}
@@ -521,7 +525,21 @@ export default function SettingsScreen() {
                 </View>
 
                 <Pressable
-                  onPress={() => setRewardAdVisible(true)}
+                  onPress={() => {
+                    watchRewardedAd({
+                      type: 'energy_reward',
+                      onSuccess: async () => {
+                        const next = await refillEnergy(REWARD_AD_ENERGY);
+                        Alert.alert(
+                          t('rewarded_ad_completed'),
+                          `+${REWARD_AD_ENERGY} ⚡ ${t('energy_added_msg')} ${next} ⚡`
+                        );
+                      },
+                      onFallback: () => {
+                        setRewardAdVisible(true);
+                      },
+                    });
+                  }}
                   style={({ pressed }) => [
                     styles.watchAdSubRow,
                     pressed && styles.pressed,
@@ -846,21 +864,20 @@ export default function SettingsScreen() {
           }}
         />
 
-        {/* Rewarded Video Ad Modal (+10 Energy) */}
-        <FullscreenAdModal
+        {/* Rewarded Video Ad Modal (+30 Energy) */}
+        <RewardedVideoPlayerModal
           visible={rewardAdVisible}
-          onClose={async () => {
-            setRewardAdVisible(false);
-            const next = await refillEnergy();
+          onClose={() => setRewardAdVisible(false)}
+          onRewardEarned={async () => {
+            const next = await refillEnergy(REWARD_AD_ENERGY);
             Alert.alert(
               t('rewarded_ad_completed'),
-              `+30 ⚡ ${t('energy_added_msg')} ${next} ⚡`
+              `+${REWARD_AD_ENERGY} ⚡ ${t('energy_added_msg')} ${next} ⚡`
             );
           }}
-          onUpgradePremium={() => {
-            setRewardAdVisible(false);
-            setPaywallVisible(true);
-          }}
+          rewardTitle={t('rewarded_ad_sub')}
+          rewardClaimText={t('rewarded_ad_claim_btn')}
+          cancelWarning={t('rewarded_ad_cancel_desc')}
         />
       </ScrollView>
     </View>

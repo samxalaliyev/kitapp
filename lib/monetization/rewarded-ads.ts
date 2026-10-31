@@ -169,7 +169,9 @@ export function watchRewardedAd({ type, onSuccess, onFallback }: WatchAdOptions)
   }
 
   const bonusAmount =
-    type === 'energy_reward' || type === 'bonus_translations'
+    type === 'energy_reward'
+      ? 30
+      : type === 'bonus_translations'
       ? 10
       : type === 'refill_hearts'
       ? 3
@@ -184,7 +186,7 @@ export function watchRewardedAd({ type, onSuccess, onFallback }: WatchAdOptions)
         earned = true;
         onSuccess(bonusAmount);
         if (type === 'energy_reward') {
-          Alert.alert('🎉 Təbriklər!', '+10 ⚡ Enerji balansınıza əlavə olundu!');
+          Alert.alert('🎉 Təbriklər!', '+30 ⚡ Enerji balansınıza əlavə olundu!');
         } else if (type === 'refill_hearts') {
           Alert.alert('🎉 Təbriklər!', '+3 Can balansınıza əlavə olundu! ❤️');
         } else if (type === 'bonus_translations') {
@@ -221,7 +223,7 @@ export function watchRewardedAd({ type, onSuccess, onFallback }: WatchAdOptions)
 
   // Fallback simulator dialog if offline or ad not loaded
   const titles: Record<RewardType, string> = {
-    energy_reward: '⚡ Video İzlə -> +10 Enerji Qazan',
+    energy_reward: '⚡ Video İzlə -> +30 Enerji Qazan',
     refill_hearts: '❤️ Video İzlə -> +3 Can Qazan',
     bonus_translations: '🎥 Video İzlə -> +10 Əlavə Tərcümə Qazan',
     bonus_download: '🎥 Video İzlə -> +1 Əlavə Oflayn Kitab Yüklə',
@@ -230,7 +232,7 @@ export function watchRewardedAd({ type, onSuccess, onFallback }: WatchAdOptions)
   };
 
   const messages: Record<RewardType, string> = {
-    energy_reward: '20-30 saniyəlik reklama baxaraq +10 ⚡ Enerji balansı qazanacaq və oxumağa davam edəcəksiniz.',
+    energy_reward: '30 saniyəlik reklama baxaraq +30 ⚡ Enerji balansı qazanacaq və oxumağa davam edəcəksiniz.',
     refill_hearts: '20-30 saniyəlik reklama baxaraq dərhal +3 Can ❤️ qazanacaq və oyununuza davam edəcəksiniz.',
     bonus_translations: 'Qısa reklama baxaraq bu gün üçün +10 əlavə tərcümə balansı qazanacaqsınız.',
     bonus_download: 'Qısa reklama baxaraq cihazınıza +1 əlavə oflayn kitab endirmə hüququ qazanacaqsınız.',
@@ -245,7 +247,7 @@ export function watchRewardedAd({ type, onSuccess, onFallback }: WatchAdOptions)
       onPress: () => {
         onSuccess(bonusAmount);
         if (type === 'energy_reward') {
-          Alert.alert('🎉 Təbriklər!', '+10 ⚡ Enerji balansınıza əlavə olundu!');
+          Alert.alert('🎉 Təbriklər!', '+30 ⚡ Enerji balansınıza əlavə olundu!');
         } else if (type === 'refill_hearts') {
           Alert.alert('🎉 Təbriklər!', '+3 Can balansınıza əlavə olundu! ❤️');
         }
