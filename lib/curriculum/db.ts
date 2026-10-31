@@ -46,7 +46,20 @@ export async function initCurriculumDatabase(): Promise<void> {
         );`
       );
 
-      // By default, make sure unit 1 of A1 is unlocked for everyone!
+      // By default, make sure unit 1 of A0 and A1 are unlocked for everyone!
+      const unitA0 = await db.getFirstAsync<{ unit_id: string }>(
+        'SELECT unit_id FROM curriculum_progress WHERE unit_id = ?',
+        ['a0_unit_01']
+      );
+
+      if (!unitA0) {
+        await db.runAsync(
+          `INSERT OR IGNORE INTO curriculum_progress (unit_id, level_id, status, score, stars, unlocked_at)
+           VALUES ('a0_unit_01', 'A0', 'unlocked', 0, 0, ?);`,
+          [Date.now()]
+        );
+      }
+
       const unit1 = await db.getFirstAsync<{ unit_id: string }>(
         'SELECT unit_id FROM curriculum_progress WHERE unit_id = ?',
         ['a1_unit_01']

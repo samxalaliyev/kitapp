@@ -25,8 +25,12 @@ export async function validateUnitAccess(
   isOnline: boolean,
   isBundled: boolean = false
 ): Promise<UnitAccessCheckResult> {
-  // 1. Starter unit (Unit 1 of A1) is always accessible to everyone
-  if (unitId === 'a1_unit_01' || (unitOrder === 1 && levelId === 'A1')) {
+  // 1. Starter unit (Unit 1 of A0 or A1) is always accessible to everyone
+  if (
+    unitId === 'a0_unit_01' ||
+    unitId === 'a1_unit_01' ||
+    (unitOrder === 1 && (levelId === 'A0' || levelId === 'A1'))
+  ) {
     const hearts = isPremium ? MAX_HEARTS : await getHearts();
     if (!isPremium && hearts <= 0) {
       return {

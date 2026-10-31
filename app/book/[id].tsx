@@ -4,7 +4,6 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -112,8 +111,10 @@ const TutorialPulsingHalo = React.memo(function TutorialPulsingHalo() {
 // 1. Ultra-Fast Zero-Hook Pure Word Component (Instant 0ms mounting across pages)
 interface WordItemProps {
   word: ReaderWord;
-  wordTextStyle: any;
-  spaceGap: number;
+  theme: ThemeConfig;
+  fontSize: number;
+  fontFamily: string;
+  computedLineHeight: number;
   isSelected: boolean;
   isSpoken: boolean;
   isActiveTapped?: boolean;
@@ -124,14 +125,18 @@ interface WordItemProps {
 const WordItem = React.memo(
   function WordItem({
     word,
-    wordTextStyle,
-    spaceGap,
+    theme,
+    fontSize,
+    fontFamily,
+    computedLineHeight,
     isSelected,
     isSpoken,
     isActiveTapped,
     isTutorialTarget,
     onPress,
   }: WordItemProps) {
+    const spaceGap = Math.max(3, Math.round(fontSize * 0.25));
+
     let haloBg: string | null = null;
     let haloLeft = -2;
     let haloRight = -2;
@@ -172,7 +177,17 @@ const WordItem = React.memo(
             ]}
           />
         ) : null}
-        <Text style={wordTextStyle}>
+        <Text
+          style={[
+            styles.wordText,
+            {
+              fontSize,
+              fontFamily,
+              color: theme.text,
+              lineHeight: computedLineHeight,
+            },
+          ]}
+        >
           {word.raw}
         </Text>
       </Pressable>
@@ -181,8 +196,10 @@ const WordItem = React.memo(
   (prev, next) => {
     return (
       prev.word.id === next.word.id &&
-      prev.wordTextStyle === next.wordTextStyle &&
-      prev.spaceGap === next.spaceGap &&
+      prev.theme.text === next.theme.text &&
+      prev.fontSize === next.fontSize &&
+      prev.fontFamily === next.fontFamily &&
+      prev.computedLineHeight === next.computedLineHeight &&
       prev.isSelected === next.isSelected &&
       prev.isSpoken === next.isSpoken &&
       prev.isActiveTapped === next.isActiveTapped &&
@@ -194,10 +211,12 @@ const WordItem = React.memo(
 // 2. Fine-Grained Memoized Paragraph Component (Skips Untouched Paragraphs 100%)
 interface ParagraphItemProps {
   para: ReaderParagraph;
+  theme: ThemeConfig;
+  fontFamily: string;
+  fontSize: number;
+  computedLineHeight: number;
   paragraphSpacing: number;
   textAlign: "left" | "justify";
-  wordTextStyle: any;
-  spaceGap: number;
   selectedWordIdsSet: Set<string>;
   activeSpokenWordId: string | null;
   activeTappedWordId: string | null;
@@ -208,10 +227,12 @@ interface ParagraphItemProps {
 const ParagraphItem = React.memo(
   function ParagraphItem({
     para,
+    theme,
+    fontFamily,
+    fontSize,
+    computedLineHeight,
     paragraphSpacing,
     textAlign,
-    wordTextStyle,
-    spaceGap,
     selectedWordIdsSet,
     activeSpokenWordId,
     activeTappedWordId,
@@ -232,8 +253,10 @@ const ParagraphItem = React.memo(
           <WordItem
             key={word.id}
             word={word}
-            wordTextStyle={wordTextStyle}
-            spaceGap={spaceGap}
+            theme={theme}
+            fontSize={fontSize}
+            fontFamily={fontFamily}
+            computedLineHeight={computedLineHeight}
             isSelected={selectedWordIdsSet.has(word.id)}
             isActiveTapped={activeTappedWordId === word.id}
             isSpoken={activeSpokenWordId === word.id}
@@ -247,8 +270,10 @@ const ParagraphItem = React.memo(
   (prev, next) => {
     if (
       prev.para.id !== next.para.id ||
-      prev.wordTextStyle !== next.wordTextStyle ||
-      prev.spaceGap !== next.spaceGap ||
+      prev.theme.text !== next.theme.text ||
+      prev.fontSize !== next.fontSize ||
+      prev.fontFamily !== next.fontFamily ||
+      prev.computedLineHeight !== next.computedLineHeight ||
       prev.paragraphSpacing !== next.paragraphSpacing ||
       prev.textAlign !== next.textAlign ||
       prev.tutorialTargetWordId !== next.tutorialTargetWordId
@@ -311,20 +336,6 @@ const PageItem = React.memo(
     onWordClick,
   }: PageItemProps) {
     const computedLineHeight = Math.round(fontSize * lineHeight);
-    const spaceGap = Math.max(3, Math.round(fontSize * 0.25));
-
-    const wordTextStyle = useMemo(
-      () => [
-        styles.wordText,
-        {
-          fontSize,
-          fontFamily,
-          color: theme.text,
-          lineHeight: computedLineHeight,
-        },
-      ],
-      [fontSize, fontFamily, theme.text, computedLineHeight],
-    );
 
     return (
       <View style={[styles.pageWrapper, { width: pageWidth, backgroundColor: theme.bg }]}>
@@ -348,10 +359,12 @@ const PageItem = React.memo(
               <ParagraphItem
                 key={para.id}
                 para={para}
+                theme={theme}
+                fontFamily={fontFamily}
+                fontSize={fontSize}
+                computedLineHeight={computedLineHeight}
                 paragraphSpacing={paragraphSpacing}
                 textAlign={textAlign}
-                wordTextStyle={wordTextStyle}
-                spaceGap={spaceGap}
                 selectedWordIdsSet={selectedWordIdsSet}
                 activeSpokenWordId={activeSpokenWordId}
                 activeTappedWordId={activeTappedWordId}
@@ -957,24 +970,6 @@ export default function BookReaderScreen() {
     return wordsInOrder.join(" ");
   }, [bookData, currentPage, selectedWordIds]);
 
-  // FlatList extraData token for instant 0ms cell updates on settings changes
-  const flatListExtraData = useMemo(
-    () => ({
-      settings,
-      selectedWordIdsCount: selectedWordIds.length,
-      activeSpokenWordId,
-      activeTappedWordId,
-      tutorialTargetWordId,
-    }),
-    [
-      settings,
-      selectedWordIds.length,
-      activeSpokenWordId,
-      activeTappedWordId,
-      tutorialTargetWordId,
-    ],
-  );
-
   // Memoized render item for FlatList
   const renderItem = useCallback(
     ({ item }: { item: ReaderPage }) => (
@@ -1267,9 +1262,8 @@ export default function BookReaderScreen() {
         viewabilityConfig={viewabilityConfig}
         initialNumToRender={3}
         maxToRenderPerBatch={3}
-        windowSize={5}
+        windowSize={9}
         removeClippedSubviews={false}
-        extraData={flatListExtraData}
         getItemLayout={getItemLayout}
         renderItem={renderItem}
         initialScrollIndex={initialPageRef.current > 0 ? initialPageRef.current : undefined}

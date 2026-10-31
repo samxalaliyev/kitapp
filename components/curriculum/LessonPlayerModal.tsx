@@ -202,11 +202,9 @@ export function LessonPlayerModal({
   const [showOutOfHearts, setShowOutOfHearts] = useState(false);
   const [isSpeakingStory, setIsSpeakingStory] = useState(false);
 
-  // Theory micro-step state (0 = rule & formula, 1 = examples in context, 2 = pro-tip & common mistake)
+  // Theory micro-step state (Streamlined to 1 immersive scene card)
   const [theoryStep, setTheoryStep] = useState(0);
-
-  const hasMistake = Boolean(unit?.grammarRule?.commonMistake);
-  const totalTheorySteps = hasMistake ? 3 : 2;
+  const totalTheorySteps = 1;
 
   // Exercise interaction state
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
@@ -605,9 +603,9 @@ export function LessonPlayerModal({
                         },
                       ]}
                     >
-                      <Feather name="check-circle" size={13} color="#10b981" />
+                      <Feather name="zap" size={13} color="#10b981" />
                       <Text style={styles.grammarHeaderBadgeText}>
-                        {getCurriculumText('quick_rule', activeLang).toUpperCase()}
+                        {getCurriculumText('live_scene_badge', activeLang)}
                       </Text>
                     </View>
                   </View>
@@ -628,238 +626,6 @@ export function LessonPlayerModal({
                       {getLocalizedContent(unit.grammarRule.explanation, activeLang)}
                     </Text>
                   </View>
-                </View>
-              </ScrollView>
-            )}
-
-            {/* Theory Micro-Step 1: Usage in Context / Examples */}
-            {currentStage === 'theory' && theoryStep === 1 && (
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.stageScroll}
-              >
-                <View style={styles.stepSubheader}>
-                  <View style={styles.unitBadgeRow}>
-                    <View
-                      style={[
-                        styles.stepIndicatorPill,
-                        {
-                          backgroundColor: colors.isDark ? '#0c2438' : '#e0f2fe',
-                          borderColor: '#38bdf8',
-                          borderBottomColor: '#0284c7',
-                        },
-                      ]}
-                    >
-                      <Feather name="compass" size={12} color="#0284c7" />
-                      <Text style={[styles.stepIndicatorText, { color: '#0284c7' }]}>
-                        {getCurriculumText('step_counter', activeLang)} 2 / {totalTheorySteps}
-                      </Text>
-                    </View>
-
-                    <View
-                      style={[
-                        styles.topicPillMini,
-                        {
-                          backgroundColor: colors.isDark ? '#1e1b4b' : '#e0e7ff',
-                          borderColor: colors.isDark ? '#4338ca' : '#818cf8',
-                        },
-                      ]}
-                    >
-                      <Text style={[styles.topicPillMiniText, { color: colors.isDark ? '#c7d2fe' : '#3730a3' }]}>
-                        {getLocalizedContent(unit.grammarRule.title, activeLang)}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <Text style={[styles.stepMainTitle, { color: colors.text }]}>
-                    {getCurriculumText('examples_step_title', activeLang)}
-                  </Text>
-                  <Text style={[styles.stepSubtitle, { color: colors.textMuted }]}>
-                    • {getCurriculumText('tap_to_listen', activeLang)}
-                  </Text>
-                </View>
-
-                {/* EXAMPLES LIST */}
-                <View style={styles.examplesList}>
-                  {unit.grammarRule.examples.map((ex, idx) => (
-                    <Pressable
-                      key={idx}
-                      style={({ pressed }) => [
-                        styles.exampleItemCard,
-                        {
-                          backgroundColor: colors.surface,
-                          borderColor: colors.isDark ? '#243247' : '#e2e8f0',
-                          borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
-                          transform: [{ translateY: pressed ? 2 : 0 }],
-                        },
-                      ]}
-                      onPress={() => handleSpeech(ex.english, 0.9)}
-                    >
-                      <View
-                        style={[
-                          styles.exampleSpeakerCircle,
-                          {
-                            backgroundColor: '#58cc02',
-                            borderColor: '#46a302',
-                            borderBottomColor: '#368202',
-                          },
-                        ]}
-                      >
-                        <Feather name="volume-2" size={20} color="#ffffff" />
-                      </View>
-                      <View style={{ flex: 1, paddingRight: 6 }}>
-                        <Text style={[styles.exampleEn, { color: colors.text }]}>
-                          {ex.english}
-                        </Text>
-                        <Text style={[styles.exampleTr, { color: colors.textMuted }]}>
-                          {getLocalizedContent(ex.translation, activeLang)}
-                        </Text>
-                      </View>
-                      <View
-                        style={[
-                          styles.miniPlayIconWrap,
-                          { backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9' },
-                        ]}
-                      >
-                        <Feather name="play" size={13} color="#58cc02" />
-                      </View>
-                    </Pressable>
-                  ))}
-                </View>
-              </ScrollView>
-            )}
-
-            {/* Theory Micro-Step 2: Pro-Tip & Common Pitfall */}
-            {currentStage === 'theory' && theoryStep === 2 && unit.grammarRule.commonMistake && (
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.stageScroll}
-              >
-                <View style={styles.stepSubheader}>
-                  <View style={styles.unitBadgeRow}>
-                    <View
-                      style={[
-                        styles.stepIndicatorPill,
-                        {
-                          backgroundColor: colors.isDark ? '#3b1712' : '#ffedd5',
-                          borderColor: '#fb923c',
-                          borderBottomColor: '#ea580c',
-                        },
-                      ]}
-                    >
-                      <Feather name="alert-triangle" size={12} color="#ea580c" />
-                      <Text style={[styles.stepIndicatorText, { color: '#ea580c' }]}>
-                        {getCurriculumText('step_counter', activeLang)} 3 / {totalTheorySteps}
-                      </Text>
-                    </View>
-
-                    <View
-                      style={[
-                        styles.topicPillMini,
-                        {
-                          backgroundColor: colors.isDark ? '#1e1b4b' : '#e0e7ff',
-                          borderColor: colors.isDark ? '#4338ca' : '#818cf8',
-                        },
-                      ]}
-                    >
-                      <Text style={[styles.topicPillMiniText, { color: colors.isDark ? '#c7d2fe' : '#3730a3' }]}>
-                        {getLocalizedContent(unit.grammarRule.title, activeLang)}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <Text style={[styles.stepMainTitle, { color: colors.text }]}>
-                    {getCurriculumText('pro_tip_title', activeLang)}
-                  </Text>
-                  <Text style={[styles.stepSubtitle, { color: colors.textMuted }]}>
-                    {activeLang === 'tr'
-                      ? 'En sık yapılan hatayı öğren ve dikkat et:'
-                      : activeLang === 'az'
-                      ? 'Ən çox edilən səhvi öyrən və diqqətli ol:'
-                      : 'Learn the most common trap:'}
-                  </Text>
-                </View>
-
-                {/* PRO-TIP & COMMON PITFALL CARD */}
-                <View
-                  style={[
-                    styles.proTipCard,
-                    {
-                      backgroundColor: colors.isDark ? '#1f1610' : '#fffdfa',
-                      borderColor: colors.isDark ? '#7c2d12' : '#fed7aa',
-                      borderBottomColor: colors.isDark ? '#431407' : '#fdba74',
-                    },
-                  ]}
-                >
-                  <View style={styles.proTipHeader}>
-                    <View
-                      style={[
-                        styles.proTipBadge,
-                        {
-                          backgroundColor: '#f97316',
-                          borderColor: '#ea580c',
-                          borderBottomColor: '#c2410c',
-                        },
-                      ]}
-                    >
-                      <Feather name="alert-triangle" size={13} color="#ffffff" />
-                      <Text style={styles.proTipBadgeText}>
-                        {getCurriculumText('pro_tip_title', activeLang).toUpperCase()}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Comparative blocks */}
-                  <View style={styles.comparisonWrap}>
-                    {/* Incorrect */}
-                    <View
-                      style={[
-                        styles.comparisonCardWrong,
-                        {
-                          backgroundColor: colors.isDark ? '#321417' : '#fee2e2',
-                          borderColor: '#fca5a5',
-                          borderBottomColor: '#ef4444',
-                        },
-                      ]}
-                    >
-                      <View style={styles.comparisonHeaderRow}>
-                        <Feather name="x-circle" size={15} color="#ef4444" />
-                        <Text style={styles.wrongLabel}>
-                          {getCurriculumText('wrong_label', activeLang)}:
-                        </Text>
-                      </View>
-                      <Text style={styles.wrongSentenceText}>
-                        {unit.grammarRule.commonMistake.incorrect}
-                      </Text>
-                    </View>
-
-                    {/* Correct */}
-                    <View
-                      style={[
-                        styles.comparisonCardCorrect,
-                        {
-                          backgroundColor: colors.isDark ? '#082f1e' : '#dcfce7',
-                          borderColor: '#86efac',
-                          borderBottomColor: '#22c55e',
-                        },
-                      ]}
-                    >
-                      <View style={styles.comparisonHeaderRow}>
-                        <Feather name="check-circle" size={15} color="#10b981" />
-                        <Text style={styles.correctLabel}>
-                          {getCurriculumText('correct_label', activeLang)}:
-                        </Text>
-                      </View>
-                      <Text style={styles.correctSentenceText}>
-                        {unit.grammarRule.commonMistake.correct}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Explanation note */}
-                  <Text style={[styles.proTipExplanation, { color: colors.textMuted }]}>
-                    {getLocalizedContent(unit.grammarRule.commonMistake.explanation, activeLang)}
-                  </Text>
                 </View>
               </ScrollView>
             )}
@@ -950,7 +716,7 @@ export function LessonPlayerModal({
                           >
                             <Feather name="volume-2" size={18} color="#ffffff" />
                             <Text style={styles.primaryAudioBtnText}>
-                              {activeLang === 'tr' ? 'Dinle' : activeLang === 'az' ? 'Dinlə' : activeLang === 'ru' ? 'Слушать' : 'Listen'}
+                              {getCurriculumText('listen_btn', activeLang)}
                             </Text>
                           </Pressable>
                           <Pressable
@@ -1135,20 +901,62 @@ export function LessonPlayerModal({
                   </Text>
                 </Pressable>
 
-                {/* Story text container */}
-                <View
-                  style={[
-                    styles.storyCard,
-                    {
-                      backgroundColor: colors.surface,
-                      borderColor: colors.isDark ? '#243247' : '#e2e8f0',
-                      borderBottomColor: colors.isDark ? '#0f172a' : '#cbd5e1',
-                    },
-                  ]}
-                >
-                  <Text style={[styles.storyBodyText, { color: colors.text }]}>
-                    {unit.story.content}
-                  </Text>
+                {/* Interactive Dialogue Bubbles (WhatsApp / Messenger Style) */}
+                <View style={styles.dialogueListWrap}>
+                  {unit.story.content.split('\n').filter(line => line.trim().length > 0).map((line, lIdx) => {
+                    const colonIdx = line.indexOf(':');
+                    const speaker = colonIdx > -1 ? line.substring(0, colonIdx).trim() : '';
+                    const message = colonIdx > -1 ? line.substring(colonIdx + 1).replace(/^["'\s]+|["'\s]+$/g, '').trim() : line;
+                    const isUserSpeaker = speaker.toLowerCase() === 'you' || speaker.toLowerCase() === 'alex' || lIdx % 2 === 1;
+
+                    return (
+                      <Pressable
+                        key={lIdx}
+                        onPress={() => handleSpeech(message, 0.9)}
+                        style={({ pressed }) => [
+                          styles.chatBubbleRow,
+                          {
+                            justifyContent: isUserSpeaker ? 'flex-end' : 'flex-start',
+                            transform: [{ translateY: pressed ? 1 : 0 }],
+                          },
+                        ]}
+                      >
+                        <View
+                          style={[
+                            styles.chatBubbleCard,
+                            isUserSpeaker
+                              ? {
+                                  backgroundColor: colors.isDark ? '#0c3247' : '#e0f2fe',
+                                  borderColor: '#38bdf8',
+                                  borderBottomRightRadius: 4,
+                                }
+                              : {
+                                  backgroundColor: colors.surface,
+                                  borderColor: colors.isDark ? '#243247' : '#e2e8f0',
+                                  borderBottomLeftRadius: 4,
+                                },
+                          ]}
+                        >
+                          {speaker ? (
+                            <View style={styles.chatSpeakerRow}>
+                              <Text
+                                style={[
+                                  styles.chatSpeakerName,
+                                  { color: isUserSpeaker ? '#0284c7' : colors.primary },
+                                ]}
+                              >
+                                {speaker}
+                              </Text>
+                              <Feather name="volume-2" size={13} color={colors.textMuted} style={{ marginLeft: 6 }} />
+                            </View>
+                          ) : null}
+                          <Text style={[styles.chatBubbleText, { color: colors.text }]}>
+                            {message}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
                 </View>
 
                 {/* Highlighted words list */}
@@ -1315,13 +1123,7 @@ export function LessonPlayerModal({
                             <Feather name="globe" size={13} color="#1cb0f6" />
                           </View>
                           <Text style={[styles.translateBubbleLabel, { color: colors.textMuted }]}>
-                            {activeLang === 'tr'
-                              ? 'Çevrilecek Cümle:'
-                              : activeLang === 'az'
-                              ? 'Tərcümə ediləcək cümlə:'
-                              : activeLang === 'ru'
-                              ? 'Предложение для перевода:'
-                              : 'Sentence to translate:'}
+                            {getCurriculumText('translate_sentence_label', activeLang)}
                           </Text>
                         </View>
                         <Text style={[styles.translateBubbleSentence, { color: colors.text }]}>
@@ -1694,100 +1496,20 @@ export function LessonPlayerModal({
             {/* Standard Footer Actions */}
             {feedbackState === 'idle' && (
               <>
-                {currentStage === 'theory' && theoryStep === 0 && (
+                {currentStage === 'theory' && (
                   <Pressable
                     style={({ pressed }) => [
                       styles.primaryBtn,
                       styles.duoPrimaryGreenBtn,
                       { transform: [{ translateY: pressed ? 2 : 0 }] },
                     ]}
-                    onPress={() => setTheoryStep(1)}
+                    onPress={() => setCurrentStage('vocabulary')}
                   >
                     <Text style={styles.primaryBtnWhiteText}>
-                      {getCurriculumText('see_examples', activeLang)}
+                      {getCurriculumText('continue_to_words', activeLang)}
                     </Text>
                     <Feather name="arrow-right" size={20} color="#ffffff" />
                   </Pressable>
-                )}
-
-                {currentStage === 'theory' && theoryStep === 1 && (
-                  <View style={styles.theoryDualNavRow}>
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.theoryNavPrevBtn,
-                        {
-                          backgroundColor: colors.surface,
-                          borderColor: colors.isDark ? '#334155' : '#cbd5e1',
-                          borderBottomColor: colors.isDark ? '#0f172a' : '#94a3b8',
-                          transform: [{ translateY: pressed ? 2 : 0 }],
-                        },
-                      ]}
-                      onPress={() => setTheoryStep(0)}
-                    >
-                      <Feather name="arrow-left" size={18} color={colors.text} />
-                      <Text style={[styles.vocabNavBtnText, { color: colors.text }]}>
-                        {getCurriculumText('previous', activeLang)}
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.theoryNavNextBtn,
-                        styles.duoPrimaryGreenBtn,
-                        { transform: [{ translateY: pressed ? 2 : 0 }] },
-                      ]}
-                      onPress={() => {
-                        if (hasMistake) {
-                          setTheoryStep(2);
-                        } else {
-                          setCurrentStage('vocabulary');
-                        }
-                      }}
-                    >
-                      <Text style={styles.primaryBtnWhiteText}>
-                        {hasMistake
-                          ? getCurriculumText('see_trap', activeLang)
-                          : getCurriculumText('continue_to_words', activeLang)}
-                      </Text>
-                      <Feather name="arrow-right" size={18} color="#ffffff" />
-                    </Pressable>
-                  </View>
-                )}
-
-                {currentStage === 'theory' && theoryStep === 2 && (
-                  <View style={styles.theoryDualNavRow}>
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.theoryNavPrevBtn,
-                        {
-                          backgroundColor: colors.surface,
-                          borderColor: colors.isDark ? '#334155' : '#cbd5e1',
-                          borderBottomColor: colors.isDark ? '#0f172a' : '#94a3b8',
-                          transform: [{ translateY: pressed ? 2 : 0 }],
-                        },
-                      ]}
-                      onPress={() => setTheoryStep(1)}
-                    >
-                      <Feather name="arrow-left" size={18} color={colors.text} />
-                      <Text style={[styles.vocabNavBtnText, { color: colors.text }]}>
-                        {getCurriculumText('previous', activeLang)}
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.theoryNavNextBtn,
-                        styles.duoPrimaryGreenBtn,
-                        { transform: [{ translateY: pressed ? 2 : 0 }] },
-                      ]}
-                      onPress={() => setCurrentStage('vocabulary')}
-                    >
-                      <Text style={styles.primaryBtnWhiteText}>
-                        {getCurriculumText('continue_to_words', activeLang)}
-                      </Text>
-                      <Feather name="arrow-right" size={18} color="#ffffff" />
-                    </Pressable>
-                  </View>
                 )}
 
                 {currentStage === 'story' && (
@@ -2947,5 +2669,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1.5,
     borderBottomWidth: 3,
+  },
+  dialogueListWrap: {
+    marginVertical: Spacing.md,
+    gap: 12,
+  },
+  chatBubbleRow: {
+    flexDirection: 'row',
+    width: '100%',
+    marginVertical: 4,
+  },
+  chatBubbleCard: {
+    maxWidth: '85%',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
+  },
+  chatSpeakerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  chatSpeakerName: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.extrabold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  chatBubbleText: {
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: FontWeight.semibold,
   },
 });

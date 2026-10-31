@@ -3,207 +3,153 @@
   "level": "A1",
   "order": 1,
   "title": {
-    "az": "İlk Tanışlıq: Özünü Təqdim Et",
-    "en": "First Meeting: Introduce Yourself",
-    "tr": "İlk Tanışma: Kendini Tanıt",
-    "ru": "Первое знакомство: Рассказ о себе"
+    "az": "İlk Görüş: Salamlaşma",
+    "en": "First Meeting: Say Hello",
+    "tr": "İlk Tanışma: Merhaba De",
+    "ru": "Первое знакомство: Приветствие"
   },
   "description": {
-    "az": "Mörfi (Murphy) metodologiyası ilə sadə cümlələrlə tanışlıq və 'am / is / are'",
-    "en": "Meet Lisa: natural self-introductions with 'am / is / are' (Murphy methodology)",
-    "tr": "Murphy metodolojisi ile 'am / is / are' ve kendini tanıtma",
-    "ru": "Знакомство и глагол 'am / is / are' по методологии Мерфи"
+    "az": "Canlı mühitdə insanlarla ilkin təmas və təbii tanışlıq frazaları",
+    "en": "Natural greetings and introduction chunks in real-life context",
+    "tr": "Doğal selamlaşma ve tanışma kalıpları",
+    "ru": "Естественные приветствия и фразы знакомства в живом контексте"
   },
-  "estimatedMinutes": 3,
+  "estimatedMinutes": 2,
   "iconName": "smile",
-  "xpReward": 50,
+  "xpReward": 30,
   "grammarRule": {
     "id": "a1_gr_01",
     "title": {
-      "az": "am / is / are (Tanış Olun: Lisa)",
-      "en": "am / is / are (Meet Lisa)",
-      "tr": "am / is / are (Lisa ile Tanışın)",
-      "ru": "am / is / are (Познакомьтесь: Лиза)"
+      "az": "Canlı Təqdimat Qəlibi",
+      "en": "Self-Introduction Chunk",
+      "tr": "Tanıtım Kalıbı",
+      "ru": "Шаблон знакомства"
     },
     "subtitle": {
-      "az": "İngilis dilində kim olduğunu və necə olduğunu demək çox asandır!",
-      "en": "Saying who you are and how you feel in English is easy!",
-      "tr": "Kendinizi tanıtmak ve durumunuzu söylemek çok kolay!",
-      "ru": "Рассказать о себе и своем состоянии очень просто!"
+      "az": "Özünü təqdim etmək üçün bu hazır frazadan istifadə et",
+      "en": "Use this ready-to-use phrase to introduce yourself naturally",
+      "tr": "Kendini doğal şekilde tanıtmak için bu kalıbı kullan",
+      "ru": "Используйте эту готовую фразу, чтобы представиться"
     },
     "explanation": {
-      "az": "Gəlin Lisa ilə tanış olaq: 'Hello! My name is Lisa. I am 22. I am a student.'\n\nİngilis dilində özün və ya başqası haqqında danışarkən 'am', 'is', 'are' köməkçilərindən istifadə olunur:\n\n• I ➔ am (qısaca: I'm) — Mən\n• He / She / It ➔ is (qısaca: He's / She's / It's) — O\n• We / You / They ➔ are (qısaca: We're / You're / They're) — Biz / Sən / Onlar",
-      "en": "Meet Lisa: 'Hello! My name is Lisa. I am 22. I am a student.'\n\nWhen introducing yourself or describing people, use am, is, are:\n\n• I ➔ am (short: I'm)\n• He / She / It ➔ is (short: He's / She's / It's)\n• We / You / They ➔ are (short: We're / You're / They're)",
-      "tr": "Lisa ile tanışalım: 'Hello! My name is Lisa. I am 22. I am a student.'\n\nKendinizi tanıtırken 'am', 'is', 'are' kullanırız:\n\n• I ➔ am (kısaca: I'm)\n• He / She / It ➔ is (kısaca: He's / She's / It's)\n• We / You / They ➔ are (kısaca: We're / You're / They're)",
-      "ru": "Познакомьтесь с Лизой: 'Hello! My name is Lisa. I am 22. I am a student.'\n\nКогда мы говорим о себе или других, используем am, is, are:\n\n• I ➔ am (кратко: I'm)\n• He / She / It ➔ is (кратко: He's / She's / It's)\n• We / You / They ➔ are (кратко: We're / You're / They're)"
+      "az": "İngilis dilində qaydaları əzbərləməyə ehtiyac yoxdur. Tanış olarkən bu hazır qəlibləri olduğu kimi səsləndir:\n\n• 'Hi, I'm Alex.' (Salam, mən Alexəm)\n• 'Nice to meet you.' (Tanışlığımıza şadam)",
+      "en": "No need to memorize complex rules. Simply use these natural spoken chunks:\n\n• 'Hi, I'm Alex.'\n• 'Nice to meet you.'",
+      "tr": "Kuralları ezberlemeye gerek yok. Tanışırken bu hazır kalıpları kullanın:\n\n• 'Hi, I'm Alex.' (Merhaba, ben Alex)\n• 'Nice to meet you.' (Tanıştığıma memnun oldum)",
+      "ru": "Не нужно заучивать правила. При знакомстве просто используйте эти фразы:\n\n• 'Hi, I'm Alex.' (Привет, я Алекс)\n• 'Nice to meet you.' (Приятно познакомиться)"
     },
-    "formula": "I am (I'm) • He/She/It is ('s) • We/You/They are ('re)",
+    "formula": "Hi, I'm [Adın] • Nice to meet you",
     "examples": [
       {
-        "english": "Hello! My name is Lisa.",
+        "english": "Hi, I'm Lisa. Nice to meet you!",
         "translation": {
-          "az": "Salam! Mənim adım Lisadır.",
-          "en": "Hello! My name is Lisa.",
-          "tr": "Merhaba! Benim adım Lisa.",
-          "ru": "Привет! Меня зовут Лиза."
-        }
-      },
-      {
-        "english": "I am 22 years old and I am a student.",
-        "translation": {
-          "az": "Mənim 22 yaşım var və mən tələbəyəm.",
-          "en": "I am 22 years old and I am a student.",
-          "tr": "22 yaşındayım ve öğrenciyim.",
-          "ru": "Мне 22 года, и я студентка."
-        }
-      },
-      {
-        "english": "She is my friend. We are happy to meet you!",
-        "translation": {
-          "az": "O, mənim dostumdur. Sizinlə tanış olmağımıza şadıq!",
-          "en": "She is my friend. We are happy to meet you!",
-          "tr": "O benim arkadaşım. Sizinle tanıştığımıza çok memnunuz!",
-          "ru": "Она мой друг. Мы рады познакомиться с вами!"
+          "az": "Salam, mən Lisayam. Tanışlığımıza şadam!",
+          "en": "Hi, I'm Lisa. Nice to meet you!",
+          "tr": "Merhaba, ben Lisa. Tanıştığıma memnun oldum!",
+          "ru": "Привет, я Лиза. Приятно познакомиться!"
         }
       }
     ],
     "commonMistake": {
       "incorrect": "I is Lisa.",
-      "correct": "I am Lisa. (I'm Lisa)",
+      "correct": "I'm Lisa.",
       "explanation": {
-        "az": "Özünüz haqqında danışarkən həmişə 'I am' (və ya qısaca 'I'm') deyin. Heç vaxt 'I is' deməyin.",
-        "en": "Always say 'I am' (or 'I'm') when talking about yourself. Never say 'I is'.",
-        "tr": "Kendinizden bahsederken her zaman 'I am' (veya kısaca 'I'm') deyin. Asla 'I is' demeyin.",
-        "ru": "Говоря о себе, всегда говорите 'I am' (или 'I'm'). Никогда не говорите 'I is'."
+        "az": "Qısaca və təbii şəkildə 'I'm...' deyin.",
+        "en": "Always say 'I'm...' simply and naturally.",
+        "tr": "Kısaca ve doğal şekilde 'I'm...' deyin.",
+        "ru": "Всегда говорите кратко и естественно: 'I'm...'"
       }
     }
   },
   "vocabulary": [
     {
       "id": "v1",
-      "word": "Hello",
-      "phonetic": "/həˈləʊ/",
-      "audioText": "Hello",
-      "translations": { "az": "Salam", "en": "Hello", "tr": "Merhaba", "ru": "Привет" },
-      "exampleSentence": "Hello! My name is Lisa.",
-      "exampleTranslation": { "az": "Salam! Mənim adım Lisadır.", "en": "Hello! My name is Lisa.", "tr": "Merhaba! Benim adım Lisa.", "ru": "Привет! Меня зовут Лиза." }
+      "word": "Hi, I'm...",
+      "phonetic": "/haɪ aɪm/",
+      "audioText": "Hi, I'm Alex",
+      "translations": { "az": "Salam, mən...", "en": "Hi, I'm...", "tr": "Merhaba, ben...", "ru": "Привет, я..." },
+      "exampleSentence": "Hi, I'm Alex.",
+      "exampleTranslation": { "az": "Salam, mən Alexəm.", "en": "Hi, I'm Alex.", "tr": "Merhaba, ben Alex.", "ru": "Привет, я Алекс." }
     },
     {
       "id": "v2",
-      "word": "Name",
-      "phonetic": "/neɪm/",
-      "audioText": "Name",
-      "translations": { "az": "Ad", "en": "Name", "tr": "İsim", "ru": "Имя" },
-      "exampleSentence": "What is your name?",
-      "exampleTranslation": { "az": "Adın nədir?", "en": "What is your name?", "tr": "Senin adın ne?", "ru": "Как тебя зовут?" }
-    },
-    {
-      "id": "v3",
-      "word": "Student",
-      "phonetic": "/ˈstjuːdnt/",
-      "audioText": "Student",
-      "translations": { "az": "Tələbə", "en": "Student", "tr": "Öğrenci", "ru": "Студент" },
-      "exampleSentence": "I am a student.",
-      "exampleTranslation": { "az": "Mən tələbəyəm.", "en": "I am a student.", "tr": "Ben öğrenciyim.", "ru": "Я студент." }
-    },
-    {
-      "id": "v4",
       "word": "Nice to meet you",
       "phonetic": "/naɪs tuː miːt juː/",
       "audioText": "Nice to meet you",
-      "translations": { "az": "Tanış olmağımıza şadam", "en": "Nice to meet you", "tr": "Tanıştığımıza memnun oldum", "ru": "Приятно познакомиться" },
-      "exampleSentence": "Nice to meet you, Lisa!",
-      "exampleTranslation": { "az": "Tanış olmağımıza şadam, Lisa!", "en": "Nice to meet you, Lisa!", "tr": "Tanıştığıma memnun oldum, Lisa!", "ru": "Приятно познакомиться, Лиза!" }
+      "translations": { "az": "Tanışlığımıza şadam", "en": "Nice to meet you", "tr": "Tanıştığıma memnun oldum", "ru": "Приятно познакомиться" },
+      "exampleSentence": "Nice to meet you!",
+      "exampleTranslation": { "az": "Tanışlığımıza şadam!", "en": "Nice to meet you!", "tr": "Tanıştığıma memnun oldum!", "ru": "Приятно познакомиться!" }
     },
     {
-      "id": "v5",
-      "word": "Friend",
-      "phonetic": "/frend/",
-      "audioText": "Friend",
-      "translations": { "az": "Dost", "en": "Friend", "tr": "Arkadaş", "ru": "Друг" },
-      "exampleSentence": "She is my best friend.",
-      "exampleTranslation": { "az": "O, mənim ən yaxşı dostumdur.", "en": "She is my best friend.", "tr": "O benim en iyi arkadaşım.", "ru": "Она мой лучший друг." }
-    },
-    {
-      "id": "v6",
-      "word": "Happy",
-      "phonetic": "/ˈhæpi/",
-      "audioText": "Happy",
-      "translations": { "az": "Xoşbəxt", "en": "Happy", "tr": "Mutlu", "ru": "Счастливый" },
-      "exampleSentence": "We are very happy today.",
-      "exampleTranslation": { "az": "Biz bu gün çox xoşbəxtik.", "en": "We are very happy today.", "tr": "Bugün çok mutluyuz.", "ru": "Мы очень счастливы сегодня." }
-    },
-    {
-      "id": "v7",
-      "word": "Ready",
-      "phonetic": "/ˈredi/",
-      "audioText": "Ready",
-      "translations": { "az": "Hazır", "en": "Ready", "tr": "Hazır", "ru": "Готов" },
-      "exampleSentence": "I am ready to learn English.",
-      "exampleTranslation": { "az": "Mən ingilis dilini öyrənməyə hazıram.", "en": "I am ready to learn English.", "tr": "İngilizce öğrenmeye hazırım.", "ru": "Я готов учить английский." }
-    },
-    {
-      "id": "v8",
-      "word": "Goodbye",
-      "phonetic": "/ɡʊdˈbaɪ/",
-      "audioText": "Goodbye",
-      "translations": { "az": "Sağ olun / Xudahafiz", "en": "Goodbye", "tr": "Hoşça kal", "ru": "До свидания" },
-      "exampleSentence": "Goodbye, see you soon!",
-      "exampleTranslation": { "az": "Sağ ol, tezliklə görüşərik!", "en": "Goodbye, see you soon!", "tr": "Hoşça kal, yakında görüşürüz!", "ru": "До свидания, до скорой встречи!" }
+      "id": "v3",
+      "word": "How are you?",
+      "phonetic": "/haʊ ɑː juː/",
+      "audioText": "How are you?",
+      "translations": { "az": "Necəsən?", "en": "How are you?", "tr": "Nasılsın?", "ru": "Как дела?" },
+      "exampleSentence": "Hi! How are you?",
+      "exampleTranslation": { "az": "Salam! Necəsən?", "en": "Hi! How are you?", "tr": "Merhaba! Nasılsın?", "ru": "Привет! Как дела?" }
     }
   ],
   "story": {
     "id": "s1",
-    "title": "Meet Lisa at University",
+    "title": "A Friendly Smile",
     "titleTranslation": {
-      "az": "Universitetdə Lisa ilə Tanışlıq",
-      "en": "Meet Lisa at University",
-      "tr": "Üniversitede Lisa ile Tanışma",
-      "ru": "Знакомство с Лизой в университете"
+      "az": "Mehriban Gülüş",
+      "en": "A Friendly Smile",
+      "tr": "Sıcak Bir Gülümseme",
+      "ru": "Дружелюбная улыбка"
     },
     "cefr": "A1",
-    "wordCount": 88,
-    "content": "Hello! My name is Lisa. I am 22 years old, and I am a student.\n\nToday is a wonderful sunny day. I am in the library with my books.\n\nA friendly boy smiles and says, \"Hello! My name is Alex. Nice to meet you, Lisa.\"\n\nI smile back. \"Nice to meet you, Alex! Are you ready for our English class?\"\n\n\"Yes, I am!\" Alex replies cheerfully. \"We are friends now.\"\n\nWe are happy and ready to learn together.",
-    "vocabularyHighlights": ["Hello", "name", "student", "Nice to meet you", "Friend", "Happy", "Ready"]
+    "wordCount": 26,
+    "content": "Lisa: \"Hi, I'm Lisa. Nice to meet you!\"\nAlex: \"Hello Lisa! I'm Alex. How are you?\"\nLisa: \"I'm great, thank you! Ready to learn?\"",
+    "vocabularyHighlights": ["Hi, I'm...", "Nice to meet you", "How are you?"]
   },
   "exercises": [
     {
       "id": "ex1",
       "type": "word_scramble",
       "prompt": {
-        "az": "Bu cümləni ingiliscəyə tərcümə edin:",
-        "en": "Translate this sentence to English:",
-        "tr": "Bu cümleyi İngilizceye çevirin:",
-        "ru": "Переведите это предложение на английский:"
+        "az": "Tanışlıq cümləsini qurun:",
+        "en": "Build the greeting chunk:",
+        "tr": "Tanışma cümlesini kurun:",
+        "ru": "Соберите фразу знакомства:"
       },
       "instruction": {
-        "az": "Mənim adım Lisadır.",
-        "en": "My name is Lisa.",
-        "tr": "Benim adım Lisa.",
-        "ru": "Меня зовут Лиза."
+        "az": "Tanış olmağımıza şadam.",
+        "en": "Situation: Tell a new friend you are glad to meet them.",
+        "tr": "Tanıştığıma memnun oldum.",
+        "ru": "Приятно познакомиться.",
+        "es": "Mucho gusto en conocerte.",
+        "de": "Freut mich, dich kennenzulernen.",
+        "fr": "Enchanté de vous rencontrer.",
+        "it": "Piacere di conoscerti.",
+        "pt": "Prazer em conhecer você.",
+        "pl": "Miło cię poznać.",
+        "cs": "Rád vás poznávám.",
+        "hu": "Örülök, hogy megismertelek.",
+        "uk": "Приємно познайомитися."
       },
-      "sentenceToBuild": ["My", "name", "is", "Lisa"],
-      "distractorWords": ["am", "hello"],
-      "correctSentence": "My name is Lisa",
+      "sentenceToBuild": ["Nice", "to", "meet", "you"],
+      "distractorWords": ["see", "ready"],
+      "correctSentence": "Nice to meet you",
       "xpReward": 10
     },
     {
       "id": "ex2",
       "type": "fill_in_the_blank",
       "prompt": {
-        "az": "Boşluğa uyğun olan variantı seçin:",
-        "en": "Choose the correct form for the blank:",
-        "tr": "Boşluğa uygun formu seçin:",
-        "ru": "Выберите правильную форму для пропуска:"
+        "az": "Özünü təqdim etmək üçün boşluğu tamamla:",
+        "en": "Complete the self-introduction:",
+        "tr": "Kendini tanıtmak için boşluğu doldur:",
+        "ru": "Заполните пропуск для представления:"
       },
       "instruction": {
-        "az": "I ___ a student.",
-        "en": "I ___ a student.",
-        "tr": "I ___ a student.",
-        "ru": "I ___ a student."
+        "az": "Hi, ___ Alex.",
+        "en": "Hi, ___ Alex.",
+        "tr": "Hi, ___ Alex.",
+        "ru": "Hi, ___ Alex."
       },
       "options": [
-        { "id": "o1", "text": "am", "isCorrect": true },
+        { "id": "o1", "text": "I'm", "isCorrect": true },
         { "id": "o2", "text": "is", "isCorrect": false },
         { "id": "o3", "text": "are", "isCorrect": false }
       ],
@@ -211,56 +157,18 @@
     },
     {
       "id": "ex3",
-      "type": "fill_in_the_blank",
-      "prompt": {
-        "az": "Boşluğa uyğun olan variantı seçin:",
-        "en": "Choose the correct form for the blank:",
-        "tr": "Boşluğa uygun formu seçin:",
-        "ru": "Выберите правильную форму для пропуска:"
-      },
-      "instruction": {
-        "az": "She ___ my friend.",
-        "en": "She ___ my friend.",
-        "tr": "She ___ my friend.",
-        "ru": "She ___ my friend."
-      },
-      "options": [
-        { "id": "o4", "text": "is", "isCorrect": true },
-        { "id": "o5", "text": "am", "isCorrect": false },
-        { "id": "o6", "text": "are", "isCorrect": false }
-      ],
-      "xpReward": 10
-    },
-    {
-      "id": "ex4",
       "type": "listening_dictation",
       "prompt": {
-        "az": "Səsi dinləyin və eşitdiyiniz ifadəni seçin:",
+        "az": "Səsi dinləyin və eşitdiyiniz frazanı seçin:",
         "en": "Listen and select what you hear:",
-        "tr": "Dinleyin ve duyduğunuz ifadeyi seçin:",
+        "tr": "Dinleyin ve duyduğunuz kalıbı seçin:",
         "ru": "Послушайте и выберите то, что услышали:"
       },
-      "audioPrompt": "Nice to meet you",
+      "audioPrompt": "How are you?",
       "options": [
-        { "id": "a1", "text": "Nice to meet you", "isCorrect": true },
-        { "id": "a2", "text": "See you tomorrow", "isCorrect": false },
-        { "id": "a3", "text": "Good morning", "isCorrect": false }
-      ],
-      "xpReward": 10
-    },
-    {
-      "id": "ex5",
-      "type": "multiple_choice",
-      "prompt": {
-        "az": "'Mən hazıram' ingilis dilində necə deyilir?",
-        "en": "How do you say 'I am ready' in English?",
-        "tr": "'Ben hazırım' İngilizce nasıl söylenir?",
-        "ru": "Как сказать 'Я готов' по-английски?"
-      },
-      "options": [
-        { "id": "m1", "text": "I am ready", "isCorrect": true },
-        { "id": "m2", "text": "I is ready", "isCorrect": false },
-        { "id": "m3", "text": "I are ready", "isCorrect": false }
+        { "id": "a1", "text": "How are you?", "isCorrect": true },
+        { "id": "a2", "text": "Nice to meet you", "isCorrect": false },
+        { "id": "a3", "text": "Goodbye", "isCorrect": false }
       ],
       "xpReward": 10
     }
@@ -268,44 +176,31 @@
   "bossQuiz": [
     {
       "id": "bq1",
-      "type": "fill_in_the_blank",
-      "prompt": {
-        "az": "Boşluğu tamamlayın:",
-        "en": "Complete the sentence:",
-        "tr": "Boşluğu tamamlayın:",
-        "ru": "Заполните пропуск:"
-      },
-      "instruction": {
-        "az": "We ___ happy today.",
-        "en": "We ___ happy today.",
-        "tr": "We ___ happy today.",
-        "ru": "We ___ happy today."
-      },
-      "options": [
-        { "id": "b1", "text": "are", "isCorrect": true },
-        { "id": "b2", "text": "is", "isCorrect": false },
-        { "id": "b3", "text": "am", "isCorrect": false }
-      ],
-      "xpReward": 10
-    },
-    {
-      "id": "bq2",
       "type": "word_scramble",
       "prompt": {
-        "az": "Bu cümləni ingiliscəyə tərcümə edin:",
-        "en": "Translate this sentence to English:",
-        "tr": "Bu cümleyi İngilizceye çevirin:",
-        "ru": "Переведите это предложение на английский:"
+        "az": "Sürətli sınaq: cümləni yığın",
+        "en": "Quick recall: assemble the chunk",
+        "tr": "Hızlı tekrar: cümleyi kurun",
+        "ru": "Быстрое повторение: соберите фразу"
       },
       "instruction": {
-        "az": "Sizinlə tanış olmağıma şadam.",
-        "en": "Nice to meet you.",
-        "tr": "Tanıştığımıza memnun oldum.",
-        "ru": "Приятно познакомиться."
+        "az": "Salam, mən Alexəm.",
+        "en": "Situation: Say hi and introduce yourself as Alex.",
+        "tr": "Merhaba, ben Alex.",
+        "ru": "Привет, я Алекс.",
+        "es": "Hola, soy Alex.",
+        "de": "Hallo, ich bin Alex.",
+        "fr": "Salut, je suis Alex.",
+        "it": "Ciao, sono Alex.",
+        "pt": "Oi, eu sou o Alex.",
+        "pl": "Cześć, jestem Alex.",
+        "cs": "Ahoj, já jsem Alex.",
+        "hu": "Szia, Alex vagyok.",
+        "uk": "Привіт, я Алекс."
       },
-      "sentenceToBuild": ["Nice", "to", "meet", "you"],
-      "distractorWords": ["see", "ready"],
-      "correctSentence": "Nice to meet you",
+      "sentenceToBuild": ["Hi,", "I'm", "Alex"],
+      "distractorWords": ["is", "you"],
+      "correctSentence": "Hi, I'm Alex",
       "xpReward": 10
     }
   ]

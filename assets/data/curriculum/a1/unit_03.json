@@ -3,67 +3,60 @@
   "level": "A1",
   "order": 3,
   "title": {
-    "az": "Gündəlik Vərdişlər və Zaman",
-    "en": "Daily Routines & Time",
-    "tr": "Günlük Alışkanlıklar ve Zaman",
-    "ru": "Распорядок дня и время"
+    "az": "Gündəlik Həyat: Vərdişlər",
+    "en": "Daily Life: Habits",
+    "tr": "Günlük Hayat: Alışkanlıklar",
+    "ru": "Повседневная жизнь: Привычки"
   },
   "description": {
-    "az": "Present Simple, saatlar və gündəlik hərəkətlər",
-    "en": "Present Simple, telling time, and daily action verbs",
-    "tr": "Geniş Zaman, saatler ve günlük eylemler",
-    "ru": "Простое настоящее время, время и ежедневные действия"
+    "az": "Gündəlik rejim və hər gün etdiyin hərəkətləri ifadə edən təbii frazalar",
+    "en": "Natural spoken chunks for daily routines and habits",
+    "tr": "Günlük rutinler ve alışkanlıklar için doğal kalıplar",
+    "ru": "Естественные фразы для описания распорядка дня"
   },
-  "estimatedMinutes": 5,
+  "estimatedMinutes": 2,
   "iconName": "clock",
-  "xpReward": 50,
+  "xpReward": 30,
   "grammarRule": {
     "id": "a1_gr_03",
     "title": {
-      "az": "İndiki Sadə Zaman (Present Simple)",
-      "en": "Present Simple Tense",
-      "tr": "Geniş Zaman (Present Simple)",
-      "ru": "Простое настоящее время (Present Simple)"
+      "az": "Gündəlik Vərdişlər: I always...",
+      "en": "Daily Routines: I always...",
+      "tr": "Günlük Rutinler: I always...",
+      "ru": "Ежедневная рутина: I always..."
     },
     "subtitle": {
-      "az": "Hər gün təkrarlanan vərdişləri ifadə etmək üçün",
-      "en": "For daily routines, habits, and permanent truths"
+      "az": "Hər gün etdiyin vərdişləri bu şəkildə söylə",
+      "en": "Describe what you do every day with simple chunks",
+      "tr": "Her gün yaptığın şeyleri bu basit kalıpla anlat",
+      "ru": "Описывайте то, что делаете каждый день"
     },
     "explanation": {
-      "az": "Hər gün və ya mütəmadi olaraq etdiyimiz hərəkətlər üçün fel olduğu kimi qalır (I read, they work). Yalnız He, She, It üçün felin sonuna -s və ya -es artırılır (He reads, She works).",
-      "en": "We use the base verb for I, you, we, they (I wake up, they work). For he, she, it, we add -s or -es (He wakes up, She works).",
-      "tr": "I, you, we, they için fiil yalın kalır. He, she, it için fiilin sonuna -s/-es takısı gelir.",
-      "ru": "Для I, you, we, they глагол остается в начальной форме. Для he, she, it добавляется окончание -s или -es."
+      "az": "Qaydaları düşünmədən sadəcə hərəkəti söyləyin:\n\n• 'I wake up at seven.' (Saat 7-də oyanıram)\n• 'I always read books.' (Mən həmişə kitab oxuyuram)",
+      "en": "Simply speak your actions naturally:\n\n• 'I wake up at seven.'\n• 'I always read books.'",
+      "tr": "Kurallara boğulmadan doğrudan söyleyin:\n\n• 'I wake up at seven.'\n• 'I always read books.'",
+      "ru": "Говорите о привычках естественно:\n\n• 'I wake up at seven.'\n• 'I always read books.'"
     },
-    "formula": "He/She/It + Verb-s | I/You/We/They + Verb",
+    "formula": "I wake up at [Vaxt] • I always [Hərəkət]",
     "examples": [
       {
-        "english": "I wake up at seven o'clock.",
+        "english": "I wake up early and read books.",
         "translation": {
-          "az": "Mən saat yeddidə oyanıram.",
-          "en": "I wake up at seven o'clock.",
-          "tr": "Saat yedide uyanırım.",
-          "ru": "Я просыпаюсь в семь часов."
-        }
-      },
-      {
-        "english": "She reads books every evening.",
-        "translation": {
-          "az": "O, hər axşam kitab oxuyur.",
-          "en": "She reads books every evening.",
-          "tr": "O her akşam kitap okur.",
-          "ru": "Она читает книги каждый вечер."
+          "az": "Səhər tezdən oyanıram və kitab oxuyuram.",
+          "en": "I wake up early and read books.",
+          "tr": "Sabah erken uyanırım ve kitap okurum.",
+          "ru": "Я просыпаюсь рано и читаю книги."
         }
       }
     ],
     "commonMistake": {
-      "incorrect": "He wake up early.",
-      "correct": "He wakes up early.",
+      "incorrect": "I am wake up early.",
+      "correct": "I wake up early.",
       "explanation": {
-        "az": "'He' (o) üçün felin sonuna '-s' əlavə olunmalıdır.",
-        "en": "Remember the 3rd person singular '-s' ending.",
-        "tr": "'He/She/It' özneleri için fiilin sonuna '-s' veya '-es' takısı gelmelidir.",
-        "ru": "Для третьего лица единственного числа (He/She/It) к глаголу добавляется окончание '-s'."
+        "az": "Vərdişləri deyərkən 'am' deməyin, birbaşa 'I wake up' söyləyin.",
+        "en": "Say 'I wake up' directly without 'am'.",
+        "tr": "Alışkanlıklarda 'am' demeyin, doğrudan 'I wake up' söyleyin.",
+        "ru": "Говорите напрямую 'I wake up', без 'am'."
       }
     }
   },
@@ -72,143 +65,110 @@
       "id": "v3_1",
       "word": "Wake up",
       "phonetic": "/weɪk ʌp/",
-      "audioText": "Wake up",
+      "audioText": "I wake up early",
       "translations": { "az": "Oyanmaq", "en": "Wake up", "tr": "Uyanmak", "ru": "Просыпаться" },
-      "exampleSentence": "I wake up early in the morning.",
-      "exampleTranslation": { "az": "Mən səhər tezdən oyanıram.", "en": "I wake up early in the morning.", "tr": "Sabah erken uyanırım.", "ru": "Я просыпаюсь рано утром." }
+      "exampleSentence": "I wake up at 7.",
+      "exampleTranslation": { "az": "Saat 7-də oyanıram.", "en": "I wake up at 7.", "tr": "Saat 7'de uyanırım.", "ru": "Я просыпаюсь в 7." }
     },
     {
       "id": "v3_2",
-      "word": "Breakfast",
-      "phonetic": "/ˈbrekfəst/",
-      "audioText": "Breakfast",
-      "translations": { "az": "Səhər yeməyi", "en": "Breakfast", "tr": "Kahvaltı", "ru": "Завтрак" },
-      "exampleSentence": "We have breakfast together.",
-      "exampleTranslation": { "az": "Biz birlikdə səhər yeməyi yeyirik.", "en": "We have breakfast together.", "tr": "Birlikte kahvaltı yaparız.", "ru": "Мы завтракаем вместе." }
+      "word": "I always...",
+      "phonetic": "/aɪ ˈɔːlweɪz/",
+      "audioText": "I always read books",
+      "translations": { "az": "Mən həmişə...", "en": "I always...", "tr": "Ben her zaman...", "ru": "Я всегда..." },
+      "exampleSentence": "I always read in the evening.",
+      "exampleTranslation": { "az": "Mən həmişə axşamlar oxuyuram.", "en": "I always read in the evening.", "tr": "Her zaman akşamları okurum.", "ru": "Я всегда читаю по вечерам." }
     },
     {
       "id": "v3_3",
-      "word": "Always",
-      "phonetic": "/ˈɔːlweɪz/",
-      "audioText": "Always",
-      "translations": { "az": "Həmişə", "en": "Always", "tr": "Her zaman", "ru": "Всегда" },
-      "exampleSentence": "He always reads before bed.",
-      "exampleTranslation": { "az": "O, yatmazdan əvvəl həmişə oxuyur.", "en": "He always reads before bed.", "tr": "Yatmadan önce her zaman okur.", "ru": "Он всегда читает перед сном." }
-    },
-    {
-      "id": "v3_4",
-      "word": "Evening",
-      "phonetic": "/ˈiːvnɪŋ/",
-      "audioText": "Evening",
-      "translations": { "az": "Axşam", "en": "Evening", "tr": "Akşam", "ru": "Вечер" },
-      "exampleSentence": "Good evening, everyone.",
-      "exampleTranslation": { "az": "Hər kəsə xoş axşamlar.", "en": "Good evening, everyone.", "tr": "Herkese iyi akşamlar.", "ru": "Всем добрый вечер." }
-    },
-    {
-      "id": "v3_5",
-      "word": "Work",
-      "phonetic": "/wɜːk/",
-      "audioText": "Work",
-      "translations": { "az": "İşləmək, iş", "en": "Work", "tr": "Çalışmak, iş", "ru": "Работать, работа" },
-      "exampleSentence": "They work in an office.",
-      "exampleTranslation": { "az": "Onlar ofisdə işləyirlər.", "en": "They work in an office.", "tr": "Bir ofiste çalışıyorlar.", "ru": "Они работают в офисе." }
-    },
-    {
-      "id": "v3_6",
-      "word": "Early",
-      "phonetic": "/ˈɜːrli/",
-      "audioText": "Early",
-      "translations": { "az": "Erkən, tez", "en": "Early", "tr": "Erken", "ru": "Рано" },
-      "exampleSentence": "I wake up early.",
-      "exampleTranslation": { "az": "Mən tezdən oyanıram.", "en": "I wake up early.", "tr": "Erken uyanırım.", "ru": "Я просыпаюсь рано." }
-    },
-    {
-      "id": "v3_7",
-      "word": "Night",
-      "phonetic": "/naɪt/",
-      "audioText": "Night",
-      "translations": { "az": "Gecə", "en": "Night", "tr": "Gece", "ru": "Ночь" },
-      "exampleSentence": "Good night, sleep well.",
-      "exampleTranslation": { "az": "Gecəniz xeyrə qalsın, şirin yuxular.", "en": "Good night, sleep well.", "tr": "İyi geceler, tatlı rüyalar.", "ru": "Спокойной ночи, сладких снов." }
-    },
-    {
-      "id": "v3_8",
-      "word": "Rest",
-      "phonetic": "/rest/",
-      "audioText": "Rest",
-      "translations": { "az": "Dincəlmək, istirahət", "en": "Rest", "tr": "Dinlenmek", "ru": "Отдыхать" },
-      "exampleSentence": "Now take a rest.",
-      "exampleTranslation": { "az": "İndi bir az istirahət et.", "en": "Now take a rest.", "tr": "Şimdi biraz dinlen.", "ru": "А теперь отдохни." }
+      "word": "Every day",
+      "phonetic": "/ˈevri deɪ/",
+      "audioText": "Every day",
+      "translations": { "az": "Hər gün", "en": "Every day", "tr": "Her gün", "ru": "Каждый день" },
+      "exampleSentence": "I practice English every day.",
+      "exampleTranslation": { "az": "Hər gün ingiliscə məşq edirəm.", "en": "I practice English every day.", "tr": "Her gün İngilizce pratik yaparım.", "ru": "Я практикую английский каждый день." }
     }
   ],
   "story": {
     "id": "s3",
-    "title": "The Ant and the Grasshopper (Adapted)",
+    "title": "A Productive Morning",
     "titleTranslation": {
-      "az": "Qarışqa və Cırcırama (Ezop Təmsili)",
-      "en": "The Ant and the Grasshopper",
-      "tr": "Karınca ile Ağustos Böceği",
-      "ru": "Муравей и кузнечик"
+      "az": "Məhsuldar Səhər",
+      "en": "A Productive Morning",
+      "tr": "Verimli Bir Sabah",
+      "ru": "Продуктивное утро"
     },
     "cefr": "A1",
-    "wordCount": 115,
-    "content": "Every day, the little Ant wakes up early. He has breakfast quickly and goes to work.\n\nHe gathers grains of corn under the warm sun. He always works hard.\n\nA lazy Grasshopper sings and dances near the river. \"Why do you work all day, friend Ant? Come and play with me!\"\n\nThe Ant smiles. \"Winter is coming. I prepare my food every day.\"\n\nIn the evening, the Ant rests in his warm home. When cold winter arrives, the Ant is safe, but the Grasshopper is hungry.\n\nWork today brings peace tomorrow.",
-    "vocabularyHighlights": ["wakes up", "breakfast", "work", "always", "evening", "early", "rest"]
+    "wordCount": 23,
+    "content": "Alex: \"What is your daily routine?\"\nLisa: \"I wake up at 7. I always drink water and read books every day!\"",
+    "vocabularyHighlights": ["Wake up", "I always...", "Every day"]
   },
   "exercises": [
     {
       "id": "ex3_1",
       "type": "word_scramble",
       "prompt": {
-        "az": "Bu cümləni ingiliscəyə tərcümə edin:",
-        "tr": "Bu cümleyi İngilizceye çevirin:",
-        "en": "Translate this sentence to English:",
-        "ru": "Переведите это предложение на английский:"
+        "az": "Vərdiş cümləsini qurun:",
+        "en": "Build the daily routine chunk:",
+        "tr": "Günlük rutin cümlesini kurun:",
+        "ru": "Соберите предложение о привычке:"
       },
       "instruction": {
-        "az": "O, həmişə çox işləyir.",
-        "tr": "O her zaman çok çalışır.",
-        "en": "He always works hard.",
-        "ru": "Он всегда усердно работает."
+        "az": "Mən həmişə kitab oxuyuram.",
+        "en": "Situation: Say that reading books is your regular habit.",
+        "tr": "Her zaman kitap okurum.",
+        "ru": "Я всегда читаю книги.",
+        "es": "Siempre leo libros.",
+        "de": "Ich lese immer Bücher.",
+        "fr": "Je lis toujours des livres.",
+        "it": "Leggo sempre libri.",
+        "pt": "Eu sempre leio livros.",
+        "pl": "Zawsze czytam książki.",
+        "cs": "Vždy čtu knihy.",
+        "hu": "Mindig könyveket olvasok.",
+        "uk": "Я завжди читаю книги."
       },
-      "sentenceToBuild": ["He", "always", "works", "hard"],
-      "distractorWords": ["work", "am"],
-      "correctSentence": "He always works hard",
+      "sentenceToBuild": ["I", "always", "read", "books"],
+      "distractorWords": ["am", "is"],
+      "correctSentence": "I always read books",
       "xpReward": 10
     },
     {
       "id": "ex3_2",
       "type": "fill_in_the_blank",
       "prompt": {
-        "az": "Boşluğa uyğun olan feli seçin:",
-        "tr": "Boşluğa uygun olan fiili seçin:",
-        "en": "Select the correct verb for the blank:",
-        "ru": "Выберите правильный глагол для пропуска:"
+        "az": "Səhər oyanmağı ifadə etmək üçün boşluğu doldurun:",
+        "en": "Complete the morning action:",
+        "tr": "Sabah uyanmayı anlatan boşluğu doldurun:",
+        "ru": "Заполните пропуск для подъема по утрам:"
       },
       "instruction": {
-        "az": "She ___ up early.",
-        "tr": "She ___ up early.",
-        "en": "She ___ up early.",
-        "ru": "She ___ up early."
+        "az": "I wake ___ early every day.",
+        "en": "I wake ___ early every day.",
+        "tr": "I wake ___ early every day.",
+        "ru": "I wake ___ early every day."
       },
       "options": [
-        { "id": "p1", "text": "wakes", "isCorrect": true },
-        { "id": "p2", "text": "wake", "isCorrect": false }
+        { "id": "o1", "text": "up", "isCorrect": true },
+        { "id": "o2", "text": "on", "isCorrect": false },
+        { "id": "o3", "text": "in", "isCorrect": false }
       ],
       "xpReward": 10
     },
     {
       "id": "ex3_3",
-      "type": "multiple_choice",
+      "type": "listening_dictation",
       "prompt": {
-        "az": "'Mən səhər yeməyi yeyirəm' cümləsinin düzgün tərcüməsini seçin:",
-        "tr": "'Sabah kahvaltısı yaparım' cümlesinin doğru çevirisini seçin:",
-        "en": "Choose the correct translation for 'I have breakfast in the morning':",
-        "ru": "Выберите правильный перевод для 'Я завтракаю по утрам':"
+        "az": "Dinləyin və eşitdiyinizi seçin:",
+        "en": "Listen and select what you hear:",
+        "tr": "Dinleyin ve duyduğunuzu seçin:",
+        "ru": "Послушайте и выберите то, что услышали:"
       },
+      "audioPrompt": "Every day",
       "options": [
-        { "id": "opt1", "text": "I have breakfast in the morning.", "isCorrect": true },
-        { "id": "opt2", "text": "I has breakfast in morning.", "isCorrect": false }
+        { "id": "a1", "text": "Every day", "isCorrect": true },
+        { "id": "a2", "text": "Yesterday", "isCorrect": false },
+        { "id": "a3", "text": "Tomorrow", "isCorrect": false }
       ],
       "xpReward": 10
     }
@@ -216,18 +176,31 @@
   "bossQuiz": [
     {
       "id": "bq3_1",
-      "type": "multiple_choice",
+      "type": "word_scramble",
       "prompt": {
-        "az": "'Səhər yeməyi' ingiliscə necə adlanır?",
-        "tr": "'Kahvaltı' İngilizce nasıl söylenir?",
-        "en": "What is the English word for 'Breakfast'?",
-        "ru": "Как по-английски называется 'Завтрак'?"
+        "az": "Sürətli sınaq: cümləni yığın",
+        "en": "Quick recall: assemble the chunk",
+        "tr": "Hızlı tekrar: cümleyi kurun",
+        "ru": "Быстрое повторение: соберите фразу"
       },
-      "options": [
-        { "id": "b1", "text": "Breakfast", "isCorrect": true },
-        { "id": "b2", "text": "Dinner", "isCorrect": false },
-        { "id": "b3", "text": "Lunch", "isCorrect": false }
-      ],
+      "instruction": {
+        "az": "Hər gün",
+        "en": "Situation: Express that you do a habit daily (2 words).",
+        "tr": "Her gün",
+        "ru": "Каждый день",
+        "es": "Todos los días",
+        "de": "Jeden Tag",
+        "fr": "Tous les jours",
+        "it": "Ogni giorno",
+        "pt": "Todos os dias",
+        "pl": "Codziennie",
+        "cs": "Každý den",
+        "hu": "Minden nap",
+        "uk": "Щодня"
+      },
+      "sentenceToBuild": ["Every", "day"],
+      "distractorWords": ["night", "week"],
+      "correctSentence": "Every day",
       "xpReward": 10
     }
   ]

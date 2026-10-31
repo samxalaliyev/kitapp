@@ -1,4 +1,4 @@
-export type LevelId = 'A1' | 'A2' | 'B1' | 'B2' | 'C1';
+export type LevelId = 'A0' | 'A1' | 'A2' | 'B1' | 'B2' | 'C1';
 
 export type UnitStatus = 'locked' | 'unlocked' | 'completed';
 

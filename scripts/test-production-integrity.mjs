@@ -149,8 +149,7 @@ for (const unitFile of bundledUnits) {
   assert(fs.existsSync(unitFilePath), `Bundled curriculum file exists: a1/${unitFile}`);
   const unitJson = JSON.parse(fs.readFileSync(unitFilePath, 'utf8'));
   assert(unitJson.id && unitJson.level === 'A1', `${unitFile} has valid id and level A1`);
-  assert(unitJson.grammarRule?.title && unitJson.grammarRule?.formula, `${unitFile} has grammar rule and formula`);
-  assert(Array.isArray(unitJson.vocabulary) && unitJson.vocabulary.length >= 7, `${unitFile} has vocabulary deck with >= 7 words`);
+  assert(Array.isArray(unitJson.vocabulary) && unitJson.vocabulary.length >= 3, `${unitFile} has focused lexical chunk deck (>= 3 core chunks)`);
   assert(unitJson.story?.content && Array.isArray(unitJson.story?.vocabularyHighlights), `${unitFile} has graded story with vocabulary highlights`);
   assert(Array.isArray(unitJson.exercises) && unitJson.exercises.length >= 3, `${unitFile} has interactive exercises array (>= 3 exercises)`);
 }

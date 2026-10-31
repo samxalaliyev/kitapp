@@ -36,6 +36,23 @@ interface HandbookRuleItem {
 }
 
 const LEVEL_RULES_DATA: Record<LevelId, HandbookRuleItem[]> = {
+  A0: [
+    {
+      badge: { az: 'Addım 1 • İlk Salamlaşma', tr: 'Adım 1 • İlk Selamlaşma', en: 'Step 1 • First Greetings', ru: 'Шаг 1 • Первое знакомство' },
+      formula: 'Hello, I am [Name] • Nice to meet you!',
+      example: '"Hello, I am Alex. Nice to meet you!"',
+    },
+    {
+      badge: { az: 'Addım 2 • Sehrli Nəzakət', tr: 'Adım 2 • Sihirli Nezaket', en: 'Step 2 • Polite Chunks', ru: 'Шаг 2 • Вежливые фразы' },
+      formula: 'Thank you so much • Excuse me • Water, please',
+      example: '"Excuse me! One coffee, please. Thank you so much."',
+    },
+    {
+      badge: { az: 'Addım 3 • Sağqalma Frazaları', tr: 'Adım 3 • Hayatta Kalma Kalıpları', en: 'Step 3 • Survival Chunks', ru: 'Шаг 3 • Базовые фразы' },
+      formula: 'Speak slowly, please • Where is the hotel?',
+      example: '"Speak slowly, please. Where is the hotel?"',
+    },
+  ],
   A1: [
     {
       badge: { az: 'Modul 1 • To Be', tr: 'Modül 1 • To Be', en: 'Module 1 • To Be', ru: 'Модуль 1 • To Be' },
@@ -104,7 +121,23 @@ const LEVEL_RULES_DATA: Record<LevelId, HandbookRuleItem[]> = {
       example: '"To bring about real change, we must rule out shortcuts and stand out."',
     },
   ],
-  C1: [],
+  C1: [
+    {
+      badge: { az: 'Modul 1 • Ritorik İnversiya & Cleft', tr: 'Modül 1 • Retorik Vurgu', en: 'Module 1 • Rhetorical Focus', ru: 'Модуль 1 • Риторический фокус' },
+      formula: 'What truly matters is... • Seldom have we witnessed...',
+      example: '"What truly matters is long-term sustainability. Seldom have we seen such impact."',
+    },
+    {
+      badge: { az: 'Modul 2 • Diplomatik Hedging', tr: 'Modül 2 • Diplomatik Dil', en: 'Module 2 • Diplomatic Hedging', ru: 'Модуль 2 • Дипломатический язык' },
+      formula: 'It appears that... • With all due respect • We might reconsider',
+      example: '"With all due respect, we might want to reconsider the timeline."',
+    },
+    {
+      badge: { az: 'Modul 3 • Subjunctive & İdiomlar', tr: 'Modül 3 • Subjunctive & Deyimler', en: 'Module 3 • Subjunctive & Idioms', ru: 'Модуль 3 • Высший стиль и идиомы' },
+      formula: 'It is imperative that we act • Read between the lines',
+      example: '"It is imperative that we act immediately and read between the lines."',
+    },
+  ],
 };
 
 export interface GamifiedPathMapProps {

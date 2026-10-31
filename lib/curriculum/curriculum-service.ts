@@ -34,13 +34,58 @@ export function isUnitBundled(unitId: string): boolean {
 
 export const CEFR_LEVELS: CurriculumLevelSummary[] = [
   {
-    id: 'A1',
-    title: { az: 'A1: Başlanğıc Səviyyə', en: 'A1: Beginner', tr: 'A1: Başlangıç Seviyesi', ru: 'A1: Начальный' },
+    id: 'A0',
+    title: {
+      az: 'A0: Sıfırdan İlk Addım',
+      en: 'A0: First Spark (Pre-Beginner)',
+      tr: 'A0: Sıfırdan İlk Adım',
+      ru: 'A0: Первые шаги с нуля',
+      es: 'A0: Primeros pasos',
+      de: 'A0: Erste Schritte',
+      fr: 'A0: Premiers pas',
+      it: 'A0: Primi passi',
+      pt: 'A0: Primeiros passos',
+      pl: 'A0: Pierwsze kroki',
+      cs: 'A0: První kroky',
+      hu: 'A0: Első lépések',
+      uk: 'A0: Перші кроки з нуля',
+    },
     description: {
-      az: "Təməl qrammatika, 'To Be', gündəlik tanışlıq və baza cümlələr",
-      en: "Basic grammar, 'To Be', introductions, and essential daily phrases",
-      tr: "Temel gramer, 'To Be', günlük tanışma ve temel ifadeler",
-      ru: "Базовая грамматика, глагол 'To Be', знакомство и простые фразы",
+      az: 'Qorxunu qırmaq, ilkin salamlaşma, təşəkkür və ən zəruri sağqalma frazaları',
+      en: 'Break the ice: survival greetings, polite requests, and first real-world chunks',
+      tr: 'Korkuyu yenmek, ilk selamlaşma, teşekkür ve en temel hayatta kalma kalıpları',
+      ru: 'Преодоление барьера, базовые приветствия, благодарность и первые фразы',
+      es: 'Rompe el hielo: saludos básicos, peticiones corteses y primeras frases',
+      de: 'Eis brechen: Grundlegende Begrüßungen, höfliche Bitten und erste Phrasen',
+      fr: 'Briser la glace : salutations de base, demandes polies et premières expressions',
+    },
+    totalUnits: 12,
+    completedUnits: 0,
+    unlockedUnits: 1,
+    accentColor: '#14B8A6', // Teal
+  },
+  {
+    id: 'A1',
+    title: {
+      az: 'A1: Başlanğıc Səviyyə',
+      en: 'A1: Beginner',
+      tr: 'A1: Başlangıç Seviyesi',
+      ru: 'A1: Начальный',
+      es: 'A1: Principiante',
+      de: 'A1: Anfänger',
+      fr: 'A1: Débutant',
+      it: 'A1: Principiante',
+      pt: 'A1: Iniciante',
+      pl: 'A1: Początkujący',
+      cs: 'A1: Začátečník',
+      hu: 'A1: Kezdő',
+      uk: 'A1: Початковий',
+    },
+    description: {
+      az: 'Gündəlik həyat, kafedə sifariş, ailə, ünvan soruşmaq və canlı tanışlıq',
+      en: 'Everyday survival: ordering at cafes, family, directions, and daily habits',
+      tr: 'Günlük yaşam, kafede sipariş, aile, adres sorma ve doğal tanışma kalıpları',
+      ru: 'Повседневная жизнь, заказ в кафе, семья, маршруты и привычки',
     },
     totalUnits: 16,
     completedUnits: 0,
@@ -49,12 +94,26 @@ export const CEFR_LEVELS: CurriculumLevelSummary[] = [
   },
   {
     id: 'A2',
-    title: { az: 'A2: Təməl Səviyyə', en: 'A2: Elementary', tr: 'A2: Temel Seviye', ru: 'A2: Базовый' },
+    title: {
+      az: 'A2: Təməl Səviyyə',
+      en: 'A2: Elementary',
+      tr: 'A2: Temel Seviye',
+      ru: 'A2: Базовый',
+      es: 'A2: Elemental',
+      de: 'A2: Grundstufe',
+      fr: 'A2: Élémentaire',
+      it: 'A2: Elementare',
+      pt: 'A2: Básico',
+      pl: 'A2: Podstawowy',
+      cs: 'A2: Mírně pokročilý',
+      hu: 'A2: Alapszint',
+      uk: 'A2: Базовий',
+    },
     description: {
-      az: "Keçmiş və gələcək zamanlar, səyahət, alış-veriş və sadə dialoqlar",
-      en: "Past & future tenses, travel, shopping, and everyday dialogues",
-      tr: "Geçmiş ve gelecek zaman, seyahat, alışveriş ve temel diyaloglar",
-      ru: "Прошедшее и будущее время, путешествия, покупки и простые диалоги",
+      az: 'Keçmiş səyahət xatirələri, gələcək planlar, alış-veriş və canlı dialoqlar',
+      en: 'Past travel stories, future plans, shopping, and connected conversations',
+      tr: 'Geçmiş seyahat anıları, gelecek planları, alışveriş ve akıcı diyaloglar',
+      ru: 'Истории о поездках, планы на будущее, покупки и живые диалоги',
     },
     totalUnits: 16,
     completedUnits: 0,
@@ -63,12 +122,26 @@ export const CEFR_LEVELS: CurriculumLevelSummary[] = [
   },
   {
     id: 'B1',
-    title: { az: 'B1: Orta Səviyyə', en: 'B1: Intermediate', tr: 'B1: Orta Düzey', ru: 'B1: Средний' },
+    title: {
+      az: 'B1: Orta Səviyyə',
+      en: 'B1: Intermediate',
+      tr: 'B1: Orta Düzey',
+      ru: 'B1: Средний',
+      es: 'B1: Intermedio',
+      de: 'B1: Mittelstufe',
+      fr: 'B1: Intermédiaire',
+      it: 'B1: Intermedio',
+      pt: 'B1: Intermediário',
+      pl: 'B1: Średnio zaawansowany',
+      cs: 'B1: Středně pokročilý',
+      hu: 'B1: Középhaladó',
+      uk: 'B1: Середній',
+    },
     description: {
-      az: "İş müsahibəsi, feli frazalar (Phrasal Verbs) və mürəkkəb hekayələr",
-      en: "Job interviews, phrasal verbs, idioms, and connected stories",
-      tr: "İş mülakatları, phrasal verbs, deyimler ve akıcı diyaloglar",
-      ru: "Собеседования, фразовые глаголы, идиомы и связные истории",
+      az: 'Karyera ünsiyyəti, feli frazalar (Phrasal Verbs), məsləhət və fikir ifadəsi',
+      en: 'Career communication, phrasal verbs, giving advice, and expressing opinions',
+      tr: 'Kariyer iletişimi, phrasal verbs, tavsiye verme ve görüş bildirme',
+      ru: 'Деловое общение, фразовые глаголы, советы и выражение мнения',
     },
     totalUnits: 16,
     completedUnits: 0,
@@ -77,17 +150,59 @@ export const CEFR_LEVELS: CurriculumLevelSummary[] = [
   },
   {
     id: 'B2',
-    title: { az: 'B2: İrəli Səviyyə', en: 'B2: Upper-Intermediate', tr: 'B2: İleri Düzey', ru: 'B2: Продвинутый' },
+    title: {
+      az: 'B2: Üst-Orta Səviyyə',
+      en: 'B2: Upper-Intermediate',
+      tr: 'B2: İleri Orta Düzey',
+      ru: 'B2: Выше среднего',
+      es: 'B2: Intermedio Alto',
+      de: 'B2: Gute Mittelstufe',
+      fr: 'B2: Intermédiaire Supérieur',
+      it: 'B2: Intermedio Superiore',
+      pt: 'B2: Pós-Intermediário',
+      pl: 'B2: Ponadśrednio zaawansowany',
+      cs: 'B2: Vyšší středně pokročilý',
+      hu: 'B2: Felső-középhaladó',
+      uk: 'B2: Вище середнього',
+    },
     description: {
-      az: "Fəlsəfi debatlar, orijinal məqalələr, peşəkar müzakirə və klassika",
-      en: "Abstract debates, authentic articles, professional fluency, and classics",
-      tr: "Soyut tartışmalar, özgün makaleler ve profesyonel akıcı İngilizce",
-      ru: "Дискуссии, оригинальные статьи и свободное общение",
+      az: 'Arqumentli debatlar, biznes strategiyası, idiomlar və peşəkar ünsiyyət',
+      en: 'Persuasive debates, executive strategy, nuanced idioms, and analytical fluency',
+      tr: 'Argümanlı tartışmalar, iş stratejisi, deyimler ve profesyonel akıcılık',
+      ru: 'Дебаты, бизнес-стратегия, идиомы и профессиональное общение',
     },
     totalUnits: 16,
     completedUnits: 0,
     unlockedUnits: 0,
     accentColor: '#F59E0B', // Amber
+  },
+  {
+    id: 'C1',
+    title: {
+      az: 'C1: Peşəkar Səviyyə (Mastery)',
+      en: 'C1: Advanced Fluency',
+      tr: 'C1: İleri Uzmanlık (Mastery)',
+      ru: 'C1: Профессиональный уровень',
+      es: 'C1: Dominio Avanzado',
+      de: 'C1: Fortgeschrittene Kompetenz',
+      fr: 'C1: Maîtrise Avancée',
+      it: 'C1: Padronanza Avanzata',
+      pt: 'C1: Fluência Avançada',
+      pl: 'C1: Zaawansowany',
+      cs: 'C1: Pokročilý',
+      hu: 'C1: Haladó mesterszint',
+      uk: 'C1: Професійний рівень',
+    },
+    description: {
+      az: 'Ritorika, diplomatik nüanslar, inversiya və orijinal ədəbi səviyyədə sərbəstlik',
+      en: 'Rhetorical mastery, diplomatic nuance, inversion, and native-level literary command',
+      tr: 'Retorik ustalık, diplomatik nüanslar, devrik vurgu ve ana dili düzeyinde akıcılık',
+      ru: 'Риторическое мастерство, дипломатические нюансы, инверсия и свободное владение',
+    },
+    totalUnits: 12,
+    completedUnits: 0,
+    unlockedUnits: 0,
+    accentColor: '#EC4899', // Rose/Pink
   },
 ];
 
@@ -184,6 +299,128 @@ interface SyllabusNode {
 }
 
 export const SYLLABUS_MAP: Record<LevelId, SyllabusNode[]> = {
+  A0: [
+    {
+      id: 'a0_unit_01',
+      order: 1,
+      title: { az: 'İlk Salam və Təbəssüm', tr: 'İlk Selam ve Gülümseme', en: 'First Hello & Smile', ru: 'Первое приветствие' },
+      description: { az: 'Canlı tanışlıq: Hello, I am... və Nice to meet you', tr: 'Canlı tanışma: Hello, I am... ve Nice to meet you', en: 'Say hello and introduce yourself naturally', ru: 'Живое знакомство: Hello, I am...' },
+      iconName: 'smile',
+      estimatedMinutes: 2,
+      nodeType: 'lesson',
+      shortTitle: { az: 'İlk Salam', tr: 'İlk Selam', en: 'First Hello', ru: 'Привет' },
+    },
+    {
+      id: 'a0_unit_02',
+      order: 2,
+      title: { az: 'Sehrli Nəzakət Sözləri', tr: 'Sihirli Nezaket Sözleri', en: 'Magic Polite Words', ru: 'Вежливые слова' },
+      description: { az: 'Thank you so much, Excuse me, You are welcome', tr: 'Thank you so much, Excuse me, You are welcome', en: 'Essential polite chunks for everyday warmth', ru: 'Базовые вежливые фразы на каждый день' },
+      iconName: 'heart',
+      estimatedMinutes: 2,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Nəzakət', tr: 'Nezaket', en: 'Politeness', ru: 'Вежливость' },
+    },
+    {
+      id: 'a0_chest_01',
+      order: 3,
+      title: { az: 'İlk Qığılcım Sandığı: +25 XP', tr: 'İlk Kıvılcım Sandığı: +25 XP', en: 'First Spark Chest: +25 XP', ru: 'Сундук первой искры: +25 XP' },
+      description: { az: 'İlk cəsarətli addımınız üçün mükafat!', tr: 'İlk cesur adımınız için ödül!', en: 'Reward for your very first English steps!', ru: 'Награда за первые шаги!' },
+      iconName: 'gift',
+      estimatedMinutes: 1,
+      nodeType: 'chest',
+      shortTitle: { az: 'Sandıq', tr: 'Sandık', en: 'Chest', ru: 'Сундук' },
+    },
+    {
+      id: 'a0_unit_03',
+      order: 4,
+      title: { az: 'Su və Qəhvə İstəmək', tr: 'Su ve Kahve İstemek', en: 'Asking for Water & Coffee', ru: 'Попросить воды и кофе' },
+      description: { az: 'Water, please / One coffee, please / Here you go', tr: 'Water, please / One coffee, please / Here you go', en: 'Simple café and restaurant survival chunks', ru: 'Простые фразы для заказа воды и кофе' },
+      iconName: 'coffee',
+      estimatedMinutes: 2,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Su & Qəhvə', tr: 'Su & Kahve', en: 'Coffee', ru: 'Вода и кофе' },
+    },
+    {
+      id: 'a0_unit_04',
+      order: 5,
+      title: { az: 'Rəqəmlər və Hesab', tr: 'Sayılar ve Hesap', en: 'Numbers & Quick Count', ru: 'Числа и счёт' },
+      description: { az: 'Masa nömrəsi, qiymət və sadə sayma frazaları', tr: 'Masa numarası, fiyat ve basit sayma kalıpları', en: 'Counting items, table numbers, and simple prices', ru: 'Номера столиков и простой счёт' },
+      iconName: 'hash',
+      estimatedMinutes: 2,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Rəqəmlər', tr: 'Sayılar', en: 'Numbers', ru: 'Числа' },
+    },
+    {
+      id: 'a0_chest_02',
+      order: 6,
+      title: { az: 'Cəsarət Sandığı: +35 XP', tr: 'Cesaret Sandığı: +35 XP', en: 'Confidence Chest: +35 XP', ru: 'Сундук смелости: +35 XP' },
+      description: { az: 'A0 yolunun yarısını uğurla keçdiniz!', tr: 'A0 yolunun yarısını başarıyla geçtiniz!', en: 'Halfway through A0 Pre-Beginner!', ru: 'Половина пути A0 пройдена!' },
+      iconName: 'gift',
+      estimatedMinutes: 1,
+      nodeType: 'chest',
+      shortTitle: { az: 'Sandıq', tr: 'Sandık', en: 'Chest', ru: 'Сундук' },
+    },
+    {
+      id: 'a0_unit_05',
+      order: 7,
+      title: { az: 'Bəli, Xeyr və Anlayıram', tr: 'Evet, Hayır ve Anlıyorum', en: 'Yes, No & Understanding', ru: 'Да, нет и понимание' },
+      description: { az: 'I understand, Speak slowly please, Can you repeat?', tr: 'I understand, Speak slowly please, Can you repeat?', en: 'Managing conversations when people speak fast', ru: 'Управление разговором: говорите медленнее' },
+      iconName: 'check-circle',
+      estimatedMinutes: 2,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Anlamaq', tr: 'Anlamak', en: 'Understand', ru: 'Понимание' },
+    },
+    {
+      id: 'a0_unit_06',
+      order: 8,
+      title: { az: 'Haradadır? (Taksidə və Küçədə)', tr: 'Nerede? (Takside ve Sokakta)', en: 'Where is it? (Street & Taxi)', ru: 'Где находится? (В такси и на улице)' },
+      description: { az: 'Where is the hotel? / Over there / Stop here, please', tr: 'Where is the hotel? / Over there / Stop here, please', en: 'Essential navigation chunks for travelers', ru: 'Базовая навигация в городе и такси' },
+      iconName: 'map-pin',
+      estimatedMinutes: 2,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Haradadır?', tr: 'Nerede?', en: 'Where?', ru: 'Где?' },
+    },
+    {
+      id: 'a0_unit_07',
+      order: 9,
+      title: { az: 'Bu Nədir? (Gündəlik Əşyalar)', tr: 'Bu Nedir? (Günlük Eşyalar)', en: 'Everyday Objects & Phone', ru: 'Повседневные вещи' },
+      description: { az: 'My phone, Wi-Fi password, room key və pasport', tr: 'My phone, Wi-Fi password, room key ve pasaport', en: 'Asking for Wi-Fi, keys, passport, and charger', ru: 'Пароль от Wi-Fi, ключи и телефон' },
+      iconName: 'smartphone',
+      estimatedMinutes: 2,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Əşyalar', tr: 'Eşyalar', en: 'Objects', ru: 'Вещи' },
+    },
+    {
+      id: 'a0_unit_08',
+      order: 10,
+      title: { az: 'Əhval-Ruhiyyə və Hisslər', tr: 'Ruh Hali ve Hisler', en: 'How Are You Feeling?', ru: 'Как дела и самочувствие' },
+      description: { az: 'I am doing great, I am a bit tired, Everything is fine', tr: 'I am doing great, I am a bit tired, Everything is fine', en: 'Sharing how you feel in everyday small talk', ru: 'Короткий разговор о самочувствии' },
+      iconName: 'sun',
+      estimatedMinutes: 2,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Əhval', tr: 'Ruh Hali', en: 'Feelings', ru: 'Настроение' },
+    },
+    {
+      id: 'a0_unit_09',
+      order: 11,
+      title: { az: 'Sağollaşma və Görüşənədək', tr: 'Vedalaşma ve Görüşürüz', en: 'Warm Goodbyes & See You', ru: 'Прощание и до встречи' },
+      description: { az: 'See you tomorrow, Have a great day, Take care!', tr: 'See you tomorrow, Have a great day, Take care!', en: 'Ending conversations warmly like a native speaker', ru: 'Тёплое прощание по-английски' },
+      iconName: 'flag',
+      estimatedMinutes: 2,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Sağollaşma', tr: 'Veda', en: 'Goodbyes', ru: 'Прощание' },
+    },
+    {
+      id: 'a0_boss_01',
+      order: 12,
+      title: { az: 'A0 Yekun Sınaq: İlk Söhbət', tr: 'A0 Seviye Sonu: İlk Sohbet', en: 'A0 Checkpoint: First Real Chat', ru: 'Финал A0: Первый разговор' },
+      description: { az: 'A0 səviyyəsində öyrəndiyiniz bütün canlı frazaların sınağı!', tr: 'A0 seviyesinde öğrendiğiniz tüm canlı kalıpların testi!', en: 'Complete your first real-world survival conversation!', ru: 'Проверка всех базовых фраз уровня A0!' },
+      iconName: 'award',
+      estimatedMinutes: 3,
+      nodeType: 'checkpoint',
+      shortTitle: { az: 'A0 Sınaq', tr: 'A0 Sınav', en: 'A0 Exam', ru: 'A0 Финал' },
+    },
+  ],
   A1: [
     {
       id: 'a1_unit_01',
@@ -832,7 +1069,128 @@ export const SYLLABUS_MAP: Record<LevelId, SyllabusNode[]> = {
       shortTitle: { az: 'B2 İmtahan', tr: 'B2 Sınav', en: 'B2 Exam', ru: 'B2 Экзамен' },
     },
   ],
-  C1: [],
+  C1: [
+    {
+      id: 'c1_unit_01',
+      order: 1,
+      title: { az: 'Ritorik İnversiya və Vurğu', tr: 'Retorik Devrik Yapılar ve Vurgu', en: 'Rhetorical Inversion & Emphasis', ru: 'Риторическая инверсия и акцент' },
+      description: { az: 'Not only did we transform..., Seldom have we witnessed...', tr: 'Not only did we transform..., Seldom have we witnessed...', en: 'Commanding attention in keynote speeches and leadership', ru: 'Выразительная инверсия в выступлениях' },
+      iconName: 'sliders',
+      estimatedMinutes: 4,
+      nodeType: 'lesson',
+      shortTitle: { az: 'İnversiya', tr: 'İnversiyon', en: 'Inversion', ru: 'Инверсия' },
+    },
+    {
+      id: 'c1_unit_02',
+      order: 2,
+      title: { az: 'Diplomatik Yumşaltma (Hedging)', tr: 'Diplomatik Yumuşatma (Hedging)', en: 'Diplomatic Hedging & Nuance', ru: 'Дипломатическая мягкость (Hedging)' },
+      description: { az: 'It appears that..., With all due respect, We might want to reconsider', tr: 'It appears that..., With all due respect, We might want to reconsider', en: 'Navigating high-stakes boardrooms with subtle precision', ru: 'Тонкая дипломатия в сложных переговорах' },
+      iconName: 'shield',
+      estimatedMinutes: 4,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Diplomatiya', tr: 'Diplomasi', en: 'Diplomacy', ru: 'Дипломатия' },
+    },
+    {
+      id: 'c1_chest_01',
+      order: 3,
+      title: { az: 'Ustad Sandığı: +75 XP', tr: 'Ustalık Sandığı: +75 XP', en: 'Mastery Chest: +75 XP', ru: 'Сундук мастера: +75 XP' },
+      description: { az: 'C1 Peşəkar səviyyədə ilk addımlar üçün mükafat!', tr: 'C1 Uzmanlık seviyesindeki ilk adımlar için ödül!', en: 'Reward for entering C1 Advanced Mastery!', ru: 'Награда за первые шаги на уровне C1!' },
+      iconName: 'gift',
+      estimatedMinutes: 1,
+      nodeType: 'chest',
+      shortTitle: { az: 'Sandıq', tr: 'Sandık', en: 'Chest', ru: 'Сундук' },
+    },
+    {
+      id: 'c1_unit_03',
+      order: 4,
+      title: { az: 'Vurğulu Cleft Konstruksiyalar', tr: 'Vurgulu Cleft Yapıları', en: 'Cleft Sentences for Focus', ru: 'Рассечённые предложения (Cleft)' },
+      description: { az: 'What truly matters is..., It is consistency that builds mastery', tr: 'What truly matters is..., It is consistency that builds mastery', en: 'Structuring persuasive arguments with laser focus', ru: 'Фокусировка внимания в аргументации' },
+      iconName: 'zap',
+      estimatedMinutes: 4,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Vurğu', tr: 'Vurgu', en: 'Cleft Focus', ru: 'Акцент' },
+    },
+    {
+      id: 'c1_unit_04',
+      order: 5,
+      title: { az: 'Akademik Sintez və Tənqid', tr: 'Akademik Sentez ve Eleştiri', en: 'Academic Synthesis & Critique', ru: 'Академический синтез и критика' },
+      description: { az: 'The evidence points to a correlation, This warrants investigation', tr: 'The evidence points to a correlation, This warrants investigation', en: 'Evaluating research, data, and complex hypotheses', ru: 'Оценка исследований и научных гипотез' },
+      iconName: 'book-open',
+      estimatedMinutes: 4,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Akademik', tr: 'Akademik', en: 'Synthesis', ru: 'Синтез' },
+    },
+    {
+      id: 'c1_chest_02',
+      order: 6,
+      title: { az: 'Brilyant Sandıq: +100 XP', tr: 'Elmas Sandık: +100 XP', en: 'Diamond Chest: +100 XP', ru: 'Бриллиантовый сундук: +100 XP' },
+      description: { az: 'C1 zirvəsinin yarısını fəth etdiyiniz üçün mükafat!', tr: 'C1 zirvesinin yarısını fethettiğiniz için ödül!', en: 'Halfway to complete C1 Advanced Mastery!', ru: 'Половина пути к вершине C1 пройдена!' },
+      iconName: 'gift',
+      estimatedMinutes: 1,
+      nodeType: 'chest',
+      shortTitle: { az: 'Brilyant', tr: 'Elmas', en: 'Diamond', ru: 'Бриллиант' },
+    },
+    {
+      id: 'c1_unit_05',
+      order: 7,
+      title: { az: 'Metaforik İdiomlar və Üslub', tr: 'Metaforik Deyimler ve Üslup', en: 'Metaphorical Idioms & Style', ru: 'Метафорические идиомы и стиль' },
+      description: { az: 'Read between the lines, Weather the storm, Shift the paradigm', tr: 'Read between the lines, Weather the storm, Shift the paradigm', en: 'Speaking with rich, evocative native imagery', ru: 'Богатая образная речь носителя языка' },
+      iconName: 'feather',
+      estimatedMinutes: 4,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Metafora', tr: 'Metafor', en: 'Metaphors', ru: 'Метафоры' },
+    },
+    {
+      id: 'c1_unit_06',
+      order: 8,
+      title: { az: 'Subjunctive Mood & Formal Qərarlar', tr: 'Subjunctive Mood ve Resmi Kararlar', en: 'Subjunctive & Executive Mandates', ru: 'Сослагательное наклонение (Subjunctive)' },
+      description: { az: 'It is imperative that we act..., Suffice it to say...', tr: 'It is imperative that we act..., Suffice it to say...', en: 'High-register legal, policy, and executive precision', ru: 'Высокий стиль деловых и правовых решений' },
+      iconName: 'briefcase',
+      estimatedMinutes: 4,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Rəsmi Qərar', tr: 'Resmi Karar', en: 'Mandates', ru: 'Решения' },
+    },
+    {
+      id: 'c1_unit_07',
+      order: 9,
+      title: { az: 'Sətiraltı Məna və İroniya', tr: 'Satır Arası Anlam ve İroni', en: 'Subtext, Irony & Understatement', ru: 'Подтекст, ирония и недосказанность' },
+      description: { az: 'That is beside the point, Not quite what we anticipated', tr: 'That is beside the point, Not quite what we anticipated', en: 'Decoding British & American understatement effortlessly', ru: 'Понимание британской и американской иронии' },
+      iconName: 'eye',
+      estimatedMinutes: 4,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Sətiraltı', tr: 'Satır Arası', en: 'Subtext', ru: 'Подтекст' },
+    },
+    {
+      id: 'c1_unit_08',
+      order: 10,
+      title: { az: 'Qlobal Liderlik və Strateji Baxış', tr: 'Küresel Liderlik ve Stratejik Vizyon', en: 'Global Leadership & Vision', ru: 'Глобальное лидерство и стратегия' },
+      description: { az: 'On the flip side, At the end of the day, Long-term trajectory', tr: 'On the flip side, At the end of the day, Long-term trajectory', en: 'Inspiring teams and articulating complex long-term visions', ru: 'Вдохновляющее лидерство и стратегия' },
+      iconName: 'globe',
+      estimatedMinutes: 4,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Liderlik', tr: 'Liderlik', en: 'Leadership', ru: 'Лидерство' },
+    },
+    {
+      id: 'c1_unit_09',
+      order: 11,
+      title: { az: 'Spontan Debat və Ritorika', tr: 'Spontane Münazara ve Retorik', en: 'Impromptu Debate & Rhetoric', ru: 'Спонтанные дебаты и риторика' },
+      description: { az: 'Be that as it may, Far be it from me to..., By the same token', tr: 'Be that as it may, Far be it from me to..., By the same token', en: 'Countering arguments gracefully under live pressure', ru: 'Изящное парирование аргументов в споре' },
+      iconName: 'message-circle',
+      estimatedMinutes: 4,
+      nodeType: 'lesson',
+      shortTitle: { az: 'Ritorika', tr: 'Retorik', en: 'Rhetoric', ru: 'Риторика' },
+    },
+    {
+      id: 'c1_boss_01',
+      order: 12,
+      title: { az: 'C1 Böyük Ustad İmtahanı', tr: 'C1 Büyük Ustalık Sınavı', en: 'C1 Grandmaster Fluency Exam', ru: 'Гранд-экзамен мастерства C1' },
+      description: { az: 'A0-dan C1-ə uzanan böyük səyahətin zirvə sınağı!', tr: 'A0 seviyesinden C1 zirvesine uzanan yolculuğun taçlandırma sınavı!', en: 'The ultimate crown of your A0-to-C1 English mastery journey!', ru: 'Вершина вашего пути от A0 до свободного владения C1!' },
+      iconName: 'award',
+      estimatedMinutes: 6,
+      nodeType: 'checkpoint',
+      shortTitle: { az: 'C1 Zirvə', tr: 'C1 Zirve', en: 'C1 Crown', ru: 'C1 Вершина' },
+    },
+  ],
 };
 
 export interface CurriculumSection {
@@ -846,8 +1204,9 @@ export interface CurriculumSection {
 }
 
 /**
- * Lists all levels sequentially as a continuous downward Duolingo-style path.
- * Levels are unlocked strictly when previous level is completed.
+ * Lists all levels sequentially as a continuous downward path from A0 to C1.
+ * A0 and A1 start unlocked so complete beginners and elementary starters can jump right in;
+ * subsequent levels (A2, B1, B2, C1) unlock sequentially as previous levels are mastered.
  */
 export async function listContinuousSectionsWithProgress(
   uiLang: string = 'az'
@@ -859,14 +1218,16 @@ export async function listContinuousSectionsWithProgress(
   }
 
   const sections: CurriculumSection[] = [];
-  const levelOrder: LevelId[] = ['A1', 'A2', 'B1', 'B2'];
-  let previousLevelCompleted = true; // A1 starts unlocked
+  const levelOrder: LevelId[] = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1'];
+  let previousLevelCompleted = true; // A0 starts unlocked
 
   for (let sIdx = 0; sIdx < levelOrder.length; sIdx++) {
     const levelId = levelOrder[sIdx];
     const syllabus = SYLLABUS_MAP[levelId] || [];
     const levelInfo = CEFR_LEVELS.find((l) => l.id === levelId) || CEFR_LEVELS[0];
-    const isLevelUnlocked: boolean = previousLevelCompleted;
+    // Both A0 and A1 are unlocked from the beginning so users can start at A0 or A1 directly
+    const isLevelUnlocked: boolean =
+      levelId === 'A0' || levelId === 'A1' ? true : previousLevelCompleted;
 
     const unitItems: UnitDisplayItem[] = [];
     let previousNodePassed = isLevelUnlocked;
@@ -956,6 +1317,11 @@ export async function listUnitsWithProgress(
     const b1FinalNode = b1Syllabus[b1Syllabus.length - 1];
     const b1Passed = b1FinalNode ? progressMap.get(b1FinalNode.id)?.status === 'completed' : false;
     isLevelUnlocked = b1Passed;
+  } else if (levelId === 'C1') {
+    const b2Syllabus = SYLLABUS_MAP.B2 || [];
+    const b2FinalNode = b2Syllabus[b2Syllabus.length - 1];
+    const b2Passed = b2FinalNode ? progressMap.get(b2FinalNode.id)?.status === 'completed' : false;
+    isLevelUnlocked = b2Passed;
   }
 
   const syllabus = SYLLABUS_MAP[levelId] || [];
