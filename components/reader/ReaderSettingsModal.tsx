@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -63,20 +63,62 @@ export function ReaderSettingsModal({
   const { colors } = useAppTheme();
   const { t } = useLanguage();
 
-  if (!visible) return null;
+  // Instant local state for 0ms touch feedback
+  const [currentSettings, setCurrentSettings] = useState<ReaderSettings>(settings);
+  const saveTimerRef = useRef<any>(null);
+  const pendingSaveRef = useRef<Partial<ReaderSettings>>({});
+  const updateTimerRef = useRef<any>(null);
 
-  // Immediate in-memory update for 0ms lag + background persistence
+  // Sync when prop settings change
+  useEffect(() => {
+    setCurrentSettings(settings);
+  }, [settings]);
+
+  // Clean up and flush pending storage on unmount
+  useEffect(() => {
+    return () => {
+      if (updateTimerRef.current) cancelAnimationFrame(updateTimerRef.current);
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        if (Object.keys(pendingSaveRef.current).length > 0) {
+          saveReaderSettings(pendingSaveRef.current).catch(() => {});
+        }
+      }
+    };
+  }, []);
+
+  const debouncedSaveSettings = (partial: Partial<ReaderSettings>) => {
+    pendingSaveRef.current = { ...pendingSaveRef.current, ...partial };
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveReaderSettings(pendingSaveRef.current).catch(() => {});
+      pendingSaveRef.current = {};
+    }, 350);
+  };
+
+  // Immediate 0ms local state update + next-frame parent update + debounced storage
   const update = (partial: Partial<ReaderSettings>) => {
-    const next: ReaderSettings = { ...settings, ...partial };
-    onUpdateSettings(next);
-    saveReaderSettings(partial).catch(() => {});
+    const next: ReaderSettings = { ...currentSettings, ...partial };
+    // 1. Instant local feedback in < 1ms
+    setCurrentSettings(next);
+
+    // 2. Schedule parent reader re-layout non-blockingly so button tap state paints first
+    if (updateTimerRef.current) {
+      cancelAnimationFrame(updateTimerRef.current);
+    }
+    updateTimerRef.current = requestAnimationFrame(() => {
+      onUpdateSettings(next);
+    });
+
+    // 3. Debounced background persistence
+    debouncedSaveSettings(partial);
   };
 
   const changeSizeStep = (delta: number) => {
-    const currIdx = SIZE_ORDER.indexOf(settings.fontSize);
+    const currIdx = SIZE_ORDER.indexOf(currentSettings.fontSize);
     const nextIdx = Math.min(SIZE_ORDER.length - 1, Math.max(0, currIdx + delta));
     const next = SIZE_ORDER[nextIdx];
-    if (next && next !== settings.fontSize) {
+    if (next && next !== currentSettings.fontSize) {
       update({ fontSize: next });
     }
   };
@@ -147,7 +189,7 @@ export function ReaderSettingsModal({
             <View style={styles.themeRow}>
               {THEME_ORDER.map((themeKey) => {
                 const themeItem = THEMES[themeKey];
-                const active = themeKey === settings.theme;
+                const active = themeKey === currentSettings.theme;
                 return (
                   <Pressable
                     key={themeKey}
@@ -186,11 +228,11 @@ export function ReaderSettingsModal({
                 <View style={[styles.stepperContainer, { backgroundColor: colors.bg, borderColor: colors.surfaceBorder }]}>
                   <Pressable
                     onPress={() => changeSizeStep(-1)}
-                    disabled={settings.fontSize === 'small'}
+                    disabled={currentSettings.fontSize === 'small'}
                     style={({ pressed }) => [
                       styles.stepBtn,
                       { backgroundColor: colors.surface },
-                      settings.fontSize === 'small' && styles.stepBtnDisabled,
+                      currentSettings.fontSize === 'small' && styles.stepBtnDisabled,
                       pressed && styles.pressed,
                     ]}
                   >
@@ -198,16 +240,16 @@ export function ReaderSettingsModal({
                   </Pressable>
 
                   <Text style={[styles.sizeIndicatorText, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
-                    {t(sizeLabelKey[settings.fontSize])}
+                    {t(sizeLabelKey[currentSettings.fontSize])}
                   </Text>
 
                   <Pressable
                     onPress={() => changeSizeStep(1)}
-                    disabled={settings.fontSize === 'xlarge'}
+                    disabled={currentSettings.fontSize === 'xlarge'}
                     style={({ pressed }) => [
                       styles.stepBtn,
                       { backgroundColor: colors.surface },
-                      settings.fontSize === 'xlarge' && styles.stepBtnDisabled,
+                      currentSettings.fontSize === 'xlarge' && styles.stepBtnDisabled,
                       pressed && styles.pressed,
                     ]}
                   >
@@ -223,7 +265,7 @@ export function ReaderSettingsModal({
                 </Text>
                 <View style={[styles.alignToggleRow, { backgroundColor: colors.bg, borderColor: colors.surfaceBorder }]}>
                   {(['left', 'justify'] as TextAlignChoice[]).map((align) => {
-                    const active = settings.textAlign === align;
+                    const active = currentSettings.textAlign === align;
                     return (
                       <Pressable
                         key={align}
@@ -265,7 +307,7 @@ export function ReaderSettingsModal({
             </Text>
             <View style={styles.fontGrid}>
               {FAMILY_OPTIONS.map((opt) => {
-                const active = opt.key === settings.fontFamily;
+                const active = opt.key === currentSettings.fontFamily;
                 return (
                   <Pressable
                     key={opt.key}

@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -1260,10 +1261,10 @@ export default function BookReaderScreen() {
         onMomentumScrollEnd={handleMomentumScrollEnd}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
-        initialNumToRender={3}
-        maxToRenderPerBatch={3}
-        windowSize={9}
-        removeClippedSubviews={false}
+        initialNumToRender={2}
+        maxToRenderPerBatch={2}
+        windowSize={3}
+        removeClippedSubviews={Platform.OS === 'android'}
         getItemLayout={getItemLayout}
         renderItem={renderItem}
         initialScrollIndex={initialPageRef.current > 0 ? initialPageRef.current : undefined}
@@ -1392,7 +1393,15 @@ export default function BookReaderScreen() {
         settings={settings}
         isPremium={isPremium}
         onClose={() => setSettingsVisible(false)}
-        onUpdateSettings={(next) => setSettings(next)}
+        onUpdateSettings={(next) => {
+          if (React.startTransition) {
+            React.startTransition(() => {
+              setSettings(next);
+            });
+          } else {
+            setSettings(next);
+          }
+        }}
         onOpenPaywall={() => {
           setSettingsVisible(false);
           setPaywallVisible(true);
