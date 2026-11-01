@@ -68,21 +68,21 @@
       "uk": "Регулярні звички зі словами 'always' та 'every day'"
     },
     "explanation": {
-      "az": "Hər gün etdiyin işlər üçün felləri dəyişmədən sadə şəkildə söylə:\n\n• 'I wake up early.'\n• 'I always read books.'",
-      "en": "For daily habits, simply use the base verb form:\n\n• 'I wake up early.'\n• 'I always read books.'",
-      "tr": "Günlük alışkanlıklar için fiili olduğu gibi yalın kullanın:\n\n• 'I wake up early.'\n• 'I always read books.'",
-      "ru": "Для ежедневных привычек используйте глагол в начальной форме:\n\n• 'I wake up early.'\n• 'I always read books.'",
-      "es": "Para hablar de hábitos diarios, usa simplemente el verbo en su forma base:\n\n• 'I wake up early.' (Me despierto temprano)\n• 'I always read books.' (Siempre leo libros)",
-      "de": "Für tägliche Gewohnheiten nimmst du einfach die Grundform des Verbs:\n\n• 'I wake up early.' (Ich stehe früh auf)\n• 'I always read books.' (Ich lese immer Bücher)",
-      "fr": "Pour vos habitudes quotidiennes, utilisez simplement la forme de base du verbe :\n\n• 'I wake up early.' (Je me réveille tôt)\n• 'I always read books.' (Je lis toujours des livres)",
-      "it": "Per le abitudini quotidiane usa semplicemente la forma base del verbo:\n\n• 'I wake up early.' (Mi sveglio presto)\n• 'I always read books.' (Leggo sempre libri)",
-      "pt": "Para hábitos diários, basta usar o verbo em sua forma simples:\n\n• 'I wake up early.' (Eu acordo cedo)\n• 'I always read books.' (Eu sempre leio livros)",
-      "pl": "Do opisywania codziennych nawyków używaj po prostu podstawowej formy czasownika:\n\n• 'I wake up early.' (Wstaję wcześnie)\n• 'I always read books.' (Zawsze czytam książki)",
-      "cs": "Pro každodenní zvyky stačí použít základní tvar slovesa:\n\n• 'I wake up early.' (Vstávám brzy)\n• 'I always read books.' (Vždycky čtu knihy)",
-      "hu": "A mindennapi szokásokhoz egyszerűen használd az ige alapalakját:\n\n• 'I wake up early.' (Korán ébredek)\n• 'I always read books.' (Mindig olvasok könyveket)",
-      "uk": "Для щоденних звичок використовуйте дієслово в його початковій формі:\n\n• 'I wake up early.' (Я прокидаюся рано)\n• 'I always read books.' (Я завжди читаю книги)"
+      "az": "Hər gün etdiyiniz işlər üçün felləri dəyişmədən sadə şəkildə söyləyin: 'I wake up early' (Tezdən oyanıram) və 'I always read books' (Həmişə kitab oxuyuram).",
+      "en": "For daily habits, simply use the base verb form: 'I wake up early' (morning routine) and 'I always read books' (regular habit).",
+      "tr": "Günlük alışkanlıklar için fiili olduğu gibi yalın kullanın: 'I wake up early' (Erken uyanırım) ve 'I always read books' (Her zaman kitap okurum).",
+      "ru": "Для ежедневных привычек используйте глагол в начальной форме: 'I wake up early' (Я рано просыпаюсь) и 'I always read books' (Я всегда читаю книги).",
+      "es": "Para hablar de hábitos diarios, usa simplemente el verbo en su forma base: 'I wake up early' (Me despierto temprano) y 'I always read books' (Siempre leo libros).",
+      "de": "Für tägliche Gewohnheiten nimmst du einfach die Grundform des Verbs: 'I wake up early' (Ich stehe früh auf) und 'I always read books' (Ich lese immer Bücher).",
+      "fr": "Pour vos habitudes quotidiennes, utilisez simplement la forme de base du verbe : 'I wake up early' (Je me réveille tôt) et 'I always read books' (Je lis toujours des livres).",
+      "it": "Per le abitudini quotidiane usa semplicemente la forma base del verbo: 'I wake up early' (Mi sveglio presto) e 'I always read books' (Leggo sempre libri).",
+      "pt": "Para hábitos diários, basta usar o verbo em sua forma simples: 'I wake up early' (Eu acordo cedo) e 'I always read books' (Eu sempre leio livros).",
+      "pl": "Do opisywania codziennych nawyków używaj podstawowej formy czasownika: 'I wake up early' (Wstaję wcześnie) oraz 'I always read books' (Zawsze czytam książki).",
+      "cs": "Pro každodenní zvyky stačí použít základní tvar slovesa: 'I wake up early' (Vstávám brzy) a 'I always read books' (Vždycky čtu knihy).",
+      "hu": "A mindennapi szokásokhoz egyszerűen használd az ige alapalakját: 'I wake up early' (Korán ébredek) és 'I always read books' (Mindig olvasok könyveket).",
+      "uk": "Для щоденних звичок використовуйте дієслово в початковій формі: 'I wake up early' (Я прокидаюся рано) та 'I always read books' (Я завжди читаю книги)."
     },
-    "formula": "I wake up at [Vaxt] • I always [Hərəkət]",
+    "formula": "I wake up early • I always read books",
     "examples": [
       {
         "english": "I wake up early and read books.",
@@ -90,7 +90,16 @@
           "az": "Səhər tezdən oyanıram və kitab oxuyuram.",
           "en": "I wake up early and read books.",
           "tr": "Sabah erken uyanırım ve kitap okurum.",
-          "ru": "Я просыпаюсь рано и читаю книги."
+          "ru": "Я просыпаюсь рано и читаю книги.",
+          "es": "Me despierto temprano y leo libros.",
+          "de": "Ich wache früh auf und lese Bücher.",
+          "fr": "Je me réveille tôt et je lis des livres.",
+          "it": "Mi sveglio presto e leggo libri.",
+          "pt": "Eu acordo cedo e leio livros.",
+          "pl": "Budzę się wcześnie i czytam książki.",
+          "cs": "Vstávám brzy a čtu knihy.",
+          "hu": "Korán ébredek és könyveket olvasok.",
+          "uk": "Я прокидаюся рано і читаю книги."
         }
       }
     ],
@@ -101,7 +110,16 @@
         "az": "Vərdişləri deyərkən 'am' deməyin, birbaşa 'I wake up' söyləyin.",
         "en": "Say 'I wake up' directly without 'am'.",
         "tr": "Alışkanlıklarda 'am' demeyin, doğrudan 'I wake up' söyleyin.",
-        "ru": "Говорите напрямую 'I wake up', без 'am'."
+        "ru": "Говорите напрямую 'I wake up', без 'am'.",
+        "es": "Di directamente 'I wake up', sin añadir 'am'.",
+        "de": "Sage direkt 'I wake up', ohne 'am'.",
+        "fr": "Dites directement 'I wake up', sans 'am'.",
+        "it": "Di' direttamente 'I wake up', senza 'am'.",
+        "pt": "Diga diretamente 'I wake up', sem 'am'.",
+        "pl": "Mów bezpośrednio 'I wake up', bez 'am'.",
+        "cs": "Říkejte přímo 'I wake up', bez 'am'.",
+        "hu": "Mondd közvetlenül: 'I wake up', 'am' nélkül.",
+        "uk": "Кажіть напряму 'I wake up', без 'am'."
       }
     }
   },
@@ -131,7 +149,16 @@
         "az": "Saat 7-də oyanıram.",
         "en": "I wake up at 7.",
         "tr": "Saat 7'de uyanırım.",
-        "ru": "Я просыпаюсь в 7."
+        "ru": "Я просыпаюсь в 7.",
+        "es": "Me despierto a las 7.",
+        "de": "Ich wache um 7 Uhr auf.",
+        "fr": "Je me réveille à 7 heures.",
+        "it": "Mi sveglio alle 7.",
+        "pt": "Eu acordo às 7.",
+        "pl": "Budzę się o 7.",
+        "cs": "Probouzím se v 7.",
+        "hu": "7 órakor ébredek.",
+        "uk": "Я прокидаюся о 7-й."
       }
     },
     {
@@ -159,7 +186,16 @@
         "az": "Mən həmişə axşamlar oxuyuram.",
         "en": "I always read in the evening.",
         "tr": "Her zaman akşamları okurum.",
-        "ru": "Я всегда читаю по вечерам."
+        "ru": "Я всегда читаю по вечерам.",
+        "es": "Siempre leo por la noche.",
+        "de": "Ich lese immer abends.",
+        "fr": "Je lis toujours le soir.",
+        "it": "Leggo sempre la sera.",
+        "pt": "Eu sempre leio à noite.",
+        "pl": "Zawsze czytam wieczorem.",
+        "cs": "Vždycky čtu večer.",
+        "hu": "Mindig olvasok esténként.",
+        "uk": "Я завжди читаю вечорами."
       }
     },
     {
@@ -187,7 +223,16 @@
         "az": "Hər gün ingiliscə məşq edirəm.",
         "en": "I practice English every day.",
         "tr": "Her gün İngilizce pratik yaparım.",
-        "ru": "Я практикую английский каждый день."
+        "ru": "Я практикую английский каждый день.",
+        "es": "Practico inglés todos los días.",
+        "de": "Ich übe jeden Tag Englisch.",
+        "fr": "Je pratique l'anglais tous les jours.",
+        "it": "Pratico l'inglese ogni giorno.",
+        "pt": "Eu pratico inglês todos os dias.",
+        "pl": "Ćwiczę angielski codziennie.",
+        "cs": "Procvičuji angličtinu každý den.",
+        "hu": "Minden nap gyakorlom az angolt.",
+        "uk": "Я практикую англійську щодня."
       }
     }
   ],
@@ -198,7 +243,16 @@
       "az": "Məhsuldar Səhər",
       "en": "A Productive Morning",
       "tr": "Verimli Bir Sabah",
-      "ru": "Продуктивное утро"
+      "ru": "Продуктивное утро",
+      "es": "Una mañana productiva",
+      "de": "Ein produktiver Morgen",
+      "fr": "Une matinée productive",
+      "it": "Una mattina produttiva",
+      "pt": "Uma manhã produtiva",
+      "pl": "Produktywny poranek",
+      "cs": "Produktivní ráno",
+      "hu": "Egy eredményes reggel",
+      "uk": "Продуктивний ранок"
     },
     "cefr": "A1",
     "wordCount": 23,
@@ -218,15 +272,15 @@
         "en": "Build the daily routine chunk:",
         "tr": "Günlük rutin cümlesini kurun:",
         "ru": "Соберите предложение о привычке:",
-        "es": "Build the daily routine chunk:",
-        "de": "Build the daily routine chunk:",
-        "fr": "Build the daily routine chunk:",
-        "it": "Build the daily routine chunk:",
-        "pt": "Build the daily routine chunk:",
-        "pl": "Build the daily routine chunk:",
-        "cs": "Build the daily routine chunk:",
-        "hu": "Build the daily routine chunk:",
-        "uk": "Соберите предложение о привычке:"
+        "es": "Construye la frase de rutina diaria:",
+        "de": "Bilde den Satz zur täglichen Gewohnheit:",
+        "fr": "Construisez la phrase d'habitude quotidienne :",
+        "it": "Costruisci la frase sulla routine quotidiana:",
+        "pt": "Construa a frase de rotina diária:",
+        "pl": "Ułóż zdanie o codziennym nawyku:",
+        "cs": "Sestavte větu o každodenním zvyku:",
+        "hu": "Rakd össze a napi rutint kifejező mondatot:",
+        "uk": "Складіть речення про щоденну звичку:"
       },
       "instruction": {
         "az": "Mən həmişə kitab oxuyuram.",
@@ -264,21 +318,30 @@
         "en": "Complete the morning action:",
         "tr": "Sabah uyanmayı anlatan boşluğu doldurun:",
         "ru": "Заполните пропуск для подъема по утрам:",
-        "es": "Complete the morning action:",
-        "de": "Complete the morning action:",
-        "fr": "Complete the morning action:",
-        "it": "Complete the morning action:",
-        "pt": "Complete the morning action:",
-        "pl": "Complete the morning action:",
-        "cs": "Complete the morning action:",
-        "hu": "Complete the morning action:",
-        "uk": "Заполните пропуск для подъема по утрам:"
+        "es": "Completa la acción de la mañana:",
+        "de": "Vervollständige die morgendliche Handlung:",
+        "fr": "Complétez l'action du matin :",
+        "it": "Completa l'azione del mattino:",
+        "pt": "Complete a ação da manhã:",
+        "pl": "Uzupełnij poranną czynność:",
+        "cs": "Doplňte ranní činnost:",
+        "hu": "Egészítsd ki a reggeli cselekvést:",
+        "uk": "Заповніть пропуск для ранкової дії:"
       },
       "instruction": {
         "az": "I wake ___ early every day.",
         "en": "I wake ___ early every day.",
         "tr": "I wake ___ early every day.",
-        "ru": "I wake ___ early every day."
+        "ru": "I wake ___ early every day.",
+        "es": "I wake ___ early every day.",
+        "de": "I wake ___ early every day.",
+        "fr": "I wake ___ early every day.",
+        "it": "I wake ___ early every day.",
+        "pt": "I wake ___ early every day.",
+        "pl": "I wake ___ early every day.",
+        "cs": "I wake ___ early every day.",
+        "hu": "I wake ___ early every day.",
+        "uk": "I wake ___ early every day."
       },
       "options": [
         {
@@ -307,15 +370,15 @@
         "en": "Listen and select what you hear:",
         "tr": "Dinleyin ve duyduğunuzu seçin:",
         "ru": "Послушайте и выберите то, что услышали:",
-        "es": "Listen and select what you hear:",
-        "de": "Listen and select what you hear:",
-        "fr": "Listen and select what you hear:",
-        "it": "Listen and select what you hear:",
-        "pt": "Listen and select what you hear:",
-        "pl": "Listen and select what you hear:",
-        "cs": "Listen and select what you hear:",
-        "hu": "Listen and select what you hear:",
-        "uk": "Послушайте и выберите то, что услышали:"
+        "es": "Escucha y selecciona lo que oyes:",
+        "de": "Hör zu und wähle aus, was du hörst:",
+        "fr": "Écoutez et sélectionnez ce que vous entendez :",
+        "it": "Ascolta e seleziona ciò che senti:",
+        "pt": "Ouça e selecione o que você ouviu:",
+        "pl": "Posłuchaj i wybierz to, co słyszysz:",
+        "cs": "Poslouchejte a vyberte, co slyšíte:",
+        "hu": "Hallgasd meg, és válaszd ki, amit hallasz:",
+        "uk": "Послухайте та виберіть те, що почули:"
       },
       "audioPrompt": "Every day",
       "options": [
@@ -346,7 +409,16 @@
         "az": "Sürətli sınaq: cümləni yığın",
         "en": "Quick recall: assemble the chunk",
         "tr": "Hızlı tekrar: cümleyi kurun",
-        "ru": "Быстрое повторение: соберите фразу"
+        "ru": "Быстрое повторение: соберите фразу",
+        "es": "Repaso rápido: construye la frase",
+        "de": "Schnelltest: Bilde den Ausdruck",
+        "fr": "Rappel rapide : assemblez l'expression",
+        "it": "Ripasso rapido: componi la frase",
+        "pt": "Revisão rápida: monte a expressão",
+        "pl": "Szybka powtórka: ułóż zwrot",
+        "cs": "Rychlé opakování: sestavte výraz",
+        "hu": "Gyors ismétlés: rakd össze a kifejezést",
+        "uk": "Швидке повторення: складіть фразу"
       },
       "instruction": {
         "az": "Hər gün",

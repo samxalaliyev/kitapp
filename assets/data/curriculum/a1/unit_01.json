@@ -68,21 +68,21 @@
       "uk": "Використовуйте цю готову фразу, щоб представитися природно"
     },
     "explanation": {
-      "az": "İngilis dilində qaydaları əzbərləməyə ehtiyac yoxdur. Tanış olarkən bu hazır qəlibləri olduğu kimi səsləndir:\n\n• 'Hi, I'm Alex.' (Salam, mən Alexəm)\n• 'Nice to meet you.' (Tanışlığımıza şadam)",
-      "en": "No need to memorize complex rules. Simply use these natural spoken chunks:\n\n• 'Hi, I'm Alex.'\n• 'Nice to meet you.'",
-      "tr": "Kuralları ezberlemeye gerek yok. Tanışırken bu hazır kalıpları kullanın:\n\n• 'Hi, I'm Alex.' (Merhaba, ben Alex)\n• 'Nice to meet you.' (Tanıştığıma memnun oldum)",
-      "ru": "Не нужно заучивать правила. При знакомстве просто используйте эти фразы:\n\n• 'Hi, I'm Alex.' (Привет, я Алекс)\n• 'Nice to meet you.' (Приятно познакомиться)",
-      "es": "No hace falta memorizar reglas complejas. Usa directamente estas expresiones naturales:\n\n• 'Hi, I'm Alex.' (Hola, soy Alex)\n• 'Nice to meet you.' (Mucho gusto en conocerte)",
-      "de": "Keine komplizierten Regeln pauken! Nutze einfach diese natürlichen Redewendungen:\n\n• 'Hi, I'm Alex.' (Hallo, ich bin Alex)\n• 'Nice to meet you.' (Freut mich, dich kennenzulernen)",
-      "fr": "Pas besoin d'apprendre des règles par cœur. Utilisez directement ces expressions orales naturelles :\n\n• 'Hi, I'm Alex.' (Salut, je suis Alex)\n• 'Nice to meet you.' (Ravi de vous rencontrer)",
-      "it": "Non serve memorizzare regole complesse. Usa direttamente queste frasi naturali:\n\n• 'Hi, I'm Alex.' (Ciao, sono Alex)\n• 'Nice to meet you.' (Piacere di conoscerti)",
-      "pt": "Não precisa memorizar regras difíceis. Use diretamente estas frases espontâneas:\n\n• 'Hi, I'm Alex.' (Oi, eu sou o Alex)\n• 'Nice to meet you.' (Prazer em conhecer você)",
-      "pl": "Nie musisz uczyć się regułek na pamięć. Po prostu stosuj te naturalne zwroty:\n\n• 'Hi, I'm Alex.' (Cześć, jestem Alex)\n• 'Nice to meet you.' (Miło cię poznać)",
-      "cs": "Není třeba biflovat složitá pravidla. Používejte tyto přirozené mluvené obraty:\n\n• 'Hi, I'm Alex.' (Ahoj, já jsem Alex)\n• 'Nice to meet you.' (Rád vás poznávám)",
-      "hu": "Nem kell bonyolult szabályokat magolnod. Használd közvetlenül ezeket a természetes fordulatokat:\n\n• 'Hi, I'm Alex.' (Szia, Alex vagyok)\n• 'Nice to meet you.' (Örülök, hogy megismertelek)",
-      "uk": "Не потрібно зубрити граматику. Просто використовуйте ці готові живі фрази:\n\n• 'Hi, I'm Alex.' (Привіт, я Алекс)\n• 'Nice to meet you.' (Приємно познайомитися)"
+      "az": "İngilis dilində qaydaları əzbərləməyə ehtiyac yoxdur. Tanış olarkən bu hazır qəlibləri olduğu kimi səsləndir: 'Hi, I'm Alex' (Salam, mən Alexəm) və 'Nice to meet you' (Tanışlığımıza şadam).",
+      "en": "No need to memorize complex rules. Simply use these natural spoken chunks: 'Hi, I'm Alex' (introducing your name) and 'Nice to meet you' (greeting someone new).",
+      "tr": "Kuralları ezberlemeye gerek yok. Tanışırken bu hazır kalıpları kullanın: 'Hi, I'm Alex' (Merhaba, ben Alex) ve 'Nice to meet you' (Tanıştığıma memnun oldum).",
+      "ru": "Не нужно заучивать правила. При знакомстве просто используйте эти фразы: 'Hi, I'm Alex' (Привет, я Алекс) и 'Nice to meet you' (Приятно познакомиться).",
+      "es": "No hace falta memorizar reglas complejas. Usa directamente estas expresiones naturales: 'Hi, I'm Alex' (Hola, soy Alex) y 'Nice to meet you' (Mucho gusto en conocerte).",
+      "de": "Keine komplizierten Regeln pauken! Nutze einfach diese natürlichen Redewendungen: 'Hi, I'm Alex' (Hallo, ich bin Alex) und 'Nice to meet you' (Freut mich, dich kennenzulernen).",
+      "fr": "Pas besoin d'apprendre des règles par cœur. Utilisez directement ces expressions naturelles : 'Hi, I'm Alex' (Salut, je suis Alex) et 'Nice to meet you' (Ravi de vous rencontrer).",
+      "it": "Non serve memorizzare regole complesse. Usa directement queste frasi naturali: 'Hi, I'm Alex' (Ciao, sono Alex) e 'Nice to meet you' (Piacere di conoscerti).",
+      "pt": "Não precisa memorizar regras difíceis. Use diretamente estas frases espontâneas: 'Hi, I'm Alex' (Oi, eu sou o Alex) e 'Nice to meet you' (Prazer em conhecer você).",
+      "pl": "Nie musisz uczyć się regułek na pamięć. Po prostu stosuj te naturalne zwroty: 'Hi, I'm Alex' (Cześć, jestem Alex) oraz 'Nice to meet you' (Miło cię poznać).",
+      "cs": "Není třeba biflovat složitá pravidla. Používejte tyto přirozené mluvené obraty: 'Hi, I'm Alex' (Ahoj, já jsem Alex) a 'Nice to meet you' (Rád vás poznávám).",
+      "hu": "Nem kell bonyolult szabályokat magolnod. Használd közvetlenül ezeket a természetes fordulatokat: 'Hi, I'm Alex' (Szia, Alex vagyok) és 'Nice to meet you' (Örülök, hogy megismertelek).",
+      "uk": "Не потрібно зубрити граматику. Просто використовуйте ці готові живі фрази: 'Hi, I'm Alex' (Привіт, я Алекс) та 'Nice to meet you' (Приємно познайомитися)."
     },
-    "formula": "Hi, I'm [Adın] • Nice to meet you",
+    "formula": "Hi, I'm Alex • Nice to meet you",
     "examples": [
       {
         "english": "Hi, I'm Lisa. Nice to meet you!",
@@ -90,7 +90,16 @@
           "az": "Salam, mən Lisayam. Tanışlığımıza şadam!",
           "en": "Hi, I'm Lisa. Nice to meet you!",
           "tr": "Merhaba, ben Lisa. Tanıştığıma memnun oldum!",
-          "ru": "Привет, я Лиза. Приятно познакомиться!"
+          "ru": "Привет, я Лиза. Приятно познакомиться!",
+          "es": "Hola, soy Lisa. ¡Mucho gusto en conocerte!",
+          "de": "Hallo, ich bin Lisa. Freut mich, dich kennenzulernen!",
+          "fr": "Salut, je suis Lisa. Ravie de te rencontrer !",
+          "it": "Ciao, sono Lisa. Piacere di conoscerti!",
+          "pt": "Oi, eu sou a Lisa. Prazer em conhecer você!",
+          "pl": "Cześć, jestem Lisa. Miło cię poznać!",
+          "cs": "Ahoj, já jsem Lisa. Ráda tě poznávám!",
+          "hu": "Szia, Lisa vagyok. Örülök, hogy megismertelek!",
+          "uk": "Привіт, я Ліза. Приємно познайомитися!"
         }
       }
     ],
@@ -98,10 +107,19 @@
       "incorrect": "I is Lisa.",
       "correct": "I'm Lisa.",
       "explanation": {
-        "az": "Qısaca və təbii şəkildə 'I'm...' deyin.",
+        "az": "Özünüzü təqdim edərkən qısaca və təbii şəkildə 'I'm...' deyin.",
         "en": "Always say 'I'm...' simply and naturally.",
-        "tr": "Kısaca ve doğal şekilde 'I'm...' deyin.",
-        "ru": "Всегда говорите кратко и естественно: 'I'm...'"
+        "tr": "Kendinizi tanıtırken kısaca ve doğal şekilde 'I'm...' deyin.",
+        "ru": "Всегда говорите кратко и естественно: 'I'm...'",
+        "es": "Di siempre 'I'm...' de forma breve y natural.",
+        "de": "Sage immer kurz und natürlich 'I'm...'.",
+        "fr": "Dites toujours simplement et naturellement 'I'm...'.",
+        "it": "Di' sempre 'I'm...' in modo semplice e naturale.",
+        "pt": "Diga sempre 'I'm...' de forma simples e natural.",
+        "pl": "Zawsze mów krótko i naturalnie 'I'm...'.",
+        "cs": "Vždy říkejte krátce a přirozeně 'I'm...'.",
+        "hu": "Mindig röviden és természetesen mondd: 'I'm...'.",
+        "uk": "Завжди кажіть коротко та природно: 'I'm...'."
       }
     }
   },
@@ -131,7 +149,16 @@
         "az": "Salam, mən Alexəm.",
         "en": "Hi, I'm Alex.",
         "tr": "Merhaba, ben Alex.",
-        "ru": "Привет, я Алекс."
+        "ru": "Привет, я Алекс.",
+        "es": "Hola, soy Alex.",
+        "de": "Hallo, ich bin Alex.",
+        "fr": "Salut, je suis Alex.",
+        "it": "Ciao, sono Alex.",
+        "pt": "Oi, eu sou o Alex.",
+        "pl": "Cześć, jestem Alex.",
+        "cs": "Ahoj, já jsem Alex.",
+        "hu": "Szia, Alex vagyok.",
+        "uk": "Привіт, я Алекс."
       }
     },
     {
@@ -159,7 +186,16 @@
         "az": "Tanışlığımıza şadam!",
         "en": "Nice to meet you!",
         "tr": "Tanıştığıma memnun oldum!",
-        "ru": "Приятно познакомиться!"
+        "ru": "Приятно познакомиться!",
+        "es": "¡Mucho gusto en conocerte!",
+        "de": "Freut mich, dich kennenzulernen!",
+        "fr": "Enchanté de vous rencontrer !",
+        "it": "Piacere di conoscerti!",
+        "pt": "Prazer em conhecer você!",
+        "pl": "Miło cię poznać!",
+        "cs": "Rád vás poznávám!",
+        "hu": "Örülök, hogy megismertelek!",
+        "uk": "Приємно познайомитися!"
       }
     },
     {
@@ -187,7 +223,16 @@
         "az": "Salam! Necəsən?",
         "en": "Hi! How are you?",
         "tr": "Merhaba! Nasılsın?",
-        "ru": "Привет! Как дела?"
+        "ru": "Привет! Как дела?",
+        "es": "¡Hola! ¿Cómo estás?",
+        "de": "Hallo! Wie geht es dir?",
+        "fr": "Salut ! Comment vas-tu ?",
+        "it": "Ciao! Come stai?",
+        "pt": "Oi! Como vai você?",
+        "pl": "Cześć! Jak się masz?",
+        "cs": "Ahoj! Jak se máš?",
+        "hu": "Szia! Hogy vagy?",
+        "uk": "Привіт! Як справи?"
       }
     }
   ],
@@ -198,7 +243,16 @@
       "az": "Mehriban Gülüş",
       "en": "A Friendly Smile",
       "tr": "Sıcak Bir Gülümseme",
-      "ru": "Дружелюбная улыбка"
+      "ru": "Дружелюбная улыбка",
+      "es": "Una sonrisa amistosa",
+      "de": "Ein freundliches Lächeln",
+      "fr": "Un sourire amical",
+      "it": "Un sorriso amichevole",
+      "pt": "Um sorriso amigável",
+      "pl": "Przyjazny uśmiech",
+      "cs": "Přátelský úsměv",
+      "hu": "Barátságos mosoly",
+      "uk": "Привітна усмішка"
     },
     "cefr": "A1",
     "wordCount": 26,
@@ -218,15 +272,15 @@
         "en": "Build the greeting chunk:",
         "tr": "Tanışma cümlesini kurun:",
         "ru": "Соберите фразу знакомства:",
-        "es": "Build the greeting chunk:",
-        "de": "Build the greeting chunk:",
-        "fr": "Build the greeting chunk:",
-        "it": "Build the greeting chunk:",
-        "pt": "Build the greeting chunk:",
-        "pl": "Build the greeting chunk:",
-        "cs": "Build the greeting chunk:",
-        "hu": "Build the greeting chunk:",
-        "uk": "Соберите фразу знакомства:"
+        "es": "Construye la frase de presentación:",
+        "de": "Bilde den Begrüßungssatz:",
+        "fr": "Construisez la phrase de rencontre :",
+        "it": "Costruisci la frase di presentazione:",
+        "pt": "Construa a frase de apresentação:",
+        "pl": "Ułóż zwrot powitalny:",
+        "cs": "Sestavte seznamovací frázi:",
+        "hu": "Rakd össze a bemutatkozó mondatot:",
+        "uk": "Складіть фразу знайомства:"
       },
       "instruction": {
         "az": "Tanış olmağımıza şadam.",
@@ -264,21 +318,30 @@
         "en": "Complete the self-introduction:",
         "tr": "Kendini tanıtmak için boşluğu doldur:",
         "ru": "Заполните пропуск для представления:",
-        "es": "Complete the self-introduction:",
-        "de": "Complete the self-introduction:",
-        "fr": "Complete the self-introduction:",
-        "it": "Complete the self-introduction:",
-        "pt": "Complete the self-introduction:",
-        "pl": "Complete the self-introduction:",
-        "cs": "Complete the self-introduction:",
-        "hu": "Complete the self-introduction:",
-        "uk": "Заполните пропуск для представления:"
+        "es": "Completa la presentación personal:",
+        "de": "Vervollständige die Vorstellung:",
+        "fr": "Complétez la présentation :",
+        "it": "Completa la presentazione:",
+        "pt": "Complete a apresentação:",
+        "pl": "Uzupełnij przedstawienie się:",
+        "cs": "Doplňte představení:",
+        "hu": "Egészítsd ki a bemutatkozást:",
+        "uk": "Заповніть пропуск для представлення:"
       },
       "instruction": {
         "az": "Hi, ___ Alex.",
         "en": "Hi, ___ Alex.",
         "tr": "Hi, ___ Alex.",
-        "ru": "Hi, ___ Alex."
+        "ru": "Hi, ___ Alex.",
+        "es": "Hi, ___ Alex.",
+        "de": "Hi, ___ Alex.",
+        "fr": "Hi, ___ Alex.",
+        "it": "Hi, ___ Alex.",
+        "pt": "Hi, ___ Alex.",
+        "pl": "Hi, ___ Alex.",
+        "cs": "Hi, ___ Alex.",
+        "hu": "Hi, ___ Alex.",
+        "uk": "Hi, ___ Alex."
       },
       "options": [
         {
@@ -307,15 +370,15 @@
         "en": "Listen and select what you hear:",
         "tr": "Dinleyin ve duyduğunuz kalıbı seçin:",
         "ru": "Послушайте и выберите то, что услышали:",
-        "es": "Listen and select what you hear:",
-        "de": "Listen and select what you hear:",
-        "fr": "Listen and select what you hear:",
-        "it": "Listen and select what you hear:",
-        "pt": "Listen and select what you hear:",
-        "pl": "Listen and select what you hear:",
-        "cs": "Listen and select what you hear:",
-        "hu": "Listen and select what you hear:",
-        "uk": "Послушайте и выберите то, что услышали:"
+        "es": "Escucha y selecciona lo que oyes:",
+        "de": "Hör zu und wähle aus, was du hörst:",
+        "fr": "Écoutez et sélectionnez ce que vous entendez :",
+        "it": "Ascolta e seleziona ciò che senti:",
+        "pt": "Ouça e selecione o que você ouviu:",
+        "pl": "Posłuchaj i wybierz to, co słyszysz:",
+        "cs": "Poslouchejte a vyberte, co slyšíte:",
+        "hu": "Hallgasd meg, és válaszd ki, amit hallasz:",
+        "uk": "Послухайте та виберіть те, що почули:"
       },
       "audioPrompt": "How are you?",
       "options": [
@@ -346,7 +409,16 @@
         "az": "Sürətli sınaq: cümləni yığın",
         "en": "Quick recall: assemble the chunk",
         "tr": "Hızlı tekrar: cümleyi kurun",
-        "ru": "Быстрое повторение: соберите фразу"
+        "ru": "Быстрое повторение: соберите фразу",
+        "es": "Repaso rápido: construye la frase",
+        "de": "Schnelltest: Bilde den Satz",
+        "fr": "Rappel rapide : assemblez la phrase",
+        "it": "Ripasso rapido: componi la frase",
+        "pt": "Revisão rápida: monte a frase",
+        "pl": "Szybka powtórka: ułóż zdanie",
+        "cs": "Rychlé opakování: sestavte větu",
+        "hu": "Gyors ismétlés: rakd össze a mondatot",
+        "uk": "Швидке повторення: складіть фразу"
       },
       "instruction": {
         "az": "Salam, mən Alexəm.",

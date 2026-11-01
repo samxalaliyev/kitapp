@@ -177,6 +177,48 @@ function renderStructuredFormula(formula: string, colors: any) {
   );
 }
 
+/**
+ * Renders explanation text with distinct visual emphasis on quoted English expressions ('...')
+ * and parenthetical translations ((...)) so target words and their meanings stand out clearly.
+ */
+function renderHighlightedExplanation(text: string, colors: any) {
+  const tokens = text.split(/('[^']+'|\([^)]+\))/g).filter(Boolean);
+  return (
+    <Text style={[styles.explanationText, { color: colors.text }]}>
+      {tokens.map((part, idx) => {
+        if (part.startsWith("'") && part.endsWith("'") && part.length > 2) {
+          return (
+            <Text
+              key={idx}
+              style={{
+                color: colors.isDark ? '#38bdf8' : '#0284c7',
+                fontWeight: FontWeight.extrabold,
+                backgroundColor: colors.isDark ? 'rgba(56, 189, 248, 0.14)' : '#e0f2fe',
+              }}
+            >
+              {part}
+            </Text>
+          );
+        }
+        if (part.startsWith('(') && part.endsWith(')') && part.length > 2) {
+          return (
+            <Text
+              key={idx}
+              style={{
+                color: colors.isDark ? '#34d399' : '#059669',
+                fontWeight: FontWeight.bold,
+              }}
+            >
+              {part}
+            </Text>
+          );
+        }
+        return <Text key={idx}>{part}</Text>;
+      })}
+    </Text>
+  );
+}
+
 export function LessonPlayerModal({
   visible,
   unit,
@@ -201,6 +243,9 @@ export function LessonPlayerModal({
   const [hearts, setHearts] = useState(MAX_HEARTS);
   const [showOutOfHearts, setShowOutOfHearts] = useState(false);
   const [isSpeakingStory, setIsSpeakingStory] = useState(false);
+  const [activeDialogueLineIndex, setActiveDialogueLineIndex] = useState<number | null>(null);
+  const storySpeechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const storySpeechCancelledRef = useRef<boolean>(false);
 
   // Theory micro-step state (Streamlined to 1 immersive scene card)
   const [theoryStep, setTheoryStep] = useState(0);
@@ -253,9 +298,21 @@ export function LessonPlayerModal({
       setFeedbackState('idle');
       setSelectedOptionId(null);
       setScrambleBuiltWords([]);
+      storySpeechCancelledRef.current = true;
+      if (storySpeechTimerRef.current) {
+        clearTimeout(storySpeechTimerRef.current);
+        storySpeechTimerRef.current = null;
+      }
+      setActiveDialogueLineIndex(null);
     } else {
+      storySpeechCancelledRef.current = true;
+      if (storySpeechTimerRef.current) {
+        clearTimeout(storySpeechTimerRef.current);
+        storySpeechTimerRef.current = null;
+      }
       Speech.stop().catch(() => {});
       setIsSpeakingStory(false);
+      setActiveDialogueLineIndex(null);
     }
   }, [visible]);
 
@@ -286,34 +343,112 @@ export function LessonPlayerModal({
     }
   }, [currentStage, exerciseIndex, currentExercise]);
 
-  const handleSpeech = useCallback((text: string, rate: number = 0.9) => {
+  const stopStoryPlayback = useCallback(() => {
+    storySpeechCancelledRef.current = true;
+    if (storySpeechTimerRef.current) {
+      clearTimeout(storySpeechTimerRef.current);
+      storySpeechTimerRef.current = null;
+    }
     Speech.stop().catch(() => {});
-    Speech.speak(text, {
-      language: 'en-US',
-      rate,
-      pitch: 1.0,
-    });
+    setIsSpeakingStory(false);
+    setActiveDialogueLineIndex(null);
   }, []);
+
+  const handleSpeech = useCallback(
+    (text: string, rate: number = 0.9) => {
+      stopStoryPlayback();
+      Speech.speak(text, {
+        language: 'en-US',
+        rate,
+        pitch: 1.0,
+      });
+    },
+    [stopStoryPlayback]
+  );
 
   const toggleStorySpeech = useCallback(() => {
     if (!unit?.story?.content) return;
     if (isSpeakingStory) {
-      Speech.stop().catch(() => {});
-      setIsSpeakingStory(false);
-    } else {
-      setIsSpeakingStory(true);
-      Speech.speak(unit.story.content, {
+      stopStoryPlayback();
+      return;
+    }
+
+    const parsedLines = unit.story.content
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line, idx) => {
+        const colonIdx = line.indexOf(':');
+        const speaker = colonIdx > -1 ? line.substring(0, colonIdx).trim() : '';
+        const message =
+          colonIdx > -1
+            ? line
+                .substring(colonIdx + 1)
+                .replace(/^["'“”\s]+|["'“”\s]+$/g, '')
+                .trim()
+            : line.replace(/^["'“”\s]+|["'“”\s]+$/g, '').trim();
+        const isUserSpeaker =
+          speaker.toLowerCase() === 'you' ||
+          speaker.toLowerCase() === 'alex' ||
+          idx % 2 === 1;
+        return { speaker, message, isUserSpeaker };
+      })
+      .filter((item) => item.message.length > 0);
+
+    if (parsedLines.length === 0) return;
+
+    storySpeechCancelledRef.current = false;
+    setIsSpeakingStory(true);
+
+    const speakLineAt = (index: number) => {
+      if (storySpeechCancelledRef.current || index >= parsedLines.length) {
+        setIsSpeakingStory(false);
+        setActiveDialogueLineIndex(null);
+        return;
+      }
+
+      const currentLine = parsedLines[index];
+      setActiveDialogueLineIndex(index);
+
+      Speech.speak(currentLine.message, {
         language: 'en-US',
         rate: 0.88,
-        onDone: () => setIsSpeakingStory(false),
-        onError: () => setIsSpeakingStory(false),
+        pitch: currentLine.isUserSpeaker ? 0.96 : 1.05,
+        onDone: () => {
+          if (storySpeechCancelledRef.current) return;
+          if (index + 1 < parsedLines.length) {
+            storySpeechTimerRef.current = setTimeout(() => {
+              speakLineAt(index + 1);
+            }, 550);
+          } else {
+            setIsSpeakingStory(false);
+            setActiveDialogueLineIndex(null);
+          }
+        },
+        onStopped: () => {
+          if (storySpeechCancelledRef.current) {
+            setIsSpeakingStory(false);
+            setActiveDialogueLineIndex(null);
+          }
+        },
+        onError: () => {
+          setIsSpeakingStory(false);
+          setActiveDialogueLineIndex(null);
+        },
       });
-    }
-  }, [unit?.story?.content, isSpeakingStory]);
+    };
+
+    Speech.stop()
+      .catch(() => {})
+      .finally(() => {
+        if (!storySpeechCancelledRef.current) {
+          speakLineAt(0);
+        }
+      });
+  }, [unit?.story?.content, isSpeakingStory, stopStoryPlayback]);
 
   const handleClose = () => {
-    Speech.stop().catch(() => {});
-    setIsSpeakingStory(false);
+    stopStoryPlayback();
     if (currentStage === 'exercise' && !completedResult) {
       Alert.alert(
         getCurriculumText('exit_lesson_title', activeLang),
@@ -620,11 +755,55 @@ export function LessonPlayerModal({
                   {/* Soft Divider */}
                   <View style={[styles.cardDivider, { backgroundColor: colors.isDark ? '#1e293b' : '#e2e8f0' }]} />
 
-                  {/* Pedagogical Explanation */}
+                  {/* Pedagogical Explanation & Line-by-Line Highlighted Expressions */}
                   <View style={styles.explanationSection}>
-                    <Text style={[styles.explanationText, { color: colors.text }]}>
-                      {getLocalizedContent(unit.grammarRule.explanation, activeLang)}
-                    </Text>
+                    {renderHighlightedExplanation(
+                      getLocalizedContent(unit.grammarRule.explanation, activeLang),
+                      colors
+                    )}
+
+                    {unit.vocabulary && unit.vocabulary.length > 0 && (
+                      <View style={styles.explanationKeyList}>
+                        {unit.vocabulary.slice(0, 3).map((vItem, vIdx) => (
+                          <Pressable
+                            key={vItem.id || vIdx}
+                            onPress={() => handleSpeech(vItem.audioText || vItem.word, 0.9)}
+                            style={({ pressed }) => [
+                              styles.explanationKeyRow,
+                              {
+                                backgroundColor: colors.isDark ? '#141c2b' : '#f8fafc',
+                                borderColor: colors.isDark ? '#243247' : '#e2e8f0',
+                                opacity: pressed ? 0.8 : 1,
+                              },
+                            ]}
+                          >
+                            <View style={styles.explanationKeyLeft}>
+                              <Feather
+                                name="volume-2"
+                                size={15}
+                                color={colors.isDark ? '#38bdf8' : '#0284c7'}
+                              />
+                              <Text
+                                style={[
+                                  styles.explanationKeyWord,
+                                  { color: colors.isDark ? '#38bdf8' : '#0284c7' },
+                                ]}
+                              >
+                                {vItem.word}
+                              </Text>
+                            </View>
+                            <Text
+                              style={[
+                                styles.explanationKeyTrans,
+                                { color: colors.isDark ? '#34d399' : '#059669' },
+                              ]}
+                            >
+                              {getLocalizedContent(vItem.translations, activeLang)}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
                   </View>
                 </View>
               </ScrollView>
@@ -908,6 +1087,7 @@ export function LessonPlayerModal({
                     const speaker = colonIdx > -1 ? line.substring(0, colonIdx).trim() : '';
                     const message = colonIdx > -1 ? line.substring(colonIdx + 1).replace(/^["'\s]+|["'\s]+$/g, '').trim() : line;
                     const isUserSpeaker = speaker.toLowerCase() === 'you' || speaker.toLowerCase() === 'alex' || lIdx % 2 === 1;
+                    const isActiveLine = activeDialogueLineIndex === lIdx;
 
                     return (
                       <Pressable
@@ -927,12 +1107,16 @@ export function LessonPlayerModal({
                             isUserSpeaker
                               ? {
                                   backgroundColor: colors.isDark ? '#0c3247' : '#e0f2fe',
-                                  borderColor: '#38bdf8',
+                                  borderColor: isActiveLine ? '#10b981' : '#38bdf8',
                                   borderBottomRightRadius: 4,
                                 }
                               : {
                                   backgroundColor: colors.surface,
-                                  borderColor: colors.isDark ? '#243247' : '#e2e8f0',
+                                  borderColor: isActiveLine
+                                    ? '#10b981'
+                                    : colors.isDark
+                                      ? '#243247'
+                                      : '#e2e8f0',
                                   borderBottomLeftRadius: 4,
                                 },
                           ]}
@@ -2702,5 +2886,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
     fontWeight: FontWeight.semibold,
+  },
+  explanationKeyList: {
+    marginTop: 14,
+    gap: 8,
+  },
+  explanationKeyRow: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    gap: 4,
+  },
+  explanationKeyLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  explanationKeyWord: {
+    fontSize: 15,
+    fontWeight: FontWeight.extrabold,
+  },
+  explanationKeyTrans: {
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
+    paddingLeft: 23,
   },
 });

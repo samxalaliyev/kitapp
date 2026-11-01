@@ -5,7 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
-import { AuthProvider } from '@/lib/auth/AuthContext';
+import { AuthProvider, useAuth } from '@/lib/auth/AuthContext';
 import { crashReporter } from '@/lib/crash-reporter';
 import { LanguageProvider, useLanguage } from '@/lib/i18n/LanguageContext';
 import { ThemeProvider as AppThemeProvider, useAppTheme } from '@/lib/theme';
@@ -24,19 +24,6 @@ import mobileAds from 'react-native-google-mobile-ads';
 
 // Initialize global crash reporter
 crashReporter.init();
-
-// Initialize Google Mobile Ads SDK safely if native binary is available
-if (isNativeAdMobAvailable()) {
-  try {
-    mobileAds()
-      .initialize()
-      .catch((err) => {
-        if (__DEV__) console.warn('[AdMob] Init warning:', err);
-      });
-  } catch (e) {
-    // Safe fallback
-  }
-}
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -75,14 +62,24 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const { colors } = useAppTheme();
   const { ready, uiLang } = useLanguage();
+  const { loading: authLoading } = useAuth();
 
   useEffect(() => {
-    if (ready) {
+    if (ready && !authLoading) {
       SplashScreen.hideAsync().catch(() => {});
-      setupNotificationChannels().catch(() => {});
-      scheduleAllSmartReminders(uiLang).catch(() => {});
+      // Defer non-critical background SDK initializations so first frame renders instantly
+      const timer = setTimeout(() => {
+        if (isNativeAdMobAvailable()) {
+          try {
+            mobileAds().initialize().catch(() => {});
+          } catch {}
+        }
+        setupNotificationChannels().catch(() => {});
+        scheduleAllSmartReminders(uiLang).catch(() => {});
+      }, 600);
+      return () => clearTimeout(timer);
     }
-  }, [ready, uiLang]);
+  }, [ready, authLoading, uiLang]);
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener(() => {

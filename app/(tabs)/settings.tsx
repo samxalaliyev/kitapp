@@ -181,7 +181,6 @@ export default function SettingsScreen() {
   // Notification Preferences State
   const [notifEnabled, setNotifEnabled] = useState(true);
   const [notifTime, setNotifTime] = useState('20:00');
-  const [sendingTestNotif, setSendingTestNotif] = useState(false);
 
   // Active Picker Modal State
   const [activePicker, setActivePicker] = useState<PickerType>(null);
@@ -212,21 +211,6 @@ export default function SettingsScreen() {
     setNotifTime(time);
     setActivePicker(null);
     await saveNotificationPreferences(notifEnabled, time, uiLang);
-  };
-
-  const handleSendTestNotification = async () => {
-    if (sendingTestNotif) return;
-    setSendingTestNotif(true);
-    try {
-      const ok = await sendInstantTestNotification(uiLang);
-      if (ok) {
-        Alert.alert(t('test_notification_sent_title'), t('test_notification_sent_desc'));
-      } else {
-        Alert.alert(t('error'), t('notification_permission_denied'));
-      }
-    } finally {
-      setTimeout(() => setSendingTestNotif(false), 2000);
-    }
   };
 
   useEffect(() => {
@@ -629,6 +613,7 @@ export default function SettingsScreen() {
             iconColor="#f59e0b"
             iconBgColor="rgba(245, 158, 11, 0.12)"
             label={t('daily_reading_reminder')}
+            isLast={!notifEnabled}
             rightElement={
               <Switch
                 value={notifEnabled}
@@ -639,24 +624,15 @@ export default function SettingsScreen() {
             }
           />
           {notifEnabled ? (
-            <>
-              <SettingRow
-                iconName="clock"
-                iconColor="#38bdf8"
-                iconBgColor="rgba(56, 189, 248, 0.12)"
-                label={t('notification_time_label')}
-                value={notifTime}
-                onPress={() => setActivePicker('notifTime')}
-              />
-              <SettingRow
-                iconName="send"
-                iconColor="#10b981"
-                iconBgColor="rgba(16, 185, 129, 0.12)"
-                label={t('test_notification_btn')}
-                onPress={handleSendTestNotification}
-                isLast
-              />
-            </>
+            <SettingRow
+              iconName="clock"
+              iconColor="#38bdf8"
+              iconBgColor="rgba(56, 189, 248, 0.12)"
+              label={t('notification_time_label')}
+              value={notifTime}
+              onPress={() => setActivePicker('notifTime')}
+              isLast
+            />
           ) : null}
         </SettingGroup>
 

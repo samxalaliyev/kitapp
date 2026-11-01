@@ -68,21 +68,21 @@
       "uk": "Ввічливе замовлення з 'I would like' (I'd like)"
     },
     "explanation": {
-      "az": "Kafedə heç vaxt kobud şəkildə 'I want coffee' deməyin. Yerli insanlar həmişə 'I'd like a coffee, please' deyir.",
-      "en": "Never say 'I want coffee' abruptly. Native speakers always say 'I'd like a coffee, please.'",
-      "tr": "Kafede asla kaba şekilde 'I want coffee' demeyin. Doğal ve kibar olanı: 'I'd like a coffee, please.'",
-      "ru": "В кафе никогда не говорите резко 'I want coffee'. Носители языка всегда используют мягкую форму: 'I'd like a coffee, please.'",
-      "es": "Nunca digas bruscamente 'I want coffee'. Los hablantes nativos siempre dicen 'I'd like a coffee, please.'",
-      "de": "Sage im Café nie schroff 'I want coffee'. Muttersprachler sagen stets: 'I'd like a coffee, please.'",
-      "fr": "Ne dites jamais brutalement 'I want coffee'. Les anglophones disent toujours : 'I'd like a coffee, please.'",
-      "it": "Al bar non dire mai bruscamente 'I want coffee'. I madrelingua dicono sempre: 'I'd like a coffee, please.'",
-      "pt": "Nunca diga secamente 'I want coffee'. Os nativos sempre usam a forma gentil: 'I'd like a coffee, please.'",
-      "pl": "W kawiarni nigdy nie mów szorstko 'I want coffee'. Native speakerzy zawsze mówią: 'I'd like a coffee, please.'",
-      "cs": "V kavárně nikdy neříkejte úsečně 'I want coffee'. Rodilí mluvčí vždy říkají: 'I'd like a coffee, please.'",
-      "hu": "Kávézóban sose mondd nyersen, hogy 'I want coffee'. Az anyanyelviek mindig így kérik: 'I'd like a coffee, please.'",
-      "uk": "У кафе ніколи не говоріть різко 'I want coffee'. Носії мови завжди кажуть м'яко: 'I'd like a coffee, please.'"
+      "az": "Kafedə heç vaxt kobud şəkildə 'I want coffee' deməyin. Yerli insanlar həmişə 'I'd like a coffee, please' (Bir qəhvə istərdim, zəhmət olmasa) və 'How much is it?' (Neçəyədir?) deyir.",
+      "en": "Never say 'I want coffee' abruptly. Native speakers always say 'I'd like a coffee, please' (polite request) and 'How much is it?' (asking the price).",
+      "tr": "Kafede asla kaba şekilde 'I want coffee' demeyin. Doğal ve kibar olanı: 'I'd like a coffee, please' (Bir kahve isterdim, lütfen) ve 'How much is it?' (Ne kadar?).",
+      "ru": "В кафе никогда не говорите резко 'I want coffee'. Носители языка всегда используют мягкую форму: 'I'd like a coffee, please' (Я бы хотел кофе, пожалуйста) и 'How much is it?' (Сколько это стоит?).",
+      "es": "Nunca digas bruscamente 'I want coffee'. Los hablantes nativos siempre dicen 'I'd like a coffee, please' (Me gustaría un café, por favor) y 'How much is it?' (¿Cuánto cuesta?).",
+      "de": "Sage im Café nie schroff 'I want coffee'. Muttersprachler sagen stets: 'I'd like a coffee, please' (Ich hätte gern einen Kaffee, bitte) und 'How much is it?' (Wie viel kostet das?).",
+      "fr": "Ne dites jamais brutalement 'I want coffee'. Les anglophones disent toujours : 'I'd like a coffee, please' (Je voudrais un café, s'il vous plaît) et 'How much is it?' (Combien ça coûte ?).",
+      "it": "Al bar non dire mai bruscamente 'I want coffee'. I madrelingua dicono sempre: 'I'd like a coffee, please' (Vorrei un caffè, per favore) e 'How much is it?' (Quanto costa?).",
+      "pt": "Nunca diga secamente 'I want coffee'. Os nativos sempre usam a forma gentil: 'I'd like a coffee, please' (Eu gostaria de um café, por favor) e 'How much is it?' (Quanto custa?).",
+      "pl": "W kawiarni nigdy nie mów szorstko 'I want coffee'. Native speakerzy zawsze mówią: 'I'd like a coffee, please' (Chciałbym kawę, proszę) oraz 'How much is it?' (Ile to kosztuje?).",
+      "cs": "V kavárně nikdy neříkejte úsečně 'I want coffee'. Rodilí mluvčí vždy říkají: 'I'd like a coffee, please' (Dal bych si kávu, prosím) a 'How much is it?' (Kolik to stojí?).",
+      "hu": "Kávézóban sose mondd nyersen, hogy 'I want coffee'. Az anyanyelviek mindig így kérik: 'I'd like a coffee, please' (Szeretnék egy kávét, kérem) és 'How much is it?' (Mennyibe kerül?).",
+      "uk": "У кафе ніколи не говоріть різко 'I want coffee'. Носії мови завжди кажуть м'яко: 'I'd like a coffee, please' (Я б хотів каву, будь ласка) та 'How much is it?' (Скільки це коштує?)."
     },
-    "formula": "I'd like a [Məhsul], please • How much is it?",
+    "formula": "I'd like a coffee, please • How much is it?",
     "examples": [
       {
         "english": "I'd like a coffee, please.",
@@ -90,7 +90,16 @@
           "az": "Bir qəhvə istərdim, zəhmət olmasa.",
           "en": "I'd like a coffee, please.",
           "tr": "Bir kahve rica ediyorum, lütfen.",
-          "ru": "Я бы хотел кофе, пожалуйста."
+          "ru": "Я бы хотел кофе, пожалуйста.",
+          "es": "Me gustaría un café, por favor.",
+          "de": "Ich hätte gern einen Kaffee, bitte.",
+          "fr": "Je voudrais un café, s'il vous plaît.",
+          "it": "Vorrei un caffè, per favore.",
+          "pt": "Eu gostaria de um café, por favor.",
+          "pl": "Chciałbym kawę, proszę.",
+          "cs": "Dal bych si kávu, prosím.",
+          "hu": "Szeretnék egy kávét, kérem.",
+          "uk": "Я б хотів каву, будь ласка."
         }
       }
     ],
@@ -101,7 +110,16 @@
         "az": "Nəzakət üçün 'I'd like' və 'please' işlədin.",
         "en": "Say 'I'd like' and 'please' for polite tone.",
         "tr": "Nezaket için 'I'd like' ve 'please' kullanın.",
-        "ru": "Для вежливости используйте 'I'd like' и 'please'."
+        "ru": "Для вежливости используйте 'I'd like' и 'please'.",
+        "es": "Usa 'I'd like' y 'please' para sonar educado.",
+        "de": "Nutze 'I'd like' und 'please' für einen höflichen Ton.",
+        "fr": "Utilisez 'I'd like' et 'please' pour être poli.",
+        "it": "Usa 'I'd like' e 'please' per un tono cortese.",
+        "pt": "Use 'I'd like' e 'please' para um tom educado.",
+        "pl": "Używaj 'I'd like' oraz 'please', aby brzmieć uprzejmie.",
+        "cs": "Pro zdvořilý tón používejte 'I'd like' a 'please'.",
+        "hu": "Az udvarias hangnemhez használd az 'I'd like' és 'please' szavakat.",
+        "uk": "Для ввічливості використовуйте 'I'd like' та 'please'."
       }
     }
   },
@@ -122,7 +140,7 @@
         "it": "Vorrei...",
         "pt": "Eu gostaria de...",
         "pl": "Chciałbym...",
-        "cs": "Rád bych...",
+        "cs": "Dal bych si...",
         "hu": "Szeretnék...",
         "uk": "Я б хотів..."
       },
@@ -131,7 +149,16 @@
         "az": "Bir çay istərdim, zəhmət olmasa.",
         "en": "I'd like a tea, please.",
         "tr": "Bir çay isterdim, lütfen.",
-        "ru": "Я бы хотел чай, пожалуйста."
+        "ru": "Я бы хотел чай, пожалуйста.",
+        "es": "Me gustaría un té, por favor.",
+        "de": "Ich hätte gern einen Tee, bitte.",
+        "fr": "Je voudrais un thé, s'il vous plaît.",
+        "it": "Vorrei un tè, per favore.",
+        "pt": "Eu gostaria de um chá, por favor.",
+        "pl": "Chciałbym herbatę, proszę.",
+        "cs": "Dal bych si čaj, prosím.",
+        "hu": "Szeretnék egy teát, kérem.",
+        "uk": "Я б хотів чай, будь ласка."
       }
     },
     {
@@ -159,7 +186,16 @@
         "az": "Zəhmət olmasa deyin, neçəyədir?",
         "en": "How much is it, please?",
         "tr": "Lütfen söyler misiniz, ne kadar?",
-        "ru": "Подскажите, сколько это стоит?"
+        "ru": "Подскажите, сколько это стоит?",
+        "es": "¿Cuánto cuesta, por favor?",
+        "de": "Wie viel kostet das, bitte?",
+        "fr": "Combien cela coûte-t-il, s'il vous plaît ?",
+        "it": "Quanto costa, per favore?",
+        "pt": "Quanto custa, por favor?",
+        "pl": "Ile to kosztuje, proszę?",
+        "cs": "Kolik to prosím stojí?",
+        "hu": "Mennyibe kerül, kérem?",
+        "uk": "Підкажіть, скільки це коштує?"
       }
     },
     {
@@ -187,7 +223,16 @@
         "az": "Buyurun! Nuş olsun.",
         "en": "Here you are! Enjoy your coffee.",
         "tr": "Buyurun! Afiyet olsun.",
-        "ru": "Вот, пожалуйста! Приятного кофе."
+        "ru": "Вот, пожалуйста! Приятного кофе.",
+        "es": "¡Aquí tiene! Disfrute su café.",
+        "de": "Bitte sehr! Genießen Sie Ihren Kaffee.",
+        "fr": "Voici ! Savourez votre café.",
+        "it": "Ecco a Lei! Buon caffè.",
+        "pt": "Aqui está! Aproveite o seu café.",
+        "pl": "Proszę bardzo! Smacznej kawy.",
+        "cs": "Tady prosím! Vychutnejte si kávu.",
+        "hu": "Tessék! Fogyassza egészséggel a kávét.",
+        "uk": "Ось, будь ласка! Смачної кави."
       }
     }
   ],
@@ -198,7 +243,16 @@
       "az": "Səhər Kafesində",
       "en": "At the Morning Cafe",
       "tr": "Sabah Kafesinde",
-      "ru": "В утреннем кафе"
+      "ru": "В утреннем кафе",
+      "es": "En la cafetería por la mañana",
+      "de": "Im Morgencafé",
+      "fr": "Au café du matin",
+      "it": "Al bar del mattino",
+      "pt": "No café da manhã",
+      "pl": "W porannej kawiarni",
+      "cs": "V ranní kavárně",
+      "hu": "A reggeli kávézóban",
+      "uk": "У ранковому кафе"
     },
     "cefr": "A1",
     "wordCount": 24,
@@ -218,15 +272,15 @@
         "en": "Build the polite order:",
         "tr": "Kibar sipariş cümlesini kurun:",
         "ru": "Соберите фразу вежливого заказа:",
-        "es": "Build the polite order:",
-        "de": "Build the polite order:",
-        "fr": "Build the polite order:",
-        "it": "Build the polite order:",
-        "pt": "Build the polite order:",
-        "pl": "Build the polite order:",
-        "cs": "Build the polite order:",
-        "hu": "Build the polite order:",
-        "uk": "Соберите фразу вежливого заказа:"
+        "es": "Construye el pedido cortés:",
+        "de": "Bilde die höfliche Bestellung:",
+        "fr": "Construisez la commande polie :",
+        "it": "Costruisci l'ordinazione cortese:",
+        "pt": "Construa o pedido educado:",
+        "pl": "Ułóż uprzejme zamówienie:",
+        "cs": "Sestavte zdvořilou objednávku:",
+        "hu": "Rakd össze az udvarias rendelést:",
+        "uk": "Складіть фразу ввічливого замовлення:"
       },
       "instruction": {
         "az": "Bir qəhvə istərdim, zəhmət olmasa.",
@@ -265,21 +319,30 @@
         "en": "Ask for the price:",
         "tr": "Fiyatı sormak için boşluğu doldurun:",
         "ru": "Спросите цену:",
-        "es": "Ask for the price:",
-        "de": "Ask for the price:",
-        "fr": "Ask for the price:",
-        "it": "Ask for the price:",
-        "pt": "Ask for the price:",
-        "pl": "Ask for the price:",
-        "cs": "Ask for the price:",
-        "hu": "Ask for the price:",
-        "uk": "Спросите цену:"
+        "es": "Pregunta por el precio:",
+        "de": "Frage nach dem Preis:",
+        "fr": "Demandez le prix :",
+        "it": "Chiedi il prezzo:",
+        "pt": "Pergunte o preço:",
+        "pl": "Zapytaj o cenę:",
+        "cs": "Zeptejte se na cenu:",
+        "hu": "Kérdezd meg az árat:",
+        "uk": "Запитайте ціну:"
       },
       "instruction": {
         "az": "How ___ is it?",
         "en": "How ___ is it?",
         "tr": "How ___ is it?",
-        "ru": "How ___ is it?"
+        "ru": "How ___ is it?",
+        "es": "How ___ is it?",
+        "de": "How ___ is it?",
+        "fr": "How ___ is it?",
+        "it": "How ___ is it?",
+        "pt": "How ___ is it?",
+        "pl": "How ___ is it?",
+        "cs": "How ___ is it?",
+        "hu": "How ___ is it?",
+        "uk": "How ___ is it?"
       },
       "options": [
         {
@@ -308,15 +371,15 @@
         "en": "Listen and select what you hear:",
         "tr": "Dinleyin ve duyduğunuzu seçin:",
         "ru": "Послушайте и выберите то, что услышали:",
-        "es": "Listen and select what you hear:",
-        "de": "Listen and select what you hear:",
-        "fr": "Listen and select what you hear:",
-        "it": "Listen and select what you hear:",
-        "pt": "Listen and select what you hear:",
-        "pl": "Listen and select what you hear:",
-        "cs": "Listen and select what you hear:",
-        "hu": "Listen and select what you hear:",
-        "uk": "Послушайте и выберите то, что услышали:"
+        "es": "Escucha y selecciona lo que oyes:",
+        "de": "Hör zu und wähle aus, was du hörst:",
+        "fr": "Écoutez et sélectionnez ce que vous entendez :",
+        "it": "Ascolta e seleziona ciò che senti:",
+        "pt": "Ouça e selecione o que você ouviu:",
+        "pl": "Posłuchaj i wybierz to, co słyszysz:",
+        "cs": "Poslouchejte a vyberte, co slyšíte:",
+        "hu": "Hallgasd meg, és válaszd ki, amit hallasz:",
+        "uk": "Послухайте та виберіть те, що почули:"
       },
       "audioPrompt": "Here you are",
       "options": [
@@ -347,7 +410,16 @@
         "az": "Sürətli sınaq: Qiyməti soruşun",
         "en": "Quick recall: Ask for the price",
         "tr": "Hızlı tekrar: Fiyatı sorun",
-        "ru": "Быстрое повторение: Спросите цену"
+        "ru": "Быстрое повторение: Спросите цену",
+        "es": "Repaso rápido: Pregunta el precio",
+        "de": "Schnelltest: Frage nach dem Preis",
+        "fr": "Rappel rapide : Demandez le prix",
+        "it": "Ripasso rapido: Chiedi il prezzo",
+        "pt": "Revisão rápida: Pergunte o preço",
+        "pl": "Szybka powtórka: Zapytaj o cenę",
+        "cs": "Rychlé opakování: Zeptejte se na cenu",
+        "hu": "Gyors ismétlés: Kérdezd meg az árat",
+        "uk": "Швидке повторення: Запитайте ціну"
       },
       "instruction": {
         "az": "Neçəyədir?",

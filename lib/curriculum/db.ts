@@ -46,7 +46,8 @@ export async function initCurriculumDatabase(): Promise<void> {
         );`
       );
 
-      // By default, make sure unit 1 of A0 and A1 are unlocked for everyone!
+      // By default, only Unit 1 of A0 starts unlocked for everyone.
+      // Level A1 and subsequent levels unlock sequentially after completing the previous level.
       const unitA0 = await db.getFirstAsync<{ unit_id: string }>(
         'SELECT unit_id FROM curriculum_progress WHERE unit_id = ?',
         ['a0_unit_01']
@@ -60,18 +61,18 @@ export async function initCurriculumDatabase(): Promise<void> {
         );
       }
 
-      const unit1 = await db.getFirstAsync<{ unit_id: string }>(
-        'SELECT unit_id FROM curriculum_progress WHERE unit_id = ?',
-        ['a1_unit_01']
+      // Ensure A1 is locked if A0 final checkpoint has not been completed yet
+      const a0Boss = await db.getFirstAsync<{ status: string }>(
+        "SELECT status FROM curriculum_progress WHERE unit_id = 'a0_boss_01'"
       );
-
-      if (!unit1) {
+      if (!a0Boss || a0Boss.status !== 'completed') {
         await db.runAsync(
-          `INSERT OR IGNORE INTO curriculum_progress (unit_id, level_id, status, score, stars, unlocked_at)
-           VALUES ('a1_unit_01', 'A1', 'unlocked', 0, 0, ?);`,
-          [Date.now()]
+          "DELETE FROM curriculum_progress WHERE unit_id = 'a1_unit_01' AND status = 'unlocked' AND score = 0"
         );
       }
+
+      // Clear any stale cached unit payloads so 13-language curriculum updates take effect immediately
+      await db.runAsync('DELETE FROM cached_units;');
     } catch (err) {
       resetCurriculumDatabaseHandle();
       throw err;
@@ -202,8 +203,8 @@ export async function unlockUnit(unitId: string, levelId: LevelId): Promise<void
 }
 
 export async function isUnitUnlocked(unitId: string): Promise<boolean> {
-  // First unit of A1 is always unlocked
-  if (unitId === 'a1_unit_01') return true;
+  // First unit of A0 is always unlocked
+  if (unitId === 'a0_unit_01') return true;
 
   try {
     const db = await ensureCurriculumReady();

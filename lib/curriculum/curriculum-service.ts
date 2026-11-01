@@ -104,7 +104,7 @@ export const CEFR_LEVELS: CurriculumLevelSummary[] = [
     },
     totalUnits: 16,
     completedUnits: 0,
-    unlockedUnits: 1,
+    unlockedUnits: 0,
     accentColor: '#10B981',
   },
   {
@@ -296,11 +296,18 @@ export async function getUnitData(unitId: string, levelId: LevelId): Promise<Cur
     }
   }
 
-  // 2. Check local SQLite cache for downloaded units
+  // 2. Build directly from local 13-language curriculum registry (instant 0ms & always up-to-date)
+  const localBuilt = buildStarterUnitFallback(unitId, levelId);
+  if (localBuilt) {
+    cacheUnitPayload(localBuilt).catch(() => {});
+    return localBuilt;
+  }
+
+  // 3. Check local SQLite cache for downloaded units
   const cached = await getCachedUnit(unitId);
   if (cached) return cached;
 
-  // 3. Fallback: Fetch from Cloudflare R2 CDN on-demand
+  // 4. Fallback: Fetch from Cloudflare R2 CDN on-demand
   try {
     const url = `${R2_CDN_URL}/curriculum/${levelId.toLowerCase()}/${unitId}.json`;
     const res = await fetch(url);
@@ -311,13 +318,6 @@ export async function getUnitData(unitId: string, levelId: LevelId): Promise<Cur
     }
   } catch (err) {
     console.warn('[Curriculum] Failed to fetch unit from R2 CDN:', err);
-  }
-
-  // 4. Safe starter fallback to guarantee 100% crash/error resilience
-  const fallback = buildStarterUnitFallback(unitId, levelId);
-  if (fallback) {
-    await cacheUnitPayload(fallback).catch(() => {});
-    return fallback;
   }
 
   return null;
@@ -4973,7 +4973,7 @@ export async function listContinuousSectionsWithProgress(
     const syllabus = SYLLABUS_MAP[levelId] || [];
     const levelInfo = CEFR_LEVELS.find((l) => l.id === levelId) || CEFR_LEVELS[0];
     const isLevelUnlocked: boolean =
-      levelId === 'A0' || levelId === 'A1' ? true : previousLevelCompleted;
+      levelId === 'A0' ? true : previousLevelCompleted;
 
     const unitItems: UnitDisplayItem[] = [];
     let previousNodePassed = isLevelUnlocked;
@@ -5047,7 +5047,12 @@ export async function listUnitsWithProgress(
 
   // Determine if level itself is unlocked
   let isLevelUnlocked: boolean = true;
-  if (levelId === 'A2') {
+  if (levelId === 'A1') {
+    const a0Syllabus = SYLLABUS_MAP.A0 || [];
+    const a0FinalNode = a0Syllabus[a0Syllabus.length - 1];
+    const a0Passed = a0FinalNode ? progressMap.get(a0FinalNode.id)?.status === 'completed' : false;
+    isLevelUnlocked = a0Passed;
+  } else if (levelId === 'A2') {
     const a1Syllabus = SYLLABUS_MAP.A1 || [];
     const a1FinalNode = a1Syllabus[a1Syllabus.length - 1];
     const a1Passed = a1FinalNode ? progressMap.get(a1FinalNode.id)?.status === 'completed' : false;

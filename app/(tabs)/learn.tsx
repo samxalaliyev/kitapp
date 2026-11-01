@@ -50,13 +50,15 @@ export default function LearnScreen() {
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [showOutOfHearts, setShowOutOfHearts] = useState(false);
 
-  // Compute nextUnitId dynamically from full continuous sections
+  // Compute nextUnitId dynamically from full continuous sections (skipping chest nodes)
   const nextUnitId = useMemo(() => {
     if (!activePlayingUnit || sections.length === 0) return undefined;
-    const allUnits = sections.flatMap((s) => s.units);
-    const currentIndex = allUnits.findIndex((u) => u.id === activePlayingUnit.id);
-    if (currentIndex >= 0 && currentIndex < allUnits.length - 1) {
-      return allUnits[currentIndex + 1].id;
+    const allPlayableUnits = sections
+      .flatMap((s) => s.units)
+      .filter((u) => u.nodeType !== 'chest');
+    const currentIndex = allPlayableUnits.findIndex((u) => u.id === activePlayingUnit.id);
+    if (currentIndex >= 0 && currentIndex < allPlayableUnits.length - 1) {
+      return allPlayableUnits[currentIndex + 1].id;
     }
     return undefined;
   }, [activePlayingUnit, sections]);
@@ -90,10 +92,11 @@ export default function LearnScreen() {
   const handleUnitPress = async (unitItem: UnitDisplayItem) => {
     if (unitItem.status === 'locked') {
       const lockedTitle = getCurriculumText('lesson_locked_title', activeLang);
-      const lockedMsg =
-        unitItem.level !== 'A1'
-          ? getCurriculumText('lesson_locked_prev_level', activeLang)
-          : getCurriculumText('lesson_locked_prev_unit', activeLang);
+      const sectionObj = sections.find((s) => s.level === unitItem.level);
+      const isSectionLocked = sectionObj ? !sectionObj.isUnlocked : unitItem.level !== 'A0';
+      const lockedMsg = isSectionLocked
+        ? getCurriculumText('lesson_locked_prev_level', activeLang)
+        : getCurriculumText('lesson_locked_prev_unit', activeLang);
       Alert.alert(
         lockedTitle,
         lockedMsg,

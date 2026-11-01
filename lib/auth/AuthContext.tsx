@@ -254,21 +254,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initAuth = async () => {
       try {
-        if (!isSupabaseConfigured) {
-          // Fallback to local profile mode
-          const localProf = await AsyncStorage.getItem(STORAGE_KEYS.PROFILE);
-          if (localProf && !unmounted) {
+        // 1. Instantly hydrate cached profile from local storage (<10ms)
+        const localProf = await AsyncStorage.getItem(STORAGE_KEYS.PROFILE);
+        if (localProf && !unmounted) {
+          try {
             setProfile(JSON.parse(localProf));
-          }
+          } catch {}
+        }
+
+        if (!isSupabaseConfigured) {
           return;
         }
 
+        // 2. Read local session token without blocking UI on cloud profile fetch
         const { data } = await supabase.auth.getSession();
         if (data.session && !unmounted) {
           setSession(data.session);
           setUser(data.session.user);
-          await markLanguageOnboarded().catch(() => {});
-          await fetchProfile(data.session.user.id, data.session.user.email, data.session.user);
+          setLoading(false);
+          markLanguageOnboarded().catch(() => {});
+          fetchProfile(data.session.user.id, data.session.user.email, data.session.user).catch(() => {});
+          return;
         }
       } finally {
         if (!unmounted) setLoading(false);
@@ -339,6 +345,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             createdAt: data.created_at || new Date().toISOString(),
           };
           setProfile(prof);
+          AsyncStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(prof)).catch(() => {});
 
           // Immediately update local display name state & storage so it overrides any stale guest name
           if (resolvedName) {
