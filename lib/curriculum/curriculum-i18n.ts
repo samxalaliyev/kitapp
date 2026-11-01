@@ -85,9 +85,25 @@ export type CurriculumStringKey =
   | 'step_counter'
   | 'live_scene_badge'
   | 'translate_sentence_label'
-  | 'listen_btn';
+  | 'listen_btn'
+  | 'out_of_hearts_msg';
 
 const CURRICULUM_STRINGS: Record<CurriculumStringKey, Record<string, string>> = {
+  out_of_hearts_msg: {
+    az: 'Canlarınız bitib. Dərsə başlamaq üçün reklam izləyin və ya Limitsiz Can üçün Premium-a keçin.',
+    en: 'You are out of hearts. Watch an ad or get Premium for unlimited hearts to continue.',
+    tr: 'Canlarınız bitti. Derse devam etmek için reklam izleyin veya Sınırsız Can için Premium\'a geçin.',
+    ru: 'У вас закончились жизни. Посмотрите рекламу или перейдите на Premium для безлимитных жизней.',
+    es: 'Te has quedado sin vidas. Mira un anuncio o suscríbete a Premium para vidas ilimitadas.',
+    de: 'Du hast keine Herzen mehr. Sieh dir eine Werbung an oder hole dir Premium für unbegrenzte Herzen.',
+    fr: 'Vous n\'avez plus de vies. Regardez une publicité ou passez à Premium pour des vies illimitées.',
+    it: 'Hai esaurito le vite. Guarda una pubblicità o passa a Premium per vite illimitate.',
+    pt: 'Você ficou sem vidas. Assista a um anúncio ou assine o Premium para vidas ilimitadas.',
+    pl: 'Skończyły ci się serca. Obejrzyj reklamę lub przejdź na Premium, aby mieć nielimitowane serca.',
+    cs: 'Došly vám životy. Podívejte se na reklamu nebo přejděte na Premium pro neomezené životy.',
+    hu: 'Elfogyott az életed. Nézz meg egy hirdetést, vagy válts Prémiumra a korlátlan életekért.',
+    uk: 'У вас закінчилися життя. Перегляньте рекламу або перейдіть на Premium для безлімітних життів.',
+  },
   learn_map_title: {
     az: 'Tədris Xəritəsi',
     en: 'Learning Path',

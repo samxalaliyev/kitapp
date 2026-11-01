@@ -3,16 +3,34 @@
   "level": "A1",
   "order": 3,
   "title": {
-    "az": "Gündəlik Həyat: Vərdişlər",
-    "en": "Daily Life: Habits",
-    "tr": "Günlük Hayat: Alışkanlıklar",
-    "ru": "Повседневная жизнь: Привычки"
+    "az": "Gündəlik Vərdişlər",
+    "en": "Daily Habits",
+    "tr": "Günlük Alışkanlıklar",
+    "ru": "Повседневные привычки",
+    "es": "Hábitos diarios",
+    "de": "Tägliche Gewohnheiten",
+    "fr": "Habitudes quotidiennes",
+    "it": "Abitudini quotidiane",
+    "pt": "Hábitos diários",
+    "pl": "Codzienne nawyki",
+    "cs": "Každodenní návyky",
+    "hu": "Napi szokások",
+    "uk": "Щоденні звички"
   },
   "description": {
-    "az": "Gündəlik rejim və hər gün etdiyin hərəkətləri ifadə edən təbii frazalar",
-    "en": "Natural spoken chunks for daily routines and habits",
-    "tr": "Günlük rutinler ve alışkanlıklar için doğal kalıplar",
-    "ru": "Естественные фразы для описания распорядка дня"
+    "az": "Hər gün etdiyin hərəkətləri rahatlıqla ifadə et",
+    "en": "Express your daily routines naturally",
+    "tr": "Her gün yaptığınız eylemleri rahatça ifade edin",
+    "ru": "Свободно говорите о том, что делаете каждый день",
+    "es": "Expresa tus rutinas diarias con soltura y naturalidad",
+    "de": "Beschreibe deinen Alltag ganz entspannt und flüssig",
+    "fr": "Parlez de vos routines quotidiennes avec aisance",
+    "it": "Esprimi la tua routine quotidiana con disinvoltura",
+    "pt": "Fale sobre sua rotina diária com naturalidade",
+    "pl": "Opowiadaj o swoich codziennych nawykach ze swobodą",
+    "cs": "Mluvte o svých denních zvycích plynule a přirozeně",
+    "hu": "Beszélj a napi rutinodról könnyedén és magabiztosan",
+    "uk": "Легко розповідайте про те, що робите щодня"
   },
   "estimatedMinutes": 2,
   "iconName": "clock",
@@ -20,22 +38,49 @@
   "grammarRule": {
     "id": "a1_gr_03",
     "title": {
-      "az": "Gündəlik Vərdişlər: I always...",
-      "en": "Daily Routines: I always...",
-      "tr": "Günlük Rutinler: I always...",
-      "ru": "Ежедневная рутина: I always..."
+      "az": "Vərdiş Qəlibi",
+      "en": "Routine & Habit Chunk",
+      "tr": "Alışkanlık Kalıbı",
+      "ru": "Шаблон привычек",
+      "es": "Patrón de hábitos y rutinas",
+      "de": "Muster für Gewohnheiten",
+      "fr": "Modèle des habitudes",
+      "it": "Modello per abitudini e routine",
+      "pt": "Padrão de hábitos diários",
+      "pl": "Wzorzec codziennych nawyków",
+      "cs": "Vzor pro každodenní návyky",
+      "hu": "Szokások mintakifejezése",
+      "uk": "Шаблон повсякденних звичок"
     },
     "subtitle": {
-      "az": "Hər gün etdiyin vərdişləri bu şəkildə söylə",
-      "en": "Describe what you do every day with simple chunks",
-      "tr": "Her gün yaptığın şeyleri bu basit kalıpla anlat",
-      "ru": "Описывайте то, что делаете каждый день"
+      "az": "'I always...' və 'Every day' ilə vərdişlər",
+      "en": "Express regular habits with 'always' and 'every day'",
+      "tr": "'Always' ve 'Every day' ile düzenli alışkanlıklar",
+      "ru": "Регулярные привычки с 'always' и 'every day'",
+      "es": "Expresa hábitos regulares con 'always' y 'every day'",
+      "de": "Regelmäßige Gewohnheiten mit 'always' und 'every day'",
+      "fr": "Parler d'habitudes régulières avec 'always' et 'every day'",
+      "it": "Descrivere abitudini regolari con 'always' ed 'every day'",
+      "pt": "Expressar hábitos regulares com 'always' e 'every day'",
+      "pl": "Opisywanie regularnych zwyczajów z 'always' i 'every day'",
+      "cs": "Pravidelné návyky se slovy 'always' a 'every day'",
+      "hu": "Rendszeres szokások az 'always' és 'every day' szavakkal",
+      "uk": "Регулярні звички зі словами 'always' та 'every day'"
     },
     "explanation": {
-      "az": "Qaydaları düşünmədən sadəcə hərəkəti söyləyin:\n\n• 'I wake up at seven.' (Saat 7-də oyanıram)\n• 'I always read books.' (Mən həmişə kitab oxuyuram)",
-      "en": "Simply speak your actions naturally:\n\n• 'I wake up at seven.'\n• 'I always read books.'",
-      "tr": "Kurallara boğulmadan doğrudan söyleyin:\n\n• 'I wake up at seven.'\n• 'I always read books.'",
-      "ru": "Говорите о привычках естественно:\n\n• 'I wake up at seven.'\n• 'I always read books.'"
+      "az": "Hər gün etdiyin işlər üçün felləri dəyişmədən sadə şəkildə söylə:\n\n• 'I wake up early.'\n• 'I always read books.'",
+      "en": "For daily habits, simply use the base verb form:\n\n• 'I wake up early.'\n• 'I always read books.'",
+      "tr": "Günlük alışkanlıklar için fiili olduğu gibi yalın kullanın:\n\n• 'I wake up early.'\n• 'I always read books.'",
+      "ru": "Для ежедневных привычек используйте глагол в начальной форме:\n\n• 'I wake up early.'\n• 'I always read books.'",
+      "es": "Para hablar de hábitos diarios, usa simplemente el verbo en su forma base:\n\n• 'I wake up early.' (Me despierto temprano)\n• 'I always read books.' (Siempre leo libros)",
+      "de": "Für tägliche Gewohnheiten nimmst du einfach die Grundform des Verbs:\n\n• 'I wake up early.' (Ich stehe früh auf)\n• 'I always read books.' (Ich lese immer Bücher)",
+      "fr": "Pour vos habitudes quotidiennes, utilisez simplement la forme de base du verbe :\n\n• 'I wake up early.' (Je me réveille tôt)\n• 'I always read books.' (Je lis toujours des livres)",
+      "it": "Per le abitudini quotidiane usa semplicemente la forma base del verbo:\n\n• 'I wake up early.' (Mi sveglio presto)\n• 'I always read books.' (Leggo sempre libri)",
+      "pt": "Para hábitos diários, basta usar o verbo em sua forma simples:\n\n• 'I wake up early.' (Eu acordo cedo)\n• 'I always read books.' (Eu sempre leio livros)",
+      "pl": "Do opisywania codziennych nawyków używaj po prostu podstawowej formy czasownika:\n\n• 'I wake up early.' (Wstaję wcześnie)\n• 'I always read books.' (Zawsze czytam książki)",
+      "cs": "Pro každodenní zvyky stačí použít základní tvar slovesa:\n\n• 'I wake up early.' (Vstávám brzy)\n• 'I always read books.' (Vždycky čtu knihy)",
+      "hu": "A mindennapi szokásokhoz egyszerűen használd az ige alapalakját:\n\n• 'I wake up early.' (Korán ébredek)\n• 'I always read books.' (Mindig olvasok könyveket)",
+      "uk": "Для щоденних звичок використовуйте дієслово в його початковій формі:\n\n• 'I wake up early.' (Я прокидаюся рано)\n• 'I always read books.' (Я завжди читаю книги)"
     },
     "formula": "I wake up at [Vaxt] • I always [Hərəkət]",
     "examples": [
@@ -66,27 +111,84 @@
       "word": "Wake up",
       "phonetic": "/weɪk ʌp/",
       "audioText": "I wake up early",
-      "translations": { "az": "Oyanmaq", "en": "Wake up", "tr": "Uyanmak", "ru": "Просыпаться" },
+      "translations": {
+        "az": "Oyanmaq / Yuxudan qalxmaq",
+        "en": "Wake up",
+        "tr": "Uyanmak",
+        "ru": "Просыпаться",
+        "es": "Despertarse",
+        "de": "Aufwachen",
+        "fr": "Se réveiller",
+        "it": "Svegliarsi",
+        "pt": "Acordar",
+        "pl": "Budzić się",
+        "cs": "Probudit se",
+        "hu": "Felébredni",
+        "uk": "Прокидатися"
+      },
       "exampleSentence": "I wake up at 7.",
-      "exampleTranslation": { "az": "Saat 7-də oyanıram.", "en": "I wake up at 7.", "tr": "Saat 7'de uyanırım.", "ru": "Я просыпаюсь в 7." }
+      "exampleTranslation": {
+        "az": "Saat 7-də oyanıram.",
+        "en": "I wake up at 7.",
+        "tr": "Saat 7'de uyanırım.",
+        "ru": "Я просыпаюсь в 7."
+      }
     },
     {
       "id": "v3_2",
       "word": "I always...",
       "phonetic": "/aɪ ˈɔːlweɪz/",
       "audioText": "I always read books",
-      "translations": { "az": "Mən həmişə...", "en": "I always...", "tr": "Ben her zaman...", "ru": "Я всегда..." },
+      "translations": {
+        "az": "Mən həmişə ...",
+        "en": "I always...",
+        "tr": "Ben her zaman...",
+        "ru": "Я всегда...",
+        "es": "Yo siempre...",
+        "de": "Ich immer...",
+        "fr": "Je ... toujours",
+        "it": "Io sempre...",
+        "pt": "Eu sempre...",
+        "pl": "Zawsze...",
+        "cs": "Vždycky...",
+        "hu": "Mindig...",
+        "uk": "Я завжди..."
+      },
       "exampleSentence": "I always read in the evening.",
-      "exampleTranslation": { "az": "Mən həmişə axşamlar oxuyuram.", "en": "I always read in the evening.", "tr": "Her zaman akşamları okurum.", "ru": "Я всегда читаю по вечерам." }
+      "exampleTranslation": {
+        "az": "Mən həmişə axşamlar oxuyuram.",
+        "en": "I always read in the evening.",
+        "tr": "Her zaman akşamları okurum.",
+        "ru": "Я всегда читаю по вечерам."
+      }
     },
     {
       "id": "v3_3",
       "word": "Every day",
       "phonetic": "/ˈevri deɪ/",
       "audioText": "Every day",
-      "translations": { "az": "Hər gün", "en": "Every day", "tr": "Her gün", "ru": "Каждый день" },
+      "translations": {
+        "az": "Hər gün",
+        "en": "Every day",
+        "tr": "Her gün",
+        "ru": "Каждый день",
+        "es": "Todos los días",
+        "de": "Jeden Tag",
+        "fr": "Tous les jours",
+        "it": "Ogni giorno",
+        "pt": "Todos os dias",
+        "pl": "Codziennie",
+        "cs": "Každý den",
+        "hu": "Minden nap",
+        "uk": "Щодня"
+      },
       "exampleSentence": "I practice English every day.",
-      "exampleTranslation": { "az": "Hər gün ingiliscə məşq edirəm.", "en": "I practice English every day.", "tr": "Her gün İngilizce pratik yaparım.", "ru": "Я практикую английский каждый день." }
+      "exampleTranslation": {
+        "az": "Hər gün ingiliscə məşq edirəm.",
+        "en": "I practice English every day.",
+        "tr": "Her gün İngilizce pratik yaparım.",
+        "ru": "Я практикую английский каждый день."
+      }
     }
   ],
   "story": {
@@ -101,7 +203,11 @@
     "cefr": "A1",
     "wordCount": 23,
     "content": "Alex: \"What is your daily routine?\"\nLisa: \"I wake up at 7. I always drink water and read books every day!\"",
-    "vocabularyHighlights": ["Wake up", "I always...", "Every day"]
+    "vocabularyHighlights": [
+      "Wake up",
+      "I always...",
+      "Every day"
+    ]
   },
   "exercises": [
     {
@@ -111,7 +217,16 @@
         "az": "Vərdiş cümləsini qurun:",
         "en": "Build the daily routine chunk:",
         "tr": "Günlük rutin cümlesini kurun:",
-        "ru": "Соберите предложение о привычке:"
+        "ru": "Соберите предложение о привычке:",
+        "es": "Build the daily routine chunk:",
+        "de": "Build the daily routine chunk:",
+        "fr": "Build the daily routine chunk:",
+        "it": "Build the daily routine chunk:",
+        "pt": "Build the daily routine chunk:",
+        "pl": "Build the daily routine chunk:",
+        "cs": "Build the daily routine chunk:",
+        "hu": "Build the daily routine chunk:",
+        "uk": "Соберите предложение о привычке:"
       },
       "instruction": {
         "az": "Mən həmişə kitab oxuyuram.",
@@ -128,8 +243,16 @@
         "hu": "Mindig könyveket olvasok.",
         "uk": "Я завжди читаю книги."
       },
-      "sentenceToBuild": ["I", "always", "read", "books"],
-      "distractorWords": ["am", "is"],
+      "sentenceToBuild": [
+        "I",
+        "always",
+        "read",
+        "books"
+      ],
+      "distractorWords": [
+        "am",
+        "is"
+      ],
       "correctSentence": "I always read books",
       "xpReward": 10
     },
@@ -140,7 +263,16 @@
         "az": "Səhər oyanmağı ifadə etmək üçün boşluğu doldurun:",
         "en": "Complete the morning action:",
         "tr": "Sabah uyanmayı anlatan boşluğu doldurun:",
-        "ru": "Заполните пропуск для подъема по утрам:"
+        "ru": "Заполните пропуск для подъема по утрам:",
+        "es": "Complete the morning action:",
+        "de": "Complete the morning action:",
+        "fr": "Complete the morning action:",
+        "it": "Complete the morning action:",
+        "pt": "Complete the morning action:",
+        "pl": "Complete the morning action:",
+        "cs": "Complete the morning action:",
+        "hu": "Complete the morning action:",
+        "uk": "Заполните пропуск для подъема по утрам:"
       },
       "instruction": {
         "az": "I wake ___ early every day.",
@@ -149,9 +281,21 @@
         "ru": "I wake ___ early every day."
       },
       "options": [
-        { "id": "o1", "text": "up", "isCorrect": true },
-        { "id": "o2", "text": "on", "isCorrect": false },
-        { "id": "o3", "text": "in", "isCorrect": false }
+        {
+          "id": "o1",
+          "text": "up",
+          "isCorrect": true
+        },
+        {
+          "id": "o2",
+          "text": "on",
+          "isCorrect": false
+        },
+        {
+          "id": "o3",
+          "text": "in",
+          "isCorrect": false
+        }
       ],
       "xpReward": 10
     },
@@ -162,13 +306,34 @@
         "az": "Dinləyin və eşitdiyinizi seçin:",
         "en": "Listen and select what you hear:",
         "tr": "Dinleyin ve duyduğunuzu seçin:",
-        "ru": "Послушайте и выберите то, что услышали:"
+        "ru": "Послушайте и выберите то, что услышали:",
+        "es": "Listen and select what you hear:",
+        "de": "Listen and select what you hear:",
+        "fr": "Listen and select what you hear:",
+        "it": "Listen and select what you hear:",
+        "pt": "Listen and select what you hear:",
+        "pl": "Listen and select what you hear:",
+        "cs": "Listen and select what you hear:",
+        "hu": "Listen and select what you hear:",
+        "uk": "Послушайте и выберите то, что услышали:"
       },
       "audioPrompt": "Every day",
       "options": [
-        { "id": "a1", "text": "Every day", "isCorrect": true },
-        { "id": "a2", "text": "Yesterday", "isCorrect": false },
-        { "id": "a3", "text": "Tomorrow", "isCorrect": false }
+        {
+          "id": "a1",
+          "text": "Every day",
+          "isCorrect": true
+        },
+        {
+          "id": "a2",
+          "text": "Yesterday",
+          "isCorrect": false
+        },
+        {
+          "id": "a3",
+          "text": "Tomorrow",
+          "isCorrect": false
+        }
       ],
       "xpReward": 10
     }
@@ -198,8 +363,14 @@
         "hu": "Minden nap",
         "uk": "Щодня"
       },
-      "sentenceToBuild": ["Every", "day"],
-      "distractorWords": ["night", "week"],
+      "sentenceToBuild": [
+        "Every",
+        "day"
+      ],
+      "distractorWords": [
+        "night",
+        "week"
+      ],
       "correctSentence": "Every day",
       "xpReward": 10
     }

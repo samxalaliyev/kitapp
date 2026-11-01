@@ -132,9 +132,14 @@ export default function LearnScreen() {
         );
         return;
       }
+      const denialMsg =
+        access.messageKey
+          ? getCurriculumText(access.messageKey as any, activeLang)
+          : access.message || getCurriculumText('lesson_locked_prev_unit', activeLang);
+
       Alert.alert(
         getCurriculumText('lesson_locked_title', activeLang),
-        access.message || getCurriculumText('lesson_locked_prev_unit', activeLang)
+        denialMsg
       );
       return;
     }

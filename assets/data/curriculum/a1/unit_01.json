@@ -6,13 +6,31 @@
     "az": "İlk Görüş: Salamlaşma",
     "en": "First Meeting: Say Hello",
     "tr": "İlk Tanışma: Merhaba De",
-    "ru": "Первое знакомство: Приветствие"
+    "ru": "Первое знакомство: Приветствие",
+    "es": "Primer encuentro: Saludos",
+    "de": "Erste Begegnung: Begrüßung",
+    "fr": "Première rencontre : Salutations",
+    "it": "Primo incontro: Saluti",
+    "pt": "Primeiro encontro: Saudações",
+    "pl": "Pierwsze spotkanie: Powitania",
+    "cs": "První setkání: Pozdravy",
+    "hu": "Első találkozás: Üdvözlés",
+    "uk": "Перша зустріч: Привітання"
   },
   "description": {
     "az": "Canlı mühitdə insanlarla ilkin təmas və təbii tanışlıq frazaları",
     "en": "Natural greetings and introduction chunks in real-life context",
     "tr": "Doğal selamlaşma ve tanışma kalıpları",
-    "ru": "Естественные приветствия и фразы знакомства в живом контексте"
+    "ru": "Естественные приветствия и фразы знакомства в живом контексте",
+    "es": "Saludos naturales y frases de presentación en contexto real",
+    "de": "Natürliche Begrüßungen und Vorstellungsphrasen im echten Leben",
+    "fr": "Salutations naturelles et formules de présentation en situation réelle",
+    "it": "Saluti naturali e frasi di presentazione in contesti reali",
+    "pt": "Saudações naturais e frases de apresentação em contexto real",
+    "pl": "Naturalne powitania i zwroty do przedstawiania się w realnych sytuacjach",
+    "cs": "Přirozené pozdravy a představovací fráze v reálném kontextu",
+    "hu": "Természetes üdvözlések és bemutatkozási kifejezések életszerű helyzetekben",
+    "uk": "Природні привітання та знайомство в живому контексті"
   },
   "estimatedMinutes": 2,
   "iconName": "smile",
@@ -23,19 +41,46 @@
       "az": "Canlı Təqdimat Qəlibi",
       "en": "Self-Introduction Chunk",
       "tr": "Tanıtım Kalıbı",
-      "ru": "Шаблон знакомства"
+      "ru": "Шаблон знакомства",
+      "es": "Patrón de presentación personal",
+      "de": "Muster zur Selbstvorstellung",
+      "fr": "Modèle de présentation de soi",
+      "it": "Modello di presentazione personale",
+      "pt": "Padrão de autoapresentação",
+      "pl": "Wzorzec przedstawiania się",
+      "cs": "Vzor pro sebe-představení",
+      "hu": "Bemutatkozási mintamondat",
+      "uk": "Шаблон знайомства"
     },
     "subtitle": {
       "az": "Özünü təqdim etmək üçün bu hazır frazadan istifadə et",
       "en": "Use this ready-to-use phrase to introduce yourself naturally",
       "tr": "Kendini doğal şekilde tanıtmak için bu kalıbı kullan",
-      "ru": "Используйте эту готовую фразу, чтобы представиться"
+      "ru": "Используйте эту готовую фразу, чтобы представиться",
+      "es": "Usa esta frase lista para presentarte con total naturalidad",
+      "de": "Nutze diese fertige Phrase, um dich ganz natürlich vorzustellen",
+      "fr": "Utilisez cette expression prête à l'emploi pour vous présenter naturellement",
+      "it": "Usa questa frase pronta per presentarti con disinvoltura",
+      "pt": "Use esta frase pronta para se apresentar com total naturalidade",
+      "pl": "Użyj tego gotowego zwrotu, aby przedstawić się swobodnie",
+      "cs": "Použijte tuto hotovou frázi k přirozenému představení",
+      "hu": "Használd ezt a kész kifejezést a természetes bemutatkozáshoz",
+      "uk": "Використовуйте цю готову фразу, щоб представитися природно"
     },
     "explanation": {
       "az": "İngilis dilində qaydaları əzbərləməyə ehtiyac yoxdur. Tanış olarkən bu hazır qəlibləri olduğu kimi səsləndir:\n\n• 'Hi, I'm Alex.' (Salam, mən Alexəm)\n• 'Nice to meet you.' (Tanışlığımıza şadam)",
       "en": "No need to memorize complex rules. Simply use these natural spoken chunks:\n\n• 'Hi, I'm Alex.'\n• 'Nice to meet you.'",
       "tr": "Kuralları ezberlemeye gerek yok. Tanışırken bu hazır kalıpları kullanın:\n\n• 'Hi, I'm Alex.' (Merhaba, ben Alex)\n• 'Nice to meet you.' (Tanıştığıma memnun oldum)",
-      "ru": "Не нужно заучивать правила. При знакомстве просто используйте эти фразы:\n\n• 'Hi, I'm Alex.' (Привет, я Алекс)\n• 'Nice to meet you.' (Приятно познакомиться)"
+      "ru": "Не нужно заучивать правила. При знакомстве просто используйте эти фразы:\n\n• 'Hi, I'm Alex.' (Привет, я Алекс)\n• 'Nice to meet you.' (Приятно познакомиться)",
+      "es": "No hace falta memorizar reglas complejas. Usa directamente estas expresiones naturales:\n\n• 'Hi, I'm Alex.' (Hola, soy Alex)\n• 'Nice to meet you.' (Mucho gusto en conocerte)",
+      "de": "Keine komplizierten Regeln pauken! Nutze einfach diese natürlichen Redewendungen:\n\n• 'Hi, I'm Alex.' (Hallo, ich bin Alex)\n• 'Nice to meet you.' (Freut mich, dich kennenzulernen)",
+      "fr": "Pas besoin d'apprendre des règles par cœur. Utilisez directement ces expressions orales naturelles :\n\n• 'Hi, I'm Alex.' (Salut, je suis Alex)\n• 'Nice to meet you.' (Ravi de vous rencontrer)",
+      "it": "Non serve memorizzare regole complesse. Usa direttamente queste frasi naturali:\n\n• 'Hi, I'm Alex.' (Ciao, sono Alex)\n• 'Nice to meet you.' (Piacere di conoscerti)",
+      "pt": "Não precisa memorizar regras difíceis. Use diretamente estas frases espontâneas:\n\n• 'Hi, I'm Alex.' (Oi, eu sou o Alex)\n• 'Nice to meet you.' (Prazer em conhecer você)",
+      "pl": "Nie musisz uczyć się regułek na pamięć. Po prostu stosuj te naturalne zwroty:\n\n• 'Hi, I'm Alex.' (Cześć, jestem Alex)\n• 'Nice to meet you.' (Miło cię poznać)",
+      "cs": "Není třeba biflovat složitá pravidla. Používejte tyto přirozené mluvené obraty:\n\n• 'Hi, I'm Alex.' (Ahoj, já jsem Alex)\n• 'Nice to meet you.' (Rád vás poznávám)",
+      "hu": "Nem kell bonyolult szabályokat magolnod. Használd közvetlenül ezeket a természetes fordulatokat:\n\n• 'Hi, I'm Alex.' (Szia, Alex vagyok)\n• 'Nice to meet you.' (Örülök, hogy megismertelek)",
+      "uk": "Не потрібно зубрити граматику. Просто використовуйте ці готові живі фрази:\n\n• 'Hi, I'm Alex.' (Привіт, я Алекс)\n• 'Nice to meet you.' (Приємно познайомитися)"
     },
     "formula": "Hi, I'm [Adın] • Nice to meet you",
     "examples": [
@@ -66,27 +111,84 @@
       "word": "Hi, I'm...",
       "phonetic": "/haɪ aɪm/",
       "audioText": "Hi, I'm Alex",
-      "translations": { "az": "Salam, mən...", "en": "Hi, I'm...", "tr": "Merhaba, ben...", "ru": "Привет, я..." },
+      "translations": {
+        "az": "Salam, mən ...-əm",
+        "en": "Hi, I'm...",
+        "tr": "Merhaba, ben...",
+        "ru": "Привет, я...",
+        "es": "Hola, soy...",
+        "de": "Hallo, ich bin...",
+        "fr": "Salut, je suis...",
+        "it": "Ciao, sono...",
+        "pt": "Oi, eu sou o/a...",
+        "pl": "Cześć, jestem...",
+        "cs": "Ahoj, já jsem...",
+        "hu": "Szia, ... vagyok",
+        "uk": "Привіт, я..."
+      },
       "exampleSentence": "Hi, I'm Alex.",
-      "exampleTranslation": { "az": "Salam, mən Alexəm.", "en": "Hi, I'm Alex.", "tr": "Merhaba, ben Alex.", "ru": "Привет, я Алекс." }
+      "exampleTranslation": {
+        "az": "Salam, mən Alexəm.",
+        "en": "Hi, I'm Alex.",
+        "tr": "Merhaba, ben Alex.",
+        "ru": "Привет, я Алекс."
+      }
     },
     {
       "id": "v2",
       "word": "Nice to meet you",
       "phonetic": "/naɪs tuː miːt juː/",
       "audioText": "Nice to meet you",
-      "translations": { "az": "Tanışlığımıza şadam", "en": "Nice to meet you", "tr": "Tanıştığıma memnun oldum", "ru": "Приятно познакомиться" },
+      "translations": {
+        "az": "Tanış olmağımıza şadam",
+        "en": "Nice to meet you",
+        "tr": "Tanıştığıma memnun oldum",
+        "ru": "Приятно познакомиться",
+        "es": "Mucho gusto en conocerte",
+        "de": "Freut mich, dich kennenzulernen",
+        "fr": "Enchanté de vous rencontrer",
+        "it": "Piacere di conoscerti",
+        "pt": "Prazer em conhecer você",
+        "pl": "Miło cię poznać",
+        "cs": "Rád vás poznávám",
+        "hu": "Örülök, hogy megismertelek",
+        "uk": "Приємно познайомитися"
+      },
       "exampleSentence": "Nice to meet you!",
-      "exampleTranslation": { "az": "Tanışlığımıza şadam!", "en": "Nice to meet you!", "tr": "Tanıştığıma memnun oldum!", "ru": "Приятно познакомиться!" }
+      "exampleTranslation": {
+        "az": "Tanışlığımıza şadam!",
+        "en": "Nice to meet you!",
+        "tr": "Tanıştığıma memnun oldum!",
+        "ru": "Приятно познакомиться!"
+      }
     },
     {
       "id": "v3",
       "word": "How are you?",
       "phonetic": "/haʊ ɑː juː/",
       "audioText": "How are you?",
-      "translations": { "az": "Necəsən?", "en": "How are you?", "tr": "Nasılsın?", "ru": "Как дела?" },
+      "translations": {
+        "az": "Necəsən? / Necəsiniz?",
+        "en": "How are you?",
+        "tr": "Nasılsın? / Nasılsınız?",
+        "ru": "Как дела?",
+        "es": "¿Cómo estás?",
+        "de": "Wie geht es dir?",
+        "fr": "Comment allez-vous ?",
+        "it": "Come stai?",
+        "pt": "Como vai você?",
+        "pl": "Jak się masz?",
+        "cs": "Jak se máš?",
+        "hu": "Hogy vagy?",
+        "uk": "Як справи?"
+      },
       "exampleSentence": "Hi! How are you?",
-      "exampleTranslation": { "az": "Salam! Necəsən?", "en": "Hi! How are you?", "tr": "Merhaba! Nasılsın?", "ru": "Привет! Как дела?" }
+      "exampleTranslation": {
+        "az": "Salam! Necəsən?",
+        "en": "Hi! How are you?",
+        "tr": "Merhaba! Nasılsın?",
+        "ru": "Привет! Как дела?"
+      }
     }
   ],
   "story": {
@@ -101,7 +203,11 @@
     "cefr": "A1",
     "wordCount": 26,
     "content": "Lisa: \"Hi, I'm Lisa. Nice to meet you!\"\nAlex: \"Hello Lisa! I'm Alex. How are you?\"\nLisa: \"I'm great, thank you! Ready to learn?\"",
-    "vocabularyHighlights": ["Hi, I'm...", "Nice to meet you", "How are you?"]
+    "vocabularyHighlights": [
+      "Hi, I'm...",
+      "Nice to meet you",
+      "How are you?"
+    ]
   },
   "exercises": [
     {
@@ -111,7 +217,16 @@
         "az": "Tanışlıq cümləsini qurun:",
         "en": "Build the greeting chunk:",
         "tr": "Tanışma cümlesini kurun:",
-        "ru": "Соберите фразу знакомства:"
+        "ru": "Соберите фразу знакомства:",
+        "es": "Build the greeting chunk:",
+        "de": "Build the greeting chunk:",
+        "fr": "Build the greeting chunk:",
+        "it": "Build the greeting chunk:",
+        "pt": "Build the greeting chunk:",
+        "pl": "Build the greeting chunk:",
+        "cs": "Build the greeting chunk:",
+        "hu": "Build the greeting chunk:",
+        "uk": "Соберите фразу знакомства:"
       },
       "instruction": {
         "az": "Tanış olmağımıza şadam.",
@@ -128,8 +243,16 @@
         "hu": "Örülök, hogy megismertelek.",
         "uk": "Приємно познайомитися."
       },
-      "sentenceToBuild": ["Nice", "to", "meet", "you"],
-      "distractorWords": ["see", "ready"],
+      "sentenceToBuild": [
+        "Nice",
+        "to",
+        "meet",
+        "you"
+      ],
+      "distractorWords": [
+        "see",
+        "ready"
+      ],
       "correctSentence": "Nice to meet you",
       "xpReward": 10
     },
@@ -140,7 +263,16 @@
         "az": "Özünü təqdim etmək üçün boşluğu tamamla:",
         "en": "Complete the self-introduction:",
         "tr": "Kendini tanıtmak için boşluğu doldur:",
-        "ru": "Заполните пропуск для представления:"
+        "ru": "Заполните пропуск для представления:",
+        "es": "Complete the self-introduction:",
+        "de": "Complete the self-introduction:",
+        "fr": "Complete the self-introduction:",
+        "it": "Complete the self-introduction:",
+        "pt": "Complete the self-introduction:",
+        "pl": "Complete the self-introduction:",
+        "cs": "Complete the self-introduction:",
+        "hu": "Complete the self-introduction:",
+        "uk": "Заполните пропуск для представления:"
       },
       "instruction": {
         "az": "Hi, ___ Alex.",
@@ -149,9 +281,21 @@
         "ru": "Hi, ___ Alex."
       },
       "options": [
-        { "id": "o1", "text": "I'm", "isCorrect": true },
-        { "id": "o2", "text": "is", "isCorrect": false },
-        { "id": "o3", "text": "are", "isCorrect": false }
+        {
+          "id": "o1",
+          "text": "I'm",
+          "isCorrect": true
+        },
+        {
+          "id": "o2",
+          "text": "is",
+          "isCorrect": false
+        },
+        {
+          "id": "o3",
+          "text": "are",
+          "isCorrect": false
+        }
       ],
       "xpReward": 10
     },
@@ -162,13 +306,34 @@
         "az": "Səsi dinləyin və eşitdiyiniz frazanı seçin:",
         "en": "Listen and select what you hear:",
         "tr": "Dinleyin ve duyduğunuz kalıbı seçin:",
-        "ru": "Послушайте и выберите то, что услышали:"
+        "ru": "Послушайте и выберите то, что услышали:",
+        "es": "Listen and select what you hear:",
+        "de": "Listen and select what you hear:",
+        "fr": "Listen and select what you hear:",
+        "it": "Listen and select what you hear:",
+        "pt": "Listen and select what you hear:",
+        "pl": "Listen and select what you hear:",
+        "cs": "Listen and select what you hear:",
+        "hu": "Listen and select what you hear:",
+        "uk": "Послушайте и выберите то, что услышали:"
       },
       "audioPrompt": "How are you?",
       "options": [
-        { "id": "a1", "text": "How are you?", "isCorrect": true },
-        { "id": "a2", "text": "Nice to meet you", "isCorrect": false },
-        { "id": "a3", "text": "Goodbye", "isCorrect": false }
+        {
+          "id": "a1",
+          "text": "How are you?",
+          "isCorrect": true
+        },
+        {
+          "id": "a2",
+          "text": "Nice to meet you",
+          "isCorrect": false
+        },
+        {
+          "id": "a3",
+          "text": "Goodbye",
+          "isCorrect": false
+        }
       ],
       "xpReward": 10
     }
@@ -198,8 +363,15 @@
         "hu": "Szia, Alex vagyok.",
         "uk": "Привіт, я Алекс."
       },
-      "sentenceToBuild": ["Hi,", "I'm", "Alex"],
-      "distractorWords": ["is", "you"],
+      "sentenceToBuild": [
+        "Hi,",
+        "I'm",
+        "Alex"
+      ],
+      "distractorWords": [
+        "is",
+        "you"
+      ],
       "correctSentence": "Hi, I'm Alex",
       "xpReward": 10
     }

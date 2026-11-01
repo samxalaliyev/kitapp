@@ -3,16 +3,34 @@
   "level": "A1",
   "order": 2,
   "title": {
-    "az": "Kafedə: Sifariş Vermək",
-    "en": "At the Cafe: Ordering",
-    "tr": "Kafede: Sipariş Vermek",
-    "ru": "В кафе: Заказ"
+    "az": "Kafedə Sifariş",
+    "en": "Ordering at a Cafe",
+    "tr": "Kafede Sipariş",
+    "ru": "Заказ в кафе",
+    "es": "Pedir en una cafetería",
+    "de": "Im Café bestellen",
+    "fr": "Commander au café",
+    "it": "Ordinare al bar",
+    "pt": "Pedindo em um café",
+    "pl": "Zamawianie w kawiarni",
+    "cs": "Objednávání v kavárně",
+    "hu": "Rendelés kávézóban",
+    "uk": "Замовлення в кафе"
   },
   "description": {
-    "az": "Kafedə kofe sifariş etmək və hesabı soruşmaq üçün canlı qəliblər",
-    "en": "Essential chunks to order coffee and ask for the bill",
-    "tr": "Kahve siparişi vermek ve hesabı istemek için canlı kalıplar",
-    "ru": "Живые фразы для заказа кофе и вопроса о счете"
+    "az": "Kafedə nəzakətlə qəhvə sifariş etmək və qiymət soruşmaq",
+    "en": "Order coffee politely and ask for the price",
+    "tr": "Kafede kibarca kahve siparişi verme ve fiyat sorma",
+    "ru": "Вежливый заказ кофе в кафе и вопрос о цене",
+    "es": "Pedir café educadamente en una cafetería y preguntar el precio",
+    "de": "Höflich Kaffee im Café bestellen und nach dem Preis fragen",
+    "fr": "Commander poliment un café et demander l'addition",
+    "it": "Ordinare cortesemente un caffè e chiedere il conto al bar",
+    "pt": "Pedir café educadamente em um café e perguntar o valor",
+    "pl": "Uprzejme zamawianie kawy w kawiarni i pytanie o cenę",
+    "cs": "Zdvořilé objednání kávy v kavárně a dotaz na cenu",
+    "hu": "Udvarias kávérendelés kávézóban és az ár megkérdezése",
+    "uk": "Ввічливе замовлення кави в кафе та запитання про ціну"
   },
   "estimatedMinutes": 2,
   "iconName": "coffee",
@@ -20,22 +38,49 @@
   "grammarRule": {
     "id": "a1_gr_02",
     "title": {
-      "az": "Nəzakətli Sifariş: I'd like...",
-      "en": "Polite Ordering: I'd like...",
-      "tr": "Kibar Sipariş: I'd like...",
-      "ru": "Вежливый заказ: I'd like..."
+      "az": "Nəzakətli Sifariş Qəlibi",
+      "en": "Polite Order Chunk",
+      "tr": "Kibar Sipariş Kalıbı",
+      "ru": "Шаблон вежливого заказа",
+      "es": "Patrón de pedido cortés",
+      "de": "Muster für höfliche Bestellungen",
+      "fr": "Modèle de commande polie",
+      "it": "Modello di ordinazione cortese",
+      "pt": "Padrão de pedido educado",
+      "pl": "Wzorzec uprzejmej prośby",
+      "cs": "Vzor pro zdvořilou objednávku",
+      "hu": "Udvarias rendelési minta",
+      "uk": "Шаблон ввічливого замовлення"
     },
     "subtitle": {
-      "az": "Bir şey istəyərkən bu qəlibi söylə",
-      "en": "Use this spoken chunk whenever ordering",
-      "tr": "Bir şey isterken bu kalıbı söyle",
-      "ru": "Используйте эту фразу при заказе"
+      "az": "'I would like' (I'd like) ilə nəzakətli sifariş",
+      "en": "Polite ordering with 'I would like' (I'd like)",
+      "tr": "'I would like' ile kibarca isteme",
+      "ru": "Вежливый заказ с 'I would like' (I'd like)",
+      "es": "Pedidos corteses con 'I would like' (I'd like)",
+      "de": "Höflich bestellen mit 'I would like' (I'd like)",
+      "fr": "Commander avec courtoisie grâce à 'I would like' (I'd like)",
+      "it": "Ordinazioni gentili con 'I would like' (I'd like)",
+      "pt": "Pedidos gentis com 'I would like' (I'd like)",
+      "pl": "Uprzejme zamawianie z 'I would like' (I'd like)",
+      "cs": "Zdvořilé objednávání s 'I would like' (I'd like)",
+      "hu": "Udvarias rendelés az 'I would like' (I'd like) kifejezéssel",
+      "uk": "Ввічливе замовлення з 'I would like' (I'd like)"
     },
     "explanation": {
-      "az": "Kafedə kobud 'I want' (istəyirəm) əvəzinə həmişə nəzakətlə 'I'd like' (istərdim) deyin:\n\n• 'I'd like a coffee, please.' (Bir qəhvə istərdim, zəhmət olmasa)\n• 'How much is it?' (Neçəyədir?)",
-      "en": "Always be natural and polite with 'I'd like':\n\n• 'I'd like a coffee, please.'\n• 'How much is it?'",
-      "tr": "Kafede kibarca 'I'd like' deyin:\n\n• 'I'd like a coffee, please.'\n• 'How much is it?'",
-      "ru": "В кафе всегда говорите вежливо с 'I'd like':\n\n• 'I'd like a coffee, please.'\n• 'How much is it?'"
+      "az": "Kafedə heç vaxt kobud şəkildə 'I want coffee' deməyin. Yerli insanlar həmişə 'I'd like a coffee, please' deyir.",
+      "en": "Never say 'I want coffee' abruptly. Native speakers always say 'I'd like a coffee, please.'",
+      "tr": "Kafede asla kaba şekilde 'I want coffee' demeyin. Doğal ve kibar olanı: 'I'd like a coffee, please.'",
+      "ru": "В кафе никогда не говорите резко 'I want coffee'. Носители языка всегда используют мягкую форму: 'I'd like a coffee, please.'",
+      "es": "Nunca digas bruscamente 'I want coffee'. Los hablantes nativos siempre dicen 'I'd like a coffee, please.'",
+      "de": "Sage im Café nie schroff 'I want coffee'. Muttersprachler sagen stets: 'I'd like a coffee, please.'",
+      "fr": "Ne dites jamais brutalement 'I want coffee'. Les anglophones disent toujours : 'I'd like a coffee, please.'",
+      "it": "Al bar non dire mai bruscamente 'I want coffee'. I madrelingua dicono sempre: 'I'd like a coffee, please.'",
+      "pt": "Nunca diga secamente 'I want coffee'. Os nativos sempre usam a forma gentil: 'I'd like a coffee, please.'",
+      "pl": "W kawiarni nigdy nie mów szorstko 'I want coffee'. Native speakerzy zawsze mówią: 'I'd like a coffee, please.'",
+      "cs": "V kavárně nikdy neříkejte úsečně 'I want coffee'. Rodilí mluvčí vždy říkají: 'I'd like a coffee, please.'",
+      "hu": "Kávézóban sose mondd nyersen, hogy 'I want coffee'. Az anyanyelviek mindig így kérik: 'I'd like a coffee, please.'",
+      "uk": "У кафе ніколи не говоріть різко 'I want coffee'. Носії мови завжди кажуть м'яко: 'I'd like a coffee, please.'"
     },
     "formula": "I'd like a [Məhsul], please • How much is it?",
     "examples": [
@@ -66,27 +111,84 @@
       "word": "I'd like...",
       "phonetic": "/aɪd laɪk/",
       "audioText": "I'd like a coffee, please",
-      "translations": { "az": "...istərdim", "en": "I'd like...", "tr": "...isterdim", "ru": "Я бы хотел..." },
+      "translations": {
+        "az": "İstərdim ... (zəhmət olmasa)",
+        "en": "I'd like...",
+        "tr": "İsterdim...",
+        "ru": "Я бы хотел...",
+        "es": "Me gustaría...",
+        "de": "Ich hätte gern...",
+        "fr": "Je voudrais...",
+        "it": "Vorrei...",
+        "pt": "Eu gostaria de...",
+        "pl": "Chciałbym...",
+        "cs": "Rád bych...",
+        "hu": "Szeretnék...",
+        "uk": "Я б хотів..."
+      },
       "exampleSentence": "I'd like a tea, please.",
-      "exampleTranslation": { "az": "Bir çay istərdim, zəhmət olmasa.", "en": "I'd like a tea, please.", "tr": "Bir çay isterdim, lütfen.", "ru": "Я бы хотел чай, пожалуйста." }
+      "exampleTranslation": {
+        "az": "Bir çay istərdim, zəhmət olmasa.",
+        "en": "I'd like a tea, please.",
+        "tr": "Bir çay isterdim, lütfen.",
+        "ru": "Я бы хотел чай, пожалуйста."
+      }
     },
     {
       "id": "v2_2",
       "word": "How much is it?",
       "phonetic": "/haʊ mʌtʃ ɪz ɪt/",
       "audioText": "How much is it?",
-      "translations": { "az": "Neçəyədir?", "en": "How much is it?", "tr": "Ne kadar?", "ru": "Сколько это стоит?" },
+      "translations": {
+        "az": "Neçəyədir? / Qiyməti nə qədərdir?",
+        "en": "How much is it?",
+        "tr": "Ne kadar?",
+        "ru": "Сколько это стоит?",
+        "es": "¿Cuánto cuesta?",
+        "de": "Wie viel kostet das?",
+        "fr": "Combien ça coûte ?",
+        "it": "Quanto costa?",
+        "pt": "Quanto custa?",
+        "pl": "Ile to kosztuje?",
+        "cs": "Kolik to stojí?",
+        "hu": "Mennyibe kerül?",
+        "uk": "Скільки це коштує?"
+      },
       "exampleSentence": "How much is it, please?",
-      "exampleTranslation": { "az": "Zəhmət olmasa deyin, neçəyədir?", "en": "How much is it, please?", "tr": "Lütfen söyler misiniz, ne kadar?", "ru": "Подскажите, сколько это стоит?" }
+      "exampleTranslation": {
+        "az": "Zəhmət olmasa deyin, neçəyədir?",
+        "en": "How much is it, please?",
+        "tr": "Lütfen söyler misiniz, ne kadar?",
+        "ru": "Подскажите, сколько это стоит?"
+      }
     },
     {
       "id": "v2_3",
       "word": "Here you are",
       "phonetic": "/hɪə juː ɑː/",
       "audioText": "Here you are",
-      "translations": { "az": "Buyurun (təqdim edərkən)", "en": "Here you are", "tr": "Buyurun", "ru": "Вот, пожалуйста" },
+      "translations": {
+        "az": "Buyurun (təhvil verərkən)",
+        "en": "Here you are",
+        "tr": "Buyrun",
+        "ru": "Вот, пожалуйста",
+        "es": "Aquí tiene",
+        "de": "Bitte sehr / Hier ist es",
+        "fr": "Voici / Tenez",
+        "it": "Ecco a Lei",
+        "pt": "Aqui está",
+        "pl": "Proszę bardzo (podając)",
+        "cs": "Tady prosím",
+        "hu": "Tessék, itt van",
+        "uk": "Ось, будь ласка"
+      },
       "exampleSentence": "Here you are! Enjoy your coffee.",
-      "exampleTranslation": { "az": "Buyurun! Nuş olsun.", "en": "Here you are! Enjoy your coffee.", "tr": "Buyurun! Afiyet olsun.", "ru": "Вот, пожалуйста! Приятного кофе." }
+      "exampleTranslation": {
+        "az": "Buyurun! Nuş olsun.",
+        "en": "Here you are! Enjoy your coffee.",
+        "tr": "Buyurun! Afiyet olsun.",
+        "ru": "Вот, пожалуйста! Приятного кофе."
+      }
     }
   ],
   "story": {
@@ -101,7 +203,11 @@
     "cefr": "A1",
     "wordCount": 24,
     "content": "You: \"Good morning! I'd like a coffee, please.\"\nBarista: \"Of course! Anything else?\"\nYou: \"No, thanks. How much is it?\"\nBarista: \"Three dollars, please! Here you are.\"",
-    "vocabularyHighlights": ["I'd like...", "How much is it?", "Here you are"]
+    "vocabularyHighlights": [
+      "I'd like...",
+      "How much is it?",
+      "Here you are"
+    ]
   },
   "exercises": [
     {
@@ -111,7 +217,16 @@
         "az": "Nəzakətli sifariş cümləsini qurun:",
         "en": "Build the polite order:",
         "tr": "Kibar sipariş cümlesini kurun:",
-        "ru": "Соберите фразу вежливого заказа:"
+        "ru": "Соберите фразу вежливого заказа:",
+        "es": "Build the polite order:",
+        "de": "Build the polite order:",
+        "fr": "Build the polite order:",
+        "it": "Build the polite order:",
+        "pt": "Build the polite order:",
+        "pl": "Build the polite order:",
+        "cs": "Build the polite order:",
+        "hu": "Build the polite order:",
+        "uk": "Соберите фразу вежливого заказа:"
       },
       "instruction": {
         "az": "Bir qəhvə istərdim, zəhmət olmasa.",
@@ -128,8 +243,17 @@
         "hu": "Szeretnék egy kávét, kérem.",
         "uk": "Я б хотів каву, будь ласка."
       },
-      "sentenceToBuild": ["I'd", "like", "a", "coffee,", "please"],
-      "distractorWords": ["want", "is"],
+      "sentenceToBuild": [
+        "I'd",
+        "like",
+        "a",
+        "coffee,",
+        "please"
+      ],
+      "distractorWords": [
+        "want",
+        "is"
+      ],
       "correctSentence": "I'd like a coffee, please",
       "xpReward": 10
     },
@@ -140,7 +264,16 @@
         "az": "Qiyməti soruşmaq üçün boşluğu doldurun:",
         "en": "Ask for the price:",
         "tr": "Fiyatı sormak için boşluğu doldurun:",
-        "ru": "Спросите цену:"
+        "ru": "Спросите цену:",
+        "es": "Ask for the price:",
+        "de": "Ask for the price:",
+        "fr": "Ask for the price:",
+        "it": "Ask for the price:",
+        "pt": "Ask for the price:",
+        "pl": "Ask for the price:",
+        "cs": "Ask for the price:",
+        "hu": "Ask for the price:",
+        "uk": "Спросите цену:"
       },
       "instruction": {
         "az": "How ___ is it?",
@@ -149,9 +282,21 @@
         "ru": "How ___ is it?"
       },
       "options": [
-        { "id": "o1", "text": "much", "isCorrect": true },
-        { "id": "o2", "text": "many", "isCorrect": false },
-        { "id": "o3", "text": "are", "isCorrect": false }
+        {
+          "id": "o1",
+          "text": "much",
+          "isCorrect": true
+        },
+        {
+          "id": "o2",
+          "text": "many",
+          "isCorrect": false
+        },
+        {
+          "id": "o3",
+          "text": "are",
+          "isCorrect": false
+        }
       ],
       "xpReward": 10
     },
@@ -162,13 +307,34 @@
         "az": "Dinləyin və eşitdiyinizi seçin:",
         "en": "Listen and select what you hear:",
         "tr": "Dinleyin ve duyduğunuzu seçin:",
-        "ru": "Послушайте и выберите то, что услышали:"
+        "ru": "Послушайте и выберите то, что услышали:",
+        "es": "Listen and select what you hear:",
+        "de": "Listen and select what you hear:",
+        "fr": "Listen and select what you hear:",
+        "it": "Listen and select what you hear:",
+        "pt": "Listen and select what you hear:",
+        "pl": "Listen and select what you hear:",
+        "cs": "Listen and select what you hear:",
+        "hu": "Listen and select what you hear:",
+        "uk": "Послушайте и выберите то, что услышали:"
       },
       "audioPrompt": "Here you are",
       "options": [
-        { "id": "a1", "text": "Here you are", "isCorrect": true },
-        { "id": "a2", "text": "How are you", "isCorrect": false },
-        { "id": "a3", "text": "See you later", "isCorrect": false }
+        {
+          "id": "a1",
+          "text": "Here you are",
+          "isCorrect": true
+        },
+        {
+          "id": "a2",
+          "text": "How are you",
+          "isCorrect": false
+        },
+        {
+          "id": "a3",
+          "text": "See you later",
+          "isCorrect": false
+        }
       ],
       "xpReward": 10
     }
@@ -198,8 +364,16 @@
         "hu": "Mennyibe kerül?",
         "uk": "Скільки це коштує?"
       },
-      "sentenceToBuild": ["How", "much", "is", "it?"],
-      "distractorWords": ["many", "are"],
+      "sentenceToBuild": [
+        "How",
+        "much",
+        "is",
+        "it?"
+      ],
+      "distractorWords": [
+        "many",
+        "are"
+      ],
       "correctSentence": "How much is it?",
       "xpReward": 10
     }

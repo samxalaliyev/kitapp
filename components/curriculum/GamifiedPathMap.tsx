@@ -38,102 +38,174 @@ interface HandbookRuleItem {
 const LEVEL_RULES_DATA: Record<LevelId, HandbookRuleItem[]> = {
   A0: [
     {
-      badge: { az: 'Addım 1 • İlk Salamlaşma', tr: 'Adım 1 • İlk Selamlaşma', en: 'Step 1 • First Greetings', ru: 'Шаг 1 • Первое знакомство' },
+      badge: {
+        az: 'Addım 1 • İlk Salamlaşma', en: 'Step 1 • First Greetings', tr: 'Adım 1 • İlk Selamlaşma', ru: 'Шаг 1 • Первое знакомство',
+        es: 'Paso 1 • Primeros saludos', de: 'Schritt 1 • Erste Begrüßung', fr: 'Étape 1 • Premiers saluts', it: 'Passo 1 • Primi saluti',
+        pt: 'Passo 1 • Primeiras saudações', pl: 'Krok 1 • Pierwsze powitania', cs: 'Krok 1 • První pozdravy', hu: '1. lépés • Első üdvözlés', uk: 'Крок 1 • Перше знайомство'
+      },
       formula: 'Hello, I am [Name] • Nice to meet you!',
       example: '"Hello, I am Alex. Nice to meet you!"',
     },
     {
-      badge: { az: 'Addım 2 • Sehrli Nəzakət', tr: 'Adım 2 • Sihirli Nezaket', en: 'Step 2 • Polite Chunks', ru: 'Шаг 2 • Вежливые фразы' },
+      badge: {
+        az: 'Addım 2 • Sehrli Nəzakət', en: 'Step 2 • Polite Chunks', tr: 'Adım 2 • Sihirli Nezaket', ru: 'Шаг 2 • Вежливые фразы',
+        es: 'Paso 2 • Cortesía esencial', de: 'Schritt 2 • Höflichkeitsphrasen', fr: 'Étape 2 • Mots de politesse', it: 'Passo 2 • Frasi di cortesia',
+        pt: 'Passo 2 • Frases de gentileza', pl: 'Krok 2 • Zwroty uprzejmości', cs: 'Krok 2 • Zdvořilostní fráze', hu: '2. lépés • Udvarias kifejezések', uk: 'Крок 2 • Ввічливі фрази'
+      },
       formula: 'Thank you so much • Excuse me • Water, please',
       example: '"Excuse me! One coffee, please. Thank you so much."',
     },
     {
-      badge: { az: 'Addım 3 • Sağqalma Frazaları', tr: 'Adım 3 • Hayatta Kalma Kalıpları', en: 'Step 3 • Survival Chunks', ru: 'Шаг 3 • Базовые фразы' },
+      badge: {
+        az: 'Addım 3 • Sağqalma Frazaları', en: 'Step 3 • Survival Chunks', tr: 'Adım 3 • Hayatta Kalma Kalıpları', ru: 'Шаг 3 • Базовые фразы',
+        es: 'Paso 3 • Frases de supervivencia', de: 'Schritt 3 • Überlebensphrasen', fr: 'Étape 3 • Expressions de survie', it: 'Passo 3 • Frasi di sopravvivenza',
+        pt: 'Passo 3 • Frases de sobrevivência', pl: 'Krok 3 • Zwroty przetrwania', cs: 'Krok 3 • Záchranné fráze', hu: '3. lépés • Túlélő kifejezések', uk: 'Крок 3 • Базові фрази'
+      },
       formula: 'Speak slowly, please • Where is the hotel?',
       example: '"Speak slowly, please. Where is the hotel?"',
     },
   ],
   A1: [
     {
-      badge: { az: 'Modul 1 • To Be', tr: 'Modül 1 • To Be', en: 'Module 1 • To Be', ru: 'Модуль 1 • To Be' },
+      badge: {
+        az: 'Modul 1 • To Be', en: 'Module 1 • To Be', tr: 'Modül 1 • To Be', ru: 'Модуль 1 • To Be',
+        es: 'Módulo 1 • To Be', de: 'Modul 1 • To Be', fr: 'Module 1 • To Be', it: 'Modulo 1 • To Be',
+        pt: 'Módulo 1 • To Be', pl: 'Moduł 1 • To Be', cs: 'Modul 1 • To Be', hu: '1. modul • To Be', uk: 'Модуль 1 • To Be'
+      },
       formula: 'Subject + am / is / are + Noun / Adj',
       example: '"I am a student. She is ready."',
     },
     {
-      badge: { az: 'Modul 2 • Would like', tr: 'Modül 2 • Would like', en: 'Module 2 • Would like', ru: 'Модуль 2 • Would like' },
+      badge: {
+        az: 'Modul 2 • Would like', en: 'Module 2 • Would like', tr: 'Modül 2 • Would like', ru: 'Модуль 2 • Would like',
+        es: 'Módulo 2 • Would like', de: 'Modul 2 • Would like', fr: 'Module 2 • Would like', it: 'Modulo 2 • Would like',
+        pt: 'Módulo 2 • Would like', pl: 'Moduł 2 • Would like', cs: 'Modul 2 • Would like', hu: '2. modul • Would like', uk: 'Модуль 2 • Would like'
+      },
       formula: "I would like (I'd like) + Noun / Verb",
       example: "\"I'd like a coffee, please. How much is it?\"",
     },
     {
-      badge: { az: 'Modul 3 • Present Simple', tr: 'Modül 3 • Present Simple', en: 'Module 3 • Present Simple', ru: 'Модуль 3 • Present Simple' },
+      badge: {
+        az: 'Modul 3 • Present Simple', en: 'Module 3 • Present Simple', tr: 'Modül 3 • Present Simple', ru: 'Модуль 3 • Present Simple',
+        es: 'Módulo 3 • Present Simple', de: 'Modul 3 • Present Simple', fr: 'Module 3 • Present Simple', it: 'Modulo 3 • Present Simple',
+        pt: 'Módulo 3 • Present Simple', pl: 'Moduł 3 • Present Simple', cs: 'Modul 3 • Present Simple', hu: '3. modul • Present Simple', uk: 'Модуль 3 • Present Simple'
+      },
       formula: 'He / She / It + Verb-s | I / You / We / They + Verb',
       example: '"He always works hard. I wake up early."',
     },
   ],
   A2: [
     {
-      badge: { az: 'Modul 1 • Past Simple', tr: 'Modül 1 • Past Simple', en: 'Module 1 • Past Simple', ru: 'Модуль 1 • Past Simple' },
+      badge: {
+        az: 'Modul 1 • Past Simple', en: 'Module 1 • Past Simple', tr: 'Modül 1 • Past Simple', ru: 'Модуль 1 • Past Simple',
+        es: 'Módulo 1 • Past Simple', de: 'Modul 1 • Past Simple', fr: 'Module 1 • Past Simple', it: 'Modulo 1 • Past Simple',
+        pt: 'Módulo 1 • Past Simple', pl: 'Moduł 1 • Past Simple', cs: 'Modul 1 • Past Simple', hu: '1. modul • Past Simple', uk: 'Модуль 1 • Past Simple'
+      },
       formula: 'Subject + Verb-ed / Irregular V2 (did / went)',
       example: '"We traveled to London last month. She saw him."',
     },
     {
-      badge: { az: 'Modul 2 • Müqayisə (Comparatives)', tr: 'Modül 2 • Karşılaştırma', en: 'Module 2 • Comparatives', ru: 'Модуль 2 • Сравнения' },
+      badge: {
+        az: 'Modul 2 • Müqayisə (Comparatives)', en: 'Module 2 • Comparatives', tr: 'Modül 2 • Karşılaştırma', ru: 'Модуль 2 • Сравнения',
+        es: 'Módulo 2 • Comparativos', de: 'Modul 2 • Komparativ', fr: 'Module 2 • Comparatifs', it: 'Modulo 2 • Comparativi',
+        pt: 'Módulo 2 • Comparativos', pl: 'Moduł 2 • Stopień wyższy', cs: 'Modul 2 • Porovnávání', hu: '2. modul • Középfok', uk: 'Модуль 2 • Ступені порівняння'
+      },
       formula: 'Short adj + -er than | More + Long adj + than',
       example: '"English is easier than you think. Today is more exciting."',
     },
     {
-      badge: { az: 'Modul 3 • Present Perfect', tr: 'Modül 3 • Present Perfect', en: 'Module 3 • Present Perfect', ru: 'Модуль 3 • Present Perfect' },
+      badge: {
+        az: 'Modul 3 • Present Perfect', en: 'Module 3 • Present Perfect', tr: 'Modül 3 • Present Perfect', ru: 'Модуль 3 • Present Perfect',
+        es: 'Módulo 3 • Present Perfect', de: 'Modul 3 • Present Perfect', fr: 'Module 3 • Present Perfect', it: 'Modulo 3 • Present Perfect',
+        pt: 'Módulo 3 • Present Perfect', pl: 'Moduł 3 • Present Perfect', cs: 'Modul 3 • Present Perfect', hu: '3. modul • Present Perfect', uk: 'Модуль 3 • Present Perfect'
+      },
       formula: 'Subject + have / has + Verb-3 (V3)',
       example: '"I have already finished my task. Have you ever been there?"',
     },
   ],
   B1: [
     {
-      badge: { az: 'Modul 1 • Məchul Növ (Passive)', tr: 'Modül 1 • Edilgen Çatı', en: 'Module 1 • Passive Voice', ru: 'Модуль 1 • Пассивный залог' },
+      badge: {
+        az: 'Modul 1 • Məchul Növ (Passive)', en: 'Module 1 • Passive Voice', tr: 'Modül 1 • Edilgen Çatı', ru: 'Модуль 1 • Пассивный залог',
+        es: 'Módulo 1 • Voz Pasiva', de: 'Modul 1 • Passiv', fr: 'Module 1 • Voix passive', it: 'Modulo 1 • Forma passiva',
+        pt: 'Módulo 1 • Voz Passiva', pl: 'Moduł 1 • Strona bierna', cs: 'Modul 1 • Trpný rod', hu: '1. modul • Szenvedő szerkezet', uk: 'Модуль 1 • Пасивний стан'
+      },
       formula: 'Subject + Be (is/was/been) + Past Participle (V3)',
       example: '"English is spoken worldwide. The report was sent yesterday."',
     },
     {
-      badge: { az: 'Modul 2 • Şərt Cümlələri (Type 1 & 2)', tr: 'Modül 2 • Şart Cümleleri', en: 'Module 2 • Conditionals', ru: 'Модуль 2 • Условные предложения' },
+      badge: {
+        az: 'Modul 2 • Şərt Cümlələri (Type 1 & 2)', en: 'Module 2 • Conditionals', tr: 'Modül 2 • Şart Cümleleri', ru: 'Модуль 2 • Условные предложения',
+        es: 'Módulo 2 • Condicionales 1 y 2', de: 'Modul 2 • Konditionalsätze', fr: 'Module 2 • Conditionnels', it: 'Modulo 2 • Periodi ipotetici',
+        pt: 'Módulo 2 • Condicionais 1 e 2', pl: 'Moduł 2 • Zdania warunkowe', cs: 'Modul 2 • Podmínkové věty', hu: '2. modul • Feltételes mondatok', uk: 'Модуль 2 • Умовні речення'
+      },
       formula: 'Type 1: If + Present, Will + V | Type 2: If + Past, Would + V',
       example: '"If it rains, we will stay. If I had time, I would join."',
     },
     {
-      badge: { az: 'Modul 3 • Nisbi Əvəzliklər (Relative)', tr: 'Modül 3 • İlgi Zamirleri', en: 'Module 3 • Relative Clauses', ru: 'Модуль 3 • Связующие местоимения' },
+      badge: {
+        az: 'Modul 3 • Nisbi Əvəzliklər (Relative)', en: 'Module 3 • Relative Clauses', tr: 'Modül 3 • İlgi Zamirleri', ru: 'Модуль 3 • Связующие местоимения',
+        es: 'Módulo 3 • Oraciones de Relativo', de: 'Modul 3 • Relativsätze', fr: 'Module 3 • Propositions relatives', it: 'Modulo 3 • Frasi relative',
+        pt: 'Módulo 3 • Orações relativas', pl: 'Moduł 3 • Zdania przydawkowe', cs: 'Modul 3 • Vztažné věty', hu: '3. modul • Vonatkozó mondatok', uk: 'Модуль 3 • Означальні підрядні'
+      },
       formula: 'Noun + who (people) / which (things) / that',
       example: '"The person who helped me. The book which was recommended."',
     },
   ],
   B2: [
     {
-      badge: { az: 'Modul 1 • Past Perfect & Regrets', tr: 'Modül 1 • Past Perfect', en: 'Module 1 • Past Perfect', ru: 'Модуль 1 • Предпрошедшее время' },
+      badge: {
+        az: 'Modul 1 • Past Perfect & Regrets', en: 'Module 1 • Past Perfect', tr: 'Modül 1 • Past Perfect', ru: 'Модуль 1 • Предпрошедшее время',
+        es: 'Módulo 1 • Pasado Perfecto', de: 'Modul 1 • Plusquamperfekt', fr: 'Module 1 • Plus-que-parfait', it: 'Modulo 1 • Trapassato',
+        pt: 'Módulo 1 • Passado Perfeito', pl: 'Moduł 1 • Czas zaprzeszły', cs: 'Modul 1 • Předminulý čas', hu: '1. modul • Befejezett múlt', uk: 'Модуль 1 • Передминулий час'
+      },
       formula: 'Subject + had + V3 | If + had + V3, would have + V3',
       example: '"When I arrived, the train had already left. If I had known, I would have called."',
     },
     {
-      badge: { az: 'Modul 2 • İnversiya (Inversion)', tr: 'Modül 2 • Devrik Cümle', en: 'Module 2 • Inversion', ru: 'Модуль 2 • Инверсия' },
+      badge: {
+        az: 'Modul 2 • İnversiya (Inversion)', en: 'Module 2 • Inversion', tr: 'Modül 2 • Devrik Cümle', ru: 'Модуль 2 • Инверсия',
+        es: 'Módulo 2 • Inversión', de: 'Modul 2 • Inversion', fr: 'Module 2 • Inversion', it: 'Modulo 2 • Inversione',
+        pt: 'Módulo 2 • Inversão', pl: 'Moduł 2 • Inwersja', cs: 'Modul 2 • Inverze', hu: '2. modul • Inverzió', uk: 'Модуль 2 • Інверсія'
+      },
       formula: 'Negative Word (Never / Rarely / Not only) + Auxiliary + Subject',
       example: '"Never have I witnessed such determination. Not only did she succeed, but also inspired us."',
     },
     {
-      badge: { az: 'Modul 3 • İrəli Feli Frazalar', tr: 'Modül 3 • İleri Deyimler', en: 'Module 3 • Advanced Phrasals', ru: 'Модуль 3 • Продвинутые фразовые глаголы' },
+      badge: {
+        az: 'Modul 3 • İrəli Feli Frazalar', en: 'Module 3 • Advanced Phrasals', tr: 'Modül 3 • İleri Deyimler', ru: 'Модуль 3 • Продвинутые фразовые глаголы',
+        es: 'Módulo 3 • Phrasal Verbs Avanzados', de: 'Modul 3 • Fortgeschrittene Phrasal Verbs', fr: 'Module 3 • Phrasal Verbs Avancés', it: 'Modulo 3 • Phrasal Verbs Avanzati',
+        pt: 'Módulo 3 • Phrasal Verbs Avançados', pl: 'Moduł 3 • Zaawansowane czasowniki frazowe', cs: 'Modul 3 • Pokročilá frázová slovesa', hu: '3. modul • Haladó Phrasal Verbs', uk: 'Модуль 3 • Просунуті фразові дієслова'
+      },
       formula: 'Sophisticated Idiomatic Combinations & Collocations',
       example: '"To bring about real change, we must rule out shortcuts and stand out."',
     },
   ],
   C1: [
     {
-      badge: { az: 'Modul 1 • Ritorik İnversiya & Cleft', tr: 'Modül 1 • Retorik Vurgu', en: 'Module 1 • Rhetorical Focus', ru: 'Модуль 1 • Риторический фокус' },
+      badge: {
+        az: 'Modul 1 • Ritorik İnversiya & Cleft', en: 'Module 1 • Rhetorical Focus', tr: 'Modül 1 • Retorik Vurgu', ru: 'Модуль 1 • Риторический фокус',
+        es: 'Módulo 1 • Énfasis Retórico', de: 'Modul 1 • Rhetorischer Fokus', fr: 'Module 1 • Emphase Rhétorique', it: 'Modulo 1 • Enfasi Retorica',
+        pt: 'Módulo 1 • Foco Retórico', pl: 'Moduł 1 • Nacisk retoryczny', cs: 'Modul 1 • Rétorický důraz', hu: '1. modul • Retorikai fókusz', uk: 'Модуль 1 • Риторичний фокус'
+      },
       formula: 'What truly matters is... • Seldom have we witnessed...',
       example: '"What truly matters is long-term sustainability. Seldom have we seen such impact."',
     },
     {
-      badge: { az: 'Modul 2 • Diplomatik Hedging', tr: 'Modül 2 • Diplomatik Dil', en: 'Module 2 • Diplomatic Hedging', ru: 'Модуль 2 • Дипломатический язык' },
+      badge: {
+        az: 'Modul 2 • Diplomatik Hedging', en: 'Module 2 • Diplomatic Hedging', tr: 'Modül 2 • Diplomatik Dil', ru: 'Модуль 2 • Дипломатический язык',
+        es: 'Módulo 2 • Atenuación Diplomática', de: 'Modul 2 • Diplomatische Sprache', fr: 'Module 2 • Prudence Diplomatique', it: 'Modulo 2 • Attenuazione Diplomatica',
+        pt: 'Módulo 2 • Atenuação Diplomática', pl: 'Moduł 2 • Dyplomatyczne łagodzenie', cs: 'Modul 2 • Diplomatické zmírňování', hu: '2. modul • Diplomatikus árnyalás', uk: 'Модуль 2 • Дипломатична мова'
+      },
       formula: 'It appears that... • With all due respect • We might reconsider',
       example: '"With all due respect, we might want to reconsider the timeline."',
     },
     {
-      badge: { az: 'Modul 3 • Subjunctive & İdiomlar', tr: 'Modül 3 • Subjunctive & Deyimler', en: 'Module 3 • Subjunctive & Idioms', ru: 'Модуль 3 • Высший стиль и идиомы' },
+      badge: {
+        az: 'Modul 3 • Subjunctive & İdiomlar', en: 'Module 3 • Subjunctive & Idioms', tr: 'Modül 3 • Subjunctive & Deyimler', ru: 'Модуль 3 • Высший стиль и идиомы',
+        es: 'Módulo 3 • Subjuntivo y Modismos', de: 'Modul 3 • Konjunktiv & Idiome', fr: 'Module 3 • Subjonctif & Idiomes', it: 'Modulo 3 • Congiuntivo e Idiomi',
+        pt: 'Módulo 3 • Subjuntivo e Expressões', pl: 'Moduł 3 • Tryb łączący i idiomy', cs: 'Modul 3 • Konjunktiv a idiomy', hu: '3. modul • Kötőmód és kifejezések', uk: 'Модуль 3 • Умовний спосіб та ідіоми'
+      },
       formula: 'It is imperative that we act • Read between the lines',
       example: '"It is imperative that we act immediately and read between the lines."',
     },

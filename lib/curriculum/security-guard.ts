@@ -12,6 +12,7 @@ export interface UnitAccessCheckResult {
   allowed: boolean;
   reason?: AccessDenialReason;
   message?: string;
+  messageKey?: string;
 }
 
 /**
@@ -36,7 +37,7 @@ export async function validateUnitAccess(
       return {
         allowed: false,
         reason: 'OUT_OF_HEARTS',
-        message: 'Canlarınız bitib. Dərsə başlamaq üçün reklam izləyin və ya Premium-a keçin.',
+        messageKey: 'out_of_hearts_msg',
       };
     }
     return { allowed: true };
@@ -50,7 +51,7 @@ export async function validateUnitAccess(
       return {
         allowed: false,
         reason: 'OFFLINE_FREE_RESTRICTED',
-        message: 'Növbəti dərslərə internetsiz daxil olmaq üçün Litera Premium-a keçin və ya interneti aktiv edin.',
+        messageKey: 'need_internet_msg',
       };
     }
   }
@@ -61,7 +62,7 @@ export async function validateUnitAccess(
     return {
       allowed: false,
       reason: 'PREREQUISITE_LOCKED',
-      message: 'Bu dərsin kilidini açmaq üçün əvvəlki dərsi ən azı 70% nəticə ilə bitirin.',
+      messageKey: 'lesson_locked_prev_unit',
     };
   }
 
@@ -71,7 +72,7 @@ export async function validateUnitAccess(
     return {
       allowed: false,
       reason: 'OUT_OF_HEARTS',
-      message: 'Canlarınız bitib. Reklam izləyərək +3 can qazanın və ya Limitsiz Can üçün Premium-a keçin.',
+      messageKey: 'out_of_hearts_msg',
     };
   }
 
