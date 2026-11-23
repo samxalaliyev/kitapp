@@ -29,6 +29,7 @@ export const plTranslations: Record<TranslationKey, string> = {
   stat_streak: 'Dni z Rzędu',
   section_reading_theme: 'Czytanie i Wygląd',
   theme_mode: 'Tryb Ciemny',
+  sound_effects_setting: 'Efekty dźwiękowe',
   font_size: 'Rozmiar Czcionki',
   font_family: 'Krój Czcionki',
   section_lang_trans: 'Język i Tłumaczenie',

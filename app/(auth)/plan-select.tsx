@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LegalModal, type LegalType } from '@/components/LegalModal';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { SUBSCRIPTIONS_ENABLED } from '@/lib/config/features';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import type { SubscriptionPlan } from '@/lib/permissions/rbac';
@@ -28,6 +29,16 @@ export default function PlanSelectScreen() {
   const [loading, setLoading] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [activeLegal, setActiveLegal] = useState<LegalType>(null);
+
+  useEffect(() => {
+    if (!SUBSCRIPTIONS_ENABLED) {
+      router.replace('/(tabs)');
+    }
+  }, [router]);
+
+  if (!SUBSCRIPTIONS_ENABLED) {
+    return null;
+  }
 
   const handleContinue = async () => {
     if (selectedPlan === 'free') {

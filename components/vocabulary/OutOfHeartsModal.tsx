@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
+import { SUBSCRIPTIONS_ENABLED } from '@/lib/config/features';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
@@ -123,21 +124,23 @@ export function OutOfHeartsModal({
             </Pressable>
 
             {/* 2. Go Premium */}
-            <Pressable
-              style={({ pressed }) => [
-                styles.premiumBtn,
-                pressed && styles.pressed,
-              ]}
-              onPress={() => {
-                onClose();
-                onUpgradePremium?.();
-              }}
-            >
-              <Feather name="award" size={18} color="#0d0f17" />
-              <Text style={styles.premiumBtnText}>
-                {t('premium_unlimited_hearts_btn')?.replace('👑', '')?.trim()}
-              </Text>
-            </Pressable>
+            {SUBSCRIPTIONS_ENABLED ? (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.premiumBtn,
+                  pressed && styles.pressed,
+                ]}
+                onPress={() => {
+                  onClose();
+                  onUpgradePremium?.();
+                }}
+              >
+                <Feather name="award" size={18} color="#0d0f17" />
+                <Text style={styles.premiumBtnText}>
+                  {t('premium_unlimited_hearts_btn')?.replace('👑', '')?.trim()}
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
         </View>
       </View>

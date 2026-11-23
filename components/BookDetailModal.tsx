@@ -19,6 +19,7 @@ import { isBookReady, prepareBookForReading } from '@/lib/book-service';
 import { getBook, setSavedStatus } from '@/lib/db';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { playSound } from '@/lib/sound-service';
 import { useAppTheme } from '@/lib/theme';
 import type { ApiBook, BookPrepareProgress } from '@/types/book';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -68,12 +69,14 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
   const handleToggleSave = async () => {
     try {
       const next = !isSaved;
+      playSound(next ? 'pop_on' : 'pop_off');
       setIsSaved(next);
       await setSavedStatus(book.id, next ? 'saved' : 'reading');
     } catch {}
   };
 
   const handleShareBook = () => {
+    playSound('popup');
     setStoryModalVisible(true);
   };
 
@@ -83,11 +86,13 @@ export function BookDetailModal({ visible, book, onClose }: BookDetailModalProps
     if (!isPremium) {
       const alreadyUnlocked = await isBookUnlockedToday(book.id, isPremium);
       if (!alreadyUnlocked && energy < ENERGY_COSTS.BOOK_READING_SESSION) {
+        playSound('wrong');
         setOutOfEnergyVisible(true);
         return;
       }
     }
 
+    playSound('page_open');
     setDownloading(true);
     setDownloadError(null);
     setProgressMsg(t('reading_loading'));

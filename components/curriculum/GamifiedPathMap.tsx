@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 
+import { playSound } from '@/lib/sound-service';
 import { getCurriculumText, getLocalizedContent } from '@/lib/curriculum/curriculum-i18n';
 import {
   CEFR_LEVELS,
@@ -381,6 +382,7 @@ export function GamifiedPathMap({
 
     // Immediately mark in-memory state to prevent double-tap race conditions
     setChestClaimedMap((prev) => ({ ...prev, [unit.id]: true }));
+    playSound('chest');
 
     // 3. Award XP
     await addXP(25, isPremium);
@@ -412,6 +414,11 @@ export function GamifiedPathMap({
 
   // Handle node tap
   const handleNodePress = (unit: UnitDisplayItem) => {
+    if (unit.status === 'locked') {
+      playSound('wrong');
+    } else {
+      playSound('popup');
+    }
     // Pre-warm the unit in memory immediately so clicking start opens with zero delay!
     if (unit.status !== 'locked' && unit.nodeType !== 'chest') {
       getUnitData(unit.id, unit.level).catch(() => { });
@@ -421,6 +428,7 @@ export function GamifiedPathMap({
   };
 
   const handleStartFromPreview = () => {
+    playSound('page_open');
     if (!previewUnit) return;
     const target = previewUnit;
     setPreviewUnit(null);
@@ -461,6 +469,7 @@ export function GamifiedPathMap({
                   <Pressable
                     style={styles.handbookBtn}
                     onPress={() => {
+                      playSound('popup');
                       setSelectedHandbookLevel(sec.level);
                       setShowHandbookModal(true);
                     }}
@@ -774,7 +783,10 @@ export function GamifiedPathMap({
               {/* Close 'X' Button */}
               <Pressable
                 style={[styles.modalCloseBtn, { backgroundColor: colors.isDark ? '#1e293b' : '#f1f5f9' }]}
-                onPress={() => setPreviewUnit(null)}
+                onPress={() => {
+                  playSound('pop_off');
+                  setPreviewUnit(null);
+                }}
                 hitSlop={10}
               >
                 <Feather name="x" size={18} color={colors.text} />

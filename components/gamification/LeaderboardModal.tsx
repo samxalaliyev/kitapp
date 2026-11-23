@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 
 import { useAuth } from '@/lib/auth/AuthContext';
+import { SUBSCRIPTIONS_ENABLED } from '@/lib/config/features';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import {
   fetchLeaderboard,
@@ -148,7 +149,7 @@ export function LeaderboardModal({
                 <View style={styles.proBadge}>
                   <Text style={styles.proBadgeText}>PRO 1.5x XP</Text>
                 </View>
-              ) : onOpenPaywall ? (
+              ) : SUBSCRIPTIONS_ENABLED && onOpenPaywall ? (
                 <Pressable
                   onPress={() => {
                     onClose();

@@ -24,9 +24,11 @@ import { LeaderboardModal } from '@/components/gamification/LeaderboardModal';
 import { PairMatchingGame } from '@/components/vocabulary/PairMatchingGame';
 import { QuizGameModal } from '@/components/vocabulary/QuizGameModal';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { SUBSCRIPTIONS_ENABLED } from '@/lib/config/features';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { ENERGY_COSTS } from '@/lib/gamification/energy';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { playSound } from '@/lib/sound-service';
 import { deleteWordFromCloud, syncCloudData } from '@/lib/sync/sync-service';
 import { useAppTheme } from '@/lib/theme';
 import {
@@ -102,6 +104,7 @@ export default function VocabularyScreen() {
 
   const handleDeleteWord = useCallback(
     async (wordItem: SavedWord) => {
+      playSound('pop_off');
       await deleteSavedWord(wordItem.id);
       if (user?.id) {
         deleteWordFromCloud(user.id, wordItem.word, wordItem.language).catch(() => {});
@@ -131,9 +134,11 @@ export default function VocabularyScreen() {
   const handleGameCardPress = (gameType: 'flashcard' | 'pair' | 'quiz') => {
     if (!isPremium) {
       if (energy < ENERGY_COSTS.VOCAB_GAME_ROUND) {
+        playSound('wrong');
         setOutOfEnergyVisible(true);
         return;
       }
+      playSound('popup');
       setPendingGameType(gameType);
       setEnergyActionModalVisible(true);
     } else {
@@ -145,11 +150,13 @@ export default function VocabularyScreen() {
     if (!isPremium) {
       const allowed = await consumeEnergy(ENERGY_COSTS.VOCAB_GAME_ROUND);
       if (!allowed) {
+        playSound('wrong');
         setOutOfEnergyVisible(true);
         return;
       }
     }
 
+    playSound('page_open');
     if (gameType === 'flashcard') {
       setFlashcardStudyVisible(true);
     } else if (gameType === 'pair') {
@@ -219,7 +226,7 @@ export default function VocabularyScreen() {
               { backgroundColor: 'rgba(239, 68, 68, 0.12)', borderColor: 'rgba(239, 68, 68, 0.3)', borderWidth: 1 },
             ]}
             onPress={() => {
-              if (!isPremium) setPaywallVisible(true);
+              if (!isPremium && SUBSCRIPTIONS_ENABLED) setPaywallVisible(true);
             }}
           >
             <Feather name="heart" size={15} color="#ef4444" />
@@ -429,7 +436,10 @@ export default function VocabularyScreen() {
         {/* Filter Pills: All | Words | Phrases */}
         <View style={styles.filterPillsRow}>
           <Pressable
-            onPress={() => setVocabFilter('all')}
+            onPress={() => {
+              playSound('nav_tab');
+              setVocabFilter('all');
+            }}
             style={[
               styles.filterPill,
               { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
@@ -442,7 +452,10 @@ export default function VocabularyScreen() {
           </Pressable>
 
           <Pressable
-            onPress={() => setVocabFilter('words')}
+            onPress={() => {
+              playSound('nav_tab');
+              setVocabFilter('words');
+            }}
             style={[
               styles.filterPill,
               { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
@@ -455,7 +468,10 @@ export default function VocabularyScreen() {
           </Pressable>
 
           <Pressable
-            onPress={() => setVocabFilter('phrases')}
+            onPress={() => {
+              playSound('nav_tab');
+              setVocabFilter('phrases');
+            }}
             style={[
               styles.filterPill,
               { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },

@@ -29,6 +29,7 @@ export const ukTranslations: Record<TranslationKey, string> = {
   stat_streak: 'Днів Поспіль',
   section_reading_theme: 'Читання та Вигляд',
   theme_mode: 'Темна Тема',
+  sound_effects_setting: 'Звукові ефекти',
   font_size: 'Розмір Шрифту',
   font_family: 'Шрифт',
   section_lang_trans: 'Мова та Переклад',

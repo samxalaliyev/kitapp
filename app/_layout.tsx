@@ -21,6 +21,7 @@ import {
 } from '@/lib/notifications/notification-service';
 import { isNativeAdMobAvailable } from '@/lib/monetization/ad-guard';
 import mobileAds from 'react-native-google-mobile-ads';
+import { initSoundService } from '@/lib/sound-service';
 
 // Initialize global crash reporter
 crashReporter.init();
@@ -67,6 +68,7 @@ function RootLayoutNav() {
   useEffect(() => {
     if (ready && !authLoading) {
       SplashScreen.hideAsync().catch(() => {});
+      initSoundService().catch(() => {});
       // Defer non-critical background SDK initializations so first frame renders instantly
       const timer = setTimeout(() => {
         if (isNativeAdMobAvailable()) {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { RewardedVideoPlayerModal } from '@/components/RewardedVideoPlayerModal';
+import { SUBSCRIPTIONS_ENABLED } from '@/lib/config/features';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
@@ -70,19 +71,21 @@ export function RewardedAdModal({
               </Pressable>
 
               {/* Option B: Premium Upgrade */}
-              <Pressable
-                onPress={() => {
-                  onClose();
-                  onUpgradePremium();
-                }}
-                style={({ pressed }) => [
-                  styles.premiumBtn,
-                  { backgroundColor: colors.primary },
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Text style={styles.premiumBtnText}>{t('upgrade_premium_btn')}</Text>
-              </Pressable>
+              {SUBSCRIPTIONS_ENABLED ? (
+                <Pressable
+                  onPress={() => {
+                    onClose();
+                    onUpgradePremium();
+                  }}
+                  style={({ pressed }) => [
+                    styles.premiumBtn,
+                    { backgroundColor: colors.primary },
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.premiumBtnText}>{t('upgrade_premium_btn')}</Text>
+                </Pressable>
+              ) : null}
 
               <Pressable onPress={onClose} style={styles.cancelBtn}>
                 <Text style={[styles.cancelText, { color: colors.textMuted }]}>{t('not_now')}</Text>

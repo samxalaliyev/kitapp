@@ -13,6 +13,7 @@ import { Feather } from '@expo/vector-icons';
 
 import { LegalModal, type LegalType } from '@/components/LegalModal';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { SUBSCRIPTIONS_ENABLED } from '@/lib/config/features';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import type { SubscriptionPlan } from '@/lib/permissions/rbac';
@@ -48,7 +49,7 @@ export function SubscriptionPaywallModal({
     }
   }, [visible, isPremium, isAdmin, onClose, t]);
 
-  if (!visible || isPremium) return null;
+  if (!SUBSCRIPTIONS_ENABLED || !visible || isPremium) return null;
 
   const handleSubscribe = async () => {
     setLoading(true);

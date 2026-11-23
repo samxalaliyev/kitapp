@@ -29,6 +29,7 @@ export const huTranslations: Record<TranslationKey, string> = {
   stat_streak: 'Napos Sorozat',
   section_reading_theme: 'Olvasás és Megjelenés',
   theme_mode: 'Sötét Mód',
+  sound_effects_setting: 'Hangeffektek',
   font_size: 'Betűméret',
   font_family: 'Betűtípus',
   section_lang_trans: 'Nyelv és Fordítás',

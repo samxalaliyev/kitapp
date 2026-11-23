@@ -12,6 +12,7 @@ import { GlassView } from 'expo-glass-effect';
 
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { type TranslationKey } from '@/lib/i18n/translations';
+import { playSound } from '@/lib/sound-service';
 import { useAppTheme } from '@/lib/theme';
 
 export interface ModernTabBarProps {
@@ -75,6 +76,8 @@ export default function ModernTabBar({
   const bottomOffset = Math.max(insets.bottom, Platform.OS === 'android' ? 24 : 16) + 10;
 
   const handleTabPress = (index: number, routeKey: string, routeName: string) => {
+    playSound('nav_tab');
+
     if (optimisticIndex === index) {
       return;
     }

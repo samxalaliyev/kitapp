@@ -4,6 +4,7 @@ import { BookCover, type BookCoverSize } from '@/components/BookCover';
 import { StarRating } from '@/components/StarRating';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { computeRating } from '@/lib/rating';
+import { playSound } from '@/lib/sound-service';
 import { useAppTheme } from '@/lib/theme';
 
 export type BookCardVariant = 'horizontal' | 'vertical' | 'grid';
@@ -40,6 +41,10 @@ export function BookCard({
   const { colors } = useAppTheme();
   const rating = computeRating(downloadCount);
   const effectiveCoverSize = coverSize ?? (variant === 'horizontal' ? 'md' : 'sm');
+  const handlePress = () => {
+    playSound('popup');
+    onPress?.();
+  };
 
   if (variant === 'grid') {
     return (
@@ -48,7 +53,7 @@ export function BookCard({
           styles.gridCard,
           pressed && styles.pressed,
         ]}
-        onPress={onPress}
+        onPress={handlePress}
       >
         <BookCover
           title={title}
@@ -81,7 +86,7 @@ export function BookCard({
           { backgroundColor: colors.cardBg, borderColor: colors.surfaceBorder },
           pressed && styles.pressed,
         ]}
-        onPress={onPress}
+        onPress={handlePress}
       >
         <BookCover
           title={title}

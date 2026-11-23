@@ -17,6 +17,7 @@ import * as Speech from 'expo-speech';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { playSound } from '@/lib/sound-service';
 import { useAppTheme } from '@/lib/theme';
 import { AdBannerContainer } from '@/components/AdBannerContainer';
 import { generatePairDeck, recordGameCompleted, type GameWordPair } from '@/lib/vocabulary/game-service';
@@ -59,6 +60,7 @@ export function FlashcardStudyModal({
   const flipCard = () => {
     if (isTransitioning) return;
     const nextFlipped = !isFlippedRef.current;
+    playSound(nextFlipped ? 'pop_on' : 'pop_off');
     isFlippedRef.current = nextFlipped;
     setIsFlipped(nextFlipped);
 
@@ -138,6 +140,7 @@ export function FlashcardStudyModal({
   const handleNextWord = (mastered: boolean) => {
     if (isTransitioning || !currentWord) return;
     setIsTransitioning(true);
+    playSound(mastered ? 'correct' : 'tap');
 
     if (mastered) {
       setMasteredCount((c) => c + 1);
@@ -165,6 +168,7 @@ export function FlashcardStudyModal({
       if (currentIndex + 1 >= deck.length) {
         setCompleted(true);
         setIsTransitioning(false);
+        playSound('complete');
         recordGameCompleted(15, deck.length, isPremium).catch(() => {});
         return;
       }

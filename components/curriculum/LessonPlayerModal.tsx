@@ -29,6 +29,7 @@ import { consumeHeart, getHearts, MAX_HEARTS } from '@/lib/vocabulary/game-servi
 import { addXP } from '@/lib/gamification/leagues';
 import { OutOfHeartsModal } from '@/components/vocabulary/OutOfHeartsModal';
 import { showCurriculumInterstitialAd } from '@/lib/monetization/interstitial-ads';
+import { playSound } from '@/lib/sound-service';
 
 import { getCurriculumText, getLocalizedContent } from '@/lib/curriculum/curriculum-i18n';
 
@@ -448,6 +449,7 @@ export function LessonPlayerModal({
   }, [unit?.story?.content, isSpeakingStory, stopStoryPlayback]);
 
   const handleClose = () => {
+    playSound('pop_off');
     stopStoryPlayback();
     if (currentStage === 'exercise' && !completedResult) {
       Alert.alert(
@@ -466,6 +468,7 @@ export function LessonPlayerModal({
   // Word Scramble actions
   const handleAddScrambleWord = (word: string, index: number) => {
     if (feedbackState !== 'idle') return;
+    playSound('pop_on');
     const nextAvailable = [...scrambleAvailablePool];
     nextAvailable.splice(index, 1);
     setScrambleAvailablePool(nextAvailable);
@@ -474,6 +477,7 @@ export function LessonPlayerModal({
 
   const handleRemoveScrambleWord = (word: string, index: number) => {
     if (feedbackState !== 'idle') return;
+    playSound('pop_off');
     const nextBuilt = [...scrambleBuiltWords];
     nextBuilt.splice(index, 1);
     setScrambleBuiltWords(nextBuilt);
@@ -505,6 +509,7 @@ export function LessonPlayerModal({
     }
 
     if (isCorrect) {
+      playSound('correct');
       setFeedbackState('correct');
       setCorrectAnswersCount((prev) => prev + 1);
       // Play audio confirmation
@@ -512,6 +517,7 @@ export function LessonPlayerModal({
         handleSpeech(scrambleBuiltWords.join(' '), 0.95);
       }
     } else {
+      playSound('wrong');
       setFeedbackState('wrong');
       const updatedHearts = await consumeHeart(isPremium);
       setHearts(updatedHearts);
@@ -556,6 +562,7 @@ export function LessonPlayerModal({
 
       setCompletedResult(result);
       setCurrentStage('victory');
+      playSound(passed ? 'complete' : 'wrong');
       onCompleted?.(result);
 
       // Trigger interstitial ad for free users
@@ -979,7 +986,10 @@ export function LessonPlayerModal({
                         transform: [{ translateY: pressed && vocabIndex > 0 ? 2 : 0 }],
                       },
                     ]}
-                    onPress={() => setVocabIndex((p) => Math.max(0, p - 1))}
+                    onPress={() => {
+                      playSound('tap');
+                      setVocabIndex((p) => Math.max(0, p - 1));
+                    }}
                     disabled={vocabIndex === 0}
                   >
                     <Feather name="arrow-left" size={18} color={colors.text} />
@@ -998,9 +1008,11 @@ export function LessonPlayerModal({
                     ]}
                     onPress={() => {
                       if (vocabIndex + 1 < unit.vocabulary.length) {
+                        playSound('tap');
                         setVocabIndex((p) => p + 1);
                         handleSpeech(unit.vocabulary[vocabIndex + 1].word);
                       } else {
+                        playSound('stage_transition');
                         setCurrentStage('story');
                       }
                     }}
@@ -1475,6 +1487,7 @@ export function LessonPlayerModal({
                           ]}
                           onPress={() => {
                             if (feedbackState === 'idle') {
+                              playSound('pop_on');
                               setSelectedOptionId(opt.id);
                             }
                           }}
@@ -1667,7 +1680,10 @@ export function LessonPlayerModal({
                       transform: [{ translateY: pressed ? 2 : 0 }],
                     },
                   ]}
-                  onPress={handleContinueAfterFeedback}
+                  onPress={() => {
+                    playSound('tap');
+                    handleContinueAfterFeedback();
+                  }}
                 >
                   <Text style={styles.primaryBtnWhiteText}>
                     {getCurriculumText('continue_btn', activeLang)}
@@ -1687,7 +1703,10 @@ export function LessonPlayerModal({
                       styles.duoPrimaryGreenBtn,
                       { transform: [{ translateY: pressed ? 2 : 0 }] },
                     ]}
-                    onPress={() => setCurrentStage('vocabulary')}
+                    onPress={() => {
+                      playSound('stage_transition');
+                      setCurrentStage('vocabulary');
+                    }}
                   >
                     <Text style={styles.primaryBtnWhiteText}>
                       {getCurriculumText('continue_to_words', activeLang)}
@@ -1704,6 +1723,7 @@ export function LessonPlayerModal({
                       { transform: [{ translateY: pressed ? 2 : 0 }] },
                     ]}
                     onPress={() => {
+                      playSound('stage_transition');
                       Speech.stop().catch(() => {});
                       setIsSpeakingStory(false);
                       setCurrentStage('exercise');
@@ -1766,7 +1786,10 @@ export function LessonPlayerModal({
                       styles.duoPrimaryGreenBtn,
                       { transform: [{ translateY: pressed ? 2 : 0 }] },
                     ]}
-                    onPress={onClose}
+                    onPress={() => {
+                      playSound('tap');
+                      onClose();
+                    }}
                   >
                     <Text style={styles.primaryBtnWhiteText}>
                       {completedResult.passed

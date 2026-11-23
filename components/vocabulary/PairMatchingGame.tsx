@@ -17,6 +17,7 @@ import { OutOfHeartsModal } from '@/components/vocabulary/OutOfHeartsModal';
 import { AdBannerContainer } from '@/components/AdBannerContainer';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { playSound } from '@/lib/sound-service';
 import { useAppTheme } from '@/lib/theme';
 import {
   consumeHeart,
@@ -144,12 +145,16 @@ export function PairMatchingGame({
         setSelectedRight(null);
 
         if (nextMatched.length >= pairs.length) {
+          playSound('complete');
           await recordGameCompleted(25, pairs.length, isPremium);
           setRoundStreak((s) => s + 1);
           setRoundCompleted(true);
+        } else {
+          playSound('correct');
         }
       } else {
         // WRONG MATCH
+        playSound('wrong');
         triggerShake();
         setWrongPairIds([left.id, right.id]);
 
@@ -173,6 +178,7 @@ export function PairMatchingGame({
   const handleSelectLeft = (card: MatchingCard) => {
     if (matchedPairIds.includes(card.pairId) || wrongPairIds.length > 0) return;
     if (hearts <= 0 && !isPremium) {
+      playSound('popup');
       setOutOfHeartsVisible(true);
       return;
     }
@@ -183,13 +189,16 @@ export function PairMatchingGame({
       setSelectedLeft(card);
       checkMatch(card, selectedRight);
     } else {
-      setSelectedLeft(card.id === selectedLeft?.id ? null : card);
+      const isDeselect = card.id === selectedLeft?.id;
+      playSound(isDeselect ? 'pop_off' : 'pop_on');
+      setSelectedLeft(isDeselect ? null : card);
     }
   };
 
   const handleSelectRight = (card: MatchingCard) => {
     if (matchedPairIds.includes(card.pairId) || wrongPairIds.length > 0) return;
     if (hearts <= 0 && !isPremium) {
+      playSound('popup');
       setOutOfHeartsVisible(true);
       return;
     }
@@ -198,7 +207,9 @@ export function PairMatchingGame({
       setSelectedRight(card);
       checkMatch(selectedLeft, card);
     } else {
-      setSelectedRight(card.id === selectedRight?.id ? null : card);
+      const isDeselect = card.id === selectedRight?.id;
+      playSound(isDeselect ? 'pop_off' : 'pop_on');
+      setSelectedRight(isDeselect ? null : card);
     }
   };
 

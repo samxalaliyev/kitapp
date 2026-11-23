@@ -29,6 +29,7 @@ export const csTranslations: Record<TranslationKey, string> = {
   stat_streak: 'Dny v Řadě',
   section_reading_theme: 'Čtení a Vzhled',
   theme_mode: 'Tmavý Režim',
+  sound_effects_setting: 'Zvukové efekty',
   font_size: 'Velikost Písma',
   font_family: 'Písmo',
   section_lang_trans: 'Jazyk a Překlad',

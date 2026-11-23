@@ -12,8 +12,10 @@ import { Feather } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 
 import { useAuth } from "@/lib/auth/AuthContext";
+import { SUBSCRIPTIONS_ENABLED } from "@/lib/config/features";
 import { FontSize, FontWeight, Radius, Spacing } from "@/lib/design";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { playSound } from "@/lib/sound-service";
 import { useAppTheme } from "@/lib/theme";
 import { syncWordToCloud } from "@/lib/sync/sync-service";
 import {
@@ -368,6 +370,7 @@ export function WordPopup({
   );
 
   const handleSentenceTranslateClick = useCallback(() => {
+    playSound('tap');
     if (isPremium) {
       executeSentenceTranslation(true);
     } else {
@@ -385,6 +388,7 @@ export function WordPopup({
 
   const handleSaveIdiom = useCallback(async () => {
     if (!detectedIdiom || isIdiomSaved) return;
+    playSound('correct');
     try {
       await saveWord({
         word: detectedIdiom.phrase,
@@ -432,6 +436,7 @@ export function WordPopup({
 
   const handleSave = useCallback(async () => {
     if (!word) return;
+    playSound('correct');
     try {
       const safePhonetic = isValidPhonetic(pronunciation?.phonetic, word)
         ? pronunciation!.phonetic!
@@ -631,7 +636,7 @@ export function WordPopup({
                 "{detectedIdiom.phrase}"
               </Text>
 
-              {isPremium ? (
+              {isPremium || !SUBSCRIPTIONS_ENABLED ? (
                 <View style={styles.idiomUnlockedContent}>
                   <Text style={[styles.idiomTransText, { color: colors.primary }]}>
                     = {detectedIdiom.translation}

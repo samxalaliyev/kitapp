@@ -10,6 +10,7 @@ import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/lib/auth/AuthContext';
+import { SUBSCRIPTIONS_ENABLED } from '@/lib/config/features';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
@@ -123,27 +124,29 @@ export function OutOfEnergyModal({
             </Pressable>
 
             {/* Option 2: Go PRO for Infinite Energy */}
-            <Pressable
-              onPress={handleGoPro}
-              style={({ pressed }) => [
-                styles.btnPro,
-                {
-                  backgroundColor: colors.isDark ? 'rgba(212, 175, 122, 0.15)' : '#fef3c7',
-                  borderColor: '#d4af7a',
-                },
-                pressed && styles.pressed,
-              ]}
-            >
-              <View style={styles.btnContent}>
-                <Feather name="star" size={18} color="#d4af7a" style={styles.btnIcon} />
-                <View>
-                  <Text style={[styles.btnProTitle, { color: colors.text }]}>
-                    {t('go_pro_unlimited_energy_btn')}
-                  </Text>
+            {SUBSCRIPTIONS_ENABLED ? (
+              <Pressable
+                onPress={handleGoPro}
+                style={({ pressed }) => [
+                  styles.btnPro,
+                  {
+                    backgroundColor: colors.isDark ? 'rgba(212, 175, 122, 0.15)' : '#fef3c7',
+                    borderColor: '#d4af7a',
+                  },
+                  pressed && styles.pressed,
+                ]}
+              >
+                <View style={styles.btnContent}>
+                  <Feather name="star" size={18} color="#d4af7a" style={styles.btnIcon} />
+                  <View>
+                    <Text style={[styles.btnProTitle, { color: colors.text }]}>
+                      {t('go_pro_unlimited_energy_btn')}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              <Feather name="chevron-right" size={18} color="#d4af7a" />
-            </Pressable>
+                <Feather name="chevron-right" size={18} color="#d4af7a" />
+              </Pressable>
+            ) : null}
 
             {/* Cancel */}
             <Pressable onPress={onClose} style={styles.btnCancel}>

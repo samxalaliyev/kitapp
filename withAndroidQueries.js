@@ -73,6 +73,25 @@ module.exports = function withAndroidQueries(config) {
       }
     }
 
+    // 5. Google Play Console xətası: android.hardware.screen.portrait xüsusiyyətini isteğe bağlı (required=false) edirik
+    // Beləliklə tətbiq Telefon, Tablet, Desktop və Android XR cihazlarında əngəlsiz yüklənə bilir
+    if (!manifest['uses-feature']) {
+      manifest['uses-feature'] = [];
+    }
+    const existingPortraitFeature = manifest['uses-feature'].find(
+      (f) => f?.$?.['android:name'] === 'android.hardware.screen.portrait'
+    );
+    if (existingPortraitFeature) {
+      existingPortraitFeature.$['android:required'] = 'false';
+    } else {
+      manifest['uses-feature'].push({
+        $: {
+          'android:name': 'android.hardware.screen.portrait',
+          'android:required': 'false',
+        },
+      });
+    }
+
     return config;
   });
 };

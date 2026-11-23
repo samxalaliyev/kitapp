@@ -27,6 +27,7 @@ import { IOSOptionPickerModal, type OptionItem } from '@/components/iOSOptionPic
 import { LegalModal, type LegalType } from '@/components/LegalModal';
 import { SubscriptionPaywallModal } from '@/components/SubscriptionPaywallModal';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { SUBSCRIPTIONS_ENABLED } from '@/lib/config/features';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { clearTranslationCache } from '@/lib/i18n/cache';
 import { getLanguage, SUPPORTED_LANGUAGES, type LanguageCode } from '@/lib/i18n/constants';
@@ -45,6 +46,7 @@ import {
   type FontFamilyChoice,
   type FontSizeLevel,
 } from '@/lib/reader/settings';
+import { isSoundEffectsEnabled, setSoundEffectsEnabled, playSound } from '@/lib/sound-service';
 import { syncCloudData } from '@/lib/sync/sync-service';
 import { useAppTheme, type ThemeMode } from '@/lib/theme';
 
@@ -79,7 +81,10 @@ function SettingRow({
         !isLast && { borderBottomWidth: 0.5, borderBottomColor: 'rgba(255, 255, 255, 0.08)' },
         pressed && onPress ? styles.pressed : undefined,
       ]}
-      onPress={onPress}
+      onPress={() => {
+        playSound('tap');
+        onPress?.();
+      }}
       disabled={!onPress}
     >
       <View style={styles.settingLeft}>
@@ -188,6 +193,20 @@ export default function SettingsScreen() {
   const [leaderboardVisible, setLeaderboardVisible] = useState(false);
   const [challengesVisible, setChallengesVisible] = useState(false);
 
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  useEffect(() => {
+    setSoundEnabled(isSoundEffectsEnabled());
+  }, []);
+
+  const handleToggleSound = async (val: boolean) => {
+    setSoundEnabled(val);
+    await setSoundEffectsEnabled(val);
+    if (val) {
+      playSound('pop_on');
+    }
+  };
+
   useEffect(() => {
     getNotificationPreferences().then((p) => {
       setNotifEnabled(p.enabled);
@@ -196,6 +215,7 @@ export default function SettingsScreen() {
   }, []);
 
   const handleToggleNotification = async (val: boolean) => {
+    playSound(val ? 'pop_on' : 'pop_off');
     if (val) {
       const granted = await requestNotificationPermissions();
       if (!granted) {
@@ -600,7 +620,21 @@ export default function SettingsScreen() {
             label={t('font_family')}
             value={getFontFamilyDisplay(fontFamily)}
             onPress={() => setActivePicker('fontFamily')}
+          />
+          <SettingRow
+            iconName="volume-2"
+            iconColor="#10b981"
+            iconBgColor="rgba(16, 185, 129, 0.12)"
+            label={t('sound_effects_setting')}
             isLast
+            rightElement={
+              <Switch
+                value={soundEnabled}
+                onValueChange={handleToggleSound}
+                thumbColor="#FFFFFF"
+                trackColor={{ false: 'rgba(255, 255, 255, 0.15)', true: '#58cc02' }}
+              />
+            }
           />
         </SettingGroup>
 
@@ -684,20 +718,22 @@ export default function SettingsScreen() {
         {/* GROUP 4: MONETIZATION & LEGAL */}
         {/* ==================================================================== */}
         <SettingGroup title={t('section_legal')}>
-          {!isPremium ? (
+          {SUBSCRIPTIONS_ENABLED && !isPremium ? (
             <SettingRow
               iconName="award"
               label={t('remove_ads_upgrade')?.replace('👑', '')?.trim()}
               onPress={() => setPaywallVisible(true)}
             />
           ) : null}
-          <SettingRow
-            iconName="refresh-cw"
-            iconColor="#818cf8"
-            iconBgColor="rgba(129, 140, 248, 0.12)"
-            label={restoringPurchases ? t('connecting') : t('restore_purchases')}
-            onPress={handleRestorePurchases}
-          />
+          {SUBSCRIPTIONS_ENABLED ? (
+            <SettingRow
+              iconName="refresh-cw"
+              iconColor="#818cf8"
+              iconBgColor="rgba(129, 140, 248, 0.12)"
+              label={restoringPurchases ? t('connecting') : t('restore_purchases')}
+              onPress={handleRestorePurchases}
+            />
+          ) : null}
           <SettingRow
             iconName="shield"
             label={t('privacy_policy')}

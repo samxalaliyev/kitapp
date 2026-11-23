@@ -1,0 +1,85 @@
+diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt
+index 1111111..2222222 100644
+--- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt
++++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt
+@@ -58,7 +58,7 @@ class AudioModule : Module() {
+   private var audioEnabled = true
+   private var shouldRouteThroughEarpiece = false
+   private var focusAcquired = false
+-  private var interruptionMode: InterruptionMode? = null
++  private var interruptionMode: InterruptionMode? = InterruptionMode.MIX_WITH_OTHERS
+   private var allowsBackgroundRecording = false
+   private var playsInSilentMode = true
+ 
+diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt
+index 1111111..2222222 100644
+--- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt
++++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt
+@@ -36,7 +36,13 @@ class AudioPlayer(
+ ) : BaseAudioPlayer(
+   player = ExoPlayer.Builder(context)
+     .setLooper(context.mainLooper)
+-    .setAudioAttributes(AudioAttributes.DEFAULT, false)
++    .setAudioAttributes(
++      AudioAttributes.Builder()
++        .setUsage(C.USAGE_ASSISTANCE_SONIFICATION)
++        .setContentType(C.AUDIO_CONTENT_TYPE_SONIFICATION)
++        .build(),
++      false
++    )
+     .setSeekForwardIncrementMs(SEEK_JUMP_INTERVAL_MS)
+     .setSeekBackIncrementMs(SEEK_JUMP_INTERVAL_MS)
+     .apply {
+@@ -64,7 +70,7 @@ class AudioPlayer(
+   var isActiveForLockScreen = false
+   internal var metadata: Metadata? = null
+   internal var lockScreenOptions: AudioLockScreenOptions? = null
+-  internal var mediaSession: MediaSession = buildBasicMediaSession(context, ref)
++  internal var mediaSession: MediaSession? = null
+   val serviceConnection = AudioPlaybackServiceConnection(WeakReference(this), appContext)
+ 
+   val isLive: Boolean
+@@ -220,8 +226,8 @@ class AudioPlayer(
+   }
+ 
+   internal fun assignBasicMediaSession() {
+-    mediaSession.release()
+-    mediaSession = buildBasicMediaSession(context, ref)
++    mediaSession?.release()
++    mediaSession = null
+   }
+ 
+   private fun sendAudioSampleUpdate(sample: List<Float>) {
+@@ -277,7 +283,8 @@ class AudioPlayer(
+   }
+ 
+   override fun releasePlayer() {
+-    mediaSession.release()
++    mediaSession?.release()
++    mediaSession = null
+     if (isActiveForLockScreen) {
+       serviceConnection.playbackServiceBinder?.service?.unregisterPlayer()
+     }
+diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
+index 1111111..2222222 100644
+--- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
++++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
+@@ -375,7 +375,7 @@ class AudioControlsService : MediaSessionService() {
+           .build()
+ 
+         // Replace the basic media session with a session connected to our playback service.
+-        player.mediaSession.release()
++        player.mediaSession?.release()
+         player.mediaSession = session
+ 
+         addSession(session)
+@@ -455,7 +455,7 @@ class AudioControlsService : MediaSessionService() {
+           .setCallback(AudioMediaSessionCallback())
+           .build()
+ 
+-        player.mediaSession.release()
++        player.mediaSession?.release()
+         player.mediaSession = session
+ 
+         addSession(session)
+

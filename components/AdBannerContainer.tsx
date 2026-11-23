@@ -3,6 +3,7 @@ import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 
 import { useAuth } from '@/lib/auth/AuthContext';
+import { SUBSCRIPTIONS_ENABLED } from '@/lib/config/features';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
@@ -48,6 +49,11 @@ export function AdBannerContainer({ onUpgradePress }: AdBannerContainerProps) {
         />
       </View>
     );
+  }
+
+  // If subscriptions are not yet enabled, don't show internal "Upgrade to Premium" fallback banner
+  if (!SUBSCRIPTIONS_ENABLED) {
+    return null;
   }
 
   // Fallback to internal promo banner if offline or web

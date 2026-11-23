@@ -17,6 +17,7 @@ import { LessonPlayerModal } from '@/components/curriculum/LessonPlayerModal';
 import { SubscriptionPaywallModal } from '@/components/SubscriptionPaywallModal';
 import { OutOfHeartsModal } from '@/components/vocabulary/OutOfHeartsModal';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { SUBSCRIPTIONS_ENABLED } from '@/lib/config/features';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
@@ -203,7 +204,11 @@ export default function LearnScreen() {
                 borderColor: isPremium ? '#818cf8' : '#f59e0b',
               },
             ]}
-            onPress={() => setPaywallVisible(true)}
+            onPress={() => {
+              if (SUBSCRIPTIONS_ENABLED) {
+                setPaywallVisible(true);
+              }
+            }}
           >
             <Feather
               name="zap"

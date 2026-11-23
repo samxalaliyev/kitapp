@@ -4,6 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/lib/auth/AuthContext';
+import { SUBSCRIPTIONS_ENABLED } from '@/lib/config/features';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useAppTheme } from '@/lib/theme';
@@ -379,12 +380,14 @@ export function FullscreenAdModal({
 
         {/* Bottom CTA / Navigation */}
         <View style={styles.bottomBar}>
-          <Pressable
-            onPress={onUpgradePremium}
-            style={({ pressed }) => [styles.ctaBtn, pressed && styles.pressed]}
-          >
-            <Text style={styles.ctaBtnText}>{ctaText}</Text>
-          </Pressable>
+          {SUBSCRIPTIONS_ENABLED ? (
+            <Pressable
+              onPress={onUpgradePremium}
+              style={({ pressed }) => [styles.ctaBtn, pressed && styles.pressed]}
+            >
+              <Text style={styles.ctaBtnText}>{ctaText}</Text>
+            </Pressable>
+          ) : null}
 
           {countdown === 0 ? (
             <Pressable onPress={onClose} style={styles.continueLink} hitSlop={10}>

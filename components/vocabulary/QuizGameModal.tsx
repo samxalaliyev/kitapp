@@ -16,6 +16,7 @@ import { OutOfHeartsModal } from '@/components/vocabulary/OutOfHeartsModal';
 import { AdBannerContainer } from '@/components/AdBannerContainer';
 import { FontSize, FontWeight, Radius, Spacing } from '@/lib/design';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { playSound } from '@/lib/sound-service';
 import { useAppTheme } from '@/lib/theme';
 import {
   consumeHeart,
@@ -119,6 +120,7 @@ export function QuizGameModal({
   const handleSelectOption = async (option: string) => {
     if (selectedOption !== null || !currentPair) return;
     if (hearts <= 0 && !isPremium) {
+      playSound('popup');
       setOutOfHeartsVisible(true);
       return;
     }
@@ -127,8 +129,10 @@ export function QuizGameModal({
     const isCorrect = option === currentPair.translation;
 
     if (isCorrect) {
+      playSound('correct');
       setScore((s) => s + 1);
     } else {
+      playSound('wrong');
       const nextHearts = await consumeHeart(isPremium);
       setHearts(nextHearts);
       if (nextHearts <= 0 && !isPremium) {
@@ -147,6 +151,7 @@ export function QuizGameModal({
           Speech.speak(deck[nextIdx].word, { language: 'en-US' });
         }
       } else {
+        playSound('complete');
         await recordGameCompleted(score * 10, deck.length, isPremium);
         setCompleted(true);
       }
