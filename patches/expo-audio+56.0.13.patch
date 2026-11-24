@@ -1,5 +1,5 @@
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt
-index 1111111..2222222 100644
+index 992239b..4bfdaca 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt
 @@ -58,7 +58,7 @@ class AudioModule : Module() {
@@ -12,7 +12,7 @@ index 1111111..2222222 100644
    private var playsInSilentMode = true
  
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-index 1111111..2222222 100644
+index c76a9fd..17c3c3d 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 @@ -36,7 +36,13 @@ class AudioPlayer(
@@ -61,7 +61,7 @@ index 1111111..2222222 100644
        serviceConnection.playbackServiceBinder?.service?.unregisterPlayer()
      }
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
-index 1111111..2222222 100644
+index 196a5d5..ac828c2 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 @@ -375,7 +375,7 @@ class AudioControlsService : MediaSessionService() {
@@ -82,4 +82,3 @@ index 1111111..2222222 100644
          player.mediaSession = session
  
          addSession(session)
-
